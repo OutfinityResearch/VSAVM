@@ -1,0 +1,55 @@
+<!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>DS004 Training method and self-learned compiler | VSAVM</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="../assets/site.css">
+      </head>
+      <body>
+        <div class="site">
+          <header class="header">
+            <div class="brand">VSAVM</div>
+            <nav class="nav">
+              <a href="../index.html">Home</a>
+              <a href="../specs.html">Specs</a>
+              <a href="../theory/index.html">Theory</a>
+              <a href="../wiki/index.html">Wiki</a>
+            </nav>
+          </header>
+          <main class="main content">
+            <h1>DS004 Training method and self-learned compiler</h1>
+    <p>Training uses a single predictive objective but a two-loop architecture. The outer loop performs next-phrase modeling, while the inner loop performs program search, proposing VM programs that explain the current segment and produce a state that improves prediction.</p>
+<p>The NL to query compiler is learned through the same compression pressure. Repeated question patterns drive the emergence of compact schema and macro programs that reduce MDL and improve predictive power. VSA accelerates the process by grouping paraphrases and retrieving similar schemas early.</p>
+<p>Consolidation happens when a candidate program repeatedly wins and remains short, at which point it becomes a macro instruction. As many surface forms converge on the same macro instruction, the schema becomes robust to new phrasing.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
+<defs>
+<linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#f9efe2"/>
+<stop offset="1" stop-color="#f0ddd0"/>
+</linearGradient>
+</defs>
+<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
+<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Next phrase</text>
+<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
+<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
+<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
+<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Program search</text>
+<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
+<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
+<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
+<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Macro rules</text>
+</svg>
+      <figcaption>Concept diagram for DS004.</figcaption>
+    </figure>
+          </main>
+          <footer class="footer">
+            VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+          </footer>
+        </div>
+      </body>
+    </html>

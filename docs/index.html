@@ -1,0 +1,57 @@
+<!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Home | VSAVM</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="assets/site.css">
+      </head>
+      <body>
+        <div class="site">
+          <header class="header">
+            <div class="brand">VSAVM</div>
+            <nav class="nav">
+              <a href="index.html">Home</a>
+              <a href="specs.html">Specs</a>
+              <a href="theory/index.html">Theory</a>
+              <a href="wiki/index.html">Wiki</a>
+            </nav>
+          </header>
+          <main class="main content">
+            <section class="hero">
+  <h1 class="hero-title">VSAVM</h1>
+  <p class="hero-subtitle">VSAVM is an Axiologic Research experiment within the Achilles project. The documentation presents an LLM-like interface with an executable VM core, operational correctness, and a modality agnostic event stream.</p>
+</section>
+<section class="section">
+  <h2>Core idea</h2>
+  <p>The interface looks like a language model, but understanding is obtained through execution in a virtual machine. Next-phrase prediction is conditioned on VM state, and consistency is verified through bounded closure within configurable budgets.</p>
+  <p>The architecture combines a discrete language model, a symbolic VM, VSA as a retrieval accelerator, and a self-learned NL to query compiler. The result is a multimodal system that produces robust or conditional answers depending on how deeply the state space is explored.</p>
+</section>
+<section class="section">
+  <h2>Quick access</h2>
+  <p>The documentation is organized into specifications, theory pages, and a compact wiki. Each page is static with consistent headers, footers, and SVG diagrams for clarity.</p>
+  <div class="link-grid">
+    <a class="card" href="specs.html">
+      <div class="card-title">Specs</div>
+      <div class="card-note">URS, FS, NFS, and all DS documents in Markdown.</div>
+    </a>
+    <a class="card" href="theory/index.html">
+      <div class="card-title">Theory</div>
+      <div class="card-note">Design chapters with matching content and SVG diagrams.</div>
+    </a>
+    <a class="card" href="wiki/index.html">
+      <div class="card-title">Wiki</div>
+      <div class="card-note">Acronyms, concepts, diagrams, and external references.</div>
+    </a>
+  </div>
+</section>
+          </main>
+          <footer class="footer">
+            VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+          </footer>
+        </div>
+      </body>
+    </html>

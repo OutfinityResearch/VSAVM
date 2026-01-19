@@ -1,0 +1,5 @@
+# Specs index
+
+Primary documents are [URS](URS.md), [FS](FS.md), [NFS](NFS.md).
+
+Design specifications are [DS001 High-level vision](DS001-high-level-vision.md), [DS002 Input representation, modality agnostic](DS002-input-representation.md), [DS003 Structural separators and correctness](DS003-structural-separators.md), [DS004 Training method and self-learned compiler](DS004-training-method.md), [DS005 RL as shaping without breaking the statistical core](DS005-rl-shaping.md), [DS006 Question encoding, self-learned and multimodal](DS006-question-encoding.md), [DS007 Next-phrase completion and bounded closure](DS007-next-phrase-closure.md), [DS008 Decoding back to natural language](DS008-output-decoding.md), [DS009 Correctness through bounded closure](DS009-correctness-bounded-closure.md), [DS010 VM design and interaction with VSA](DS010-vm-design-vsa.md), [DS011 Correctness contract and boundary behavior](DS011-correctness-contract.md), [DS012 Geometric interpretation and conceptual spaces](DS012-geometric-interpretation.md), [DS013 Federated learning potential](DS013-federated-learning.md), [DS014 Trustworthy AI in VM plus VSA](DS014-trustworthy-ai.md).

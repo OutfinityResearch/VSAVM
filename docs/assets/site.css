@@ -1,0 +1,249 @@
+:root {
+  --bg: #f4f1ea;
+  --surface: #fff9f1;
+  --ink: #14100a;
+  --muted: #5b5247;
+  --accent: #c05a2b;
+  --accent-2: #2d7b6f;
+  --accent-3: #b1872f;
+  --line: #e2d6c7;
+  --shadow: 0 18px 40px rgba(20, 16, 10, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20% -20% -10% -20%;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(192, 90, 43, 0.22), transparent 55%),
+    radial-gradient(circle at 78% 18%, rgba(45, 123, 111, 0.22), transparent 55%),
+    radial-gradient(circle at 50% 90%, rgba(177, 135, 47, 0.18), transparent 60%),
+    linear-gradient(180deg, #f7f1e8 0%, #efe6db 100%);
+  z-index: -2;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(45deg, rgba(20, 16, 10, 0.035) 0 1px, transparent 1px 6px);
+  opacity: 0.4;
+  z-index: -1;
+  pointer-events: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+.site {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 6vw 16px;
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(12px);
+  background: rgba(244, 241, 234, 0.78);
+  border-bottom: 1px solid rgba(20, 16, 10, 0.06);
+  z-index: 5;
+}
+
+.brand {
+  font-family: "Fraunces", "Times New Roman", serif;
+  font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: flex;
+  gap: 18px;
+  font-size: 0.95rem;
+}
+
+.nav a {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.nav a:hover {
+  border-color: var(--line);
+  background: rgba(255, 249, 241, 0.8);
+}
+
+.main {
+  flex: 1;
+  padding: 10px 6vw 60px;
+}
+
+.hero {
+  padding: 36px 0 28px;
+}
+
+.hero-title {
+  font-family: "Fraunces", "Times New Roman", serif;
+  font-size: clamp(2.6rem, 6vw, 4.2rem);
+  margin: 0 0 12px;
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 760px;
+  line-height: 1.6;
+}
+
+.section {
+  margin-top: 40px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 28px 28px 26px;
+  box-shadow: var(--shadow);
+}
+
+.section h2 {
+  font-family: "Fraunces", "Times New Roman", serif;
+  font-size: 1.5rem;
+  margin: 0 0 12px;
+}
+
+.section p {
+  margin: 0 0 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.card {
+  display: block;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 249, 241, 0.8);
+  box-shadow: 0 14px 30px rgba(20, 16, 10, 0.06);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  animation: rise 500ms ease both;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 34px rgba(20, 16, 10, 0.12);
+}
+
+.card-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.card-note {
+  color: var(--muted);
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+.content h1 {
+  font-family: "Fraunces", "Times New Roman", serif;
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  margin: 8px 0 16px;
+}
+
+.content p {
+  color: var(--muted);
+  line-height: 1.75;
+  font-size: 1.02rem;
+  margin: 0 0 14px;
+}
+
+.diagram {
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(20, 16, 10, 0.03);
+}
+
+.diagram svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.diagram figcaption {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.footer {
+  padding: 24px 6vw 32px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 720px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .nav {
+    flex-wrap: wrap;
+  }
+
+  .section {
+    padding: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
