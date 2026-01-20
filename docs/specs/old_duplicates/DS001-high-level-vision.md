@@ -1,9 +1,0 @@
-# DS001 High-level vision
-
-VSAVM is an Axiologic Research experiment within the Achilles project. The system exposes an LLM-like interface, yet its core is an executable virtual machine. Next-phrase prediction remains the primary training objective, but it is conditioned on VM state obtained through execution. Correctness is defined operationally as avoiding contradictions both immediately and within a bounded transitive closure.
-
-Multimodality is handled through a unified event stream in which any input becomes symbolic events with structural separators. Text enters directly as events. Audio enters as transcription events plus temporal metadata such as timestamps. Images and video enter as symbolic descriptions or as discrete visual tokens produced by an external encoder, but the design does not depend on the exact token type; the key requirement is discreteness and structural segmentability.
-
-The NL to query compiler is not hardcoded; it is learned as an emergent capability under compression and prediction pressure, turning recurring intents into compact executable query programs. VSA accelerates this process by clustering paraphrases and retrieving similar schemas quickly, but VSA does not decide truth. VSA decides what is worth exploring, while the VM decides acceptability through execution and bounded closure.
-
-At runtime the input is segmented into events, candidate interpretations are executed in the VM, the question is compiled into query programs through retrieval and program search, and the system produces a response through next-phrase completion guided by VM state. When a user asks the system to think more, the closure and exploration budget increases. The system preserves the consistency contract by strengthening conclusions when possible or falling back to conditional results or indeterminacy when contradictions cannot be ruled out within the configured budget.
