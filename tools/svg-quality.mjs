@@ -96,10 +96,38 @@ function extractRects(svg) {
     const y = parseNumber(getAttr(tag, 'y'), 0);
     const width = parseNumber(getAttr(tag, 'width'));
     const height = parseNumber(getAttr(tag, 'height'));
-    rects.push({ x, y, width, height, raw: tag });
+    const strokeWidth = parseNumber(getAttr(tag, 'stroke-width'));
+    rects.push({ x, y, width, height, strokeWidth, raw: tag });
   }
 
   return rects;
+}
+
+function extractEllipses(svg) {
+  const ellipses = [];
+  const tags = collectTags(svg, 'ellipse');
+  for (const tag of tags) {
+    const cx = parseNumber(getAttr(tag, 'cx'));
+    const cy = parseNumber(getAttr(tag, 'cy'));
+    const rx = parseNumber(getAttr(tag, 'rx'));
+    const ry = parseNumber(getAttr(tag, 'ry'));
+    const strokeWidth = parseNumber(getAttr(tag, 'stroke-width'));
+    ellipses.push({ cx, cy, rx, ry, strokeWidth, raw: tag });
+  }
+  return ellipses;
+}
+
+function extractCircles(svg) {
+  const circles = [];
+  const tags = collectTags(svg, 'circle');
+  for (const tag of tags) {
+    const cx = parseNumber(getAttr(tag, 'cx'));
+    const cy = parseNumber(getAttr(tag, 'cy'));
+    const r = parseNumber(getAttr(tag, 'r'));
+    const strokeWidth = parseNumber(getAttr(tag, 'stroke-width'));
+    circles.push({ cx, cy, r, strokeWidth, raw: tag });
+  }
+  return circles;
 }
 
 function extractLines(svg) {
@@ -110,7 +138,11 @@ function extractLines(svg) {
     const y1 = parseNumber(getAttr(tag, 'y1'));
     const x2 = parseNumber(getAttr(tag, 'x2'));
     const y2 = parseNumber(getAttr(tag, 'y2'));
-    lines.push({ x1, y1, x2, y2, raw: tag });
+    const strokeWidth = parseNumber(getAttr(tag, 'stroke-width'));
+    const markerEnd = getAttr(tag, 'marker-end');
+    const markerStart = getAttr(tag, 'marker-start');
+    const dashArray = getAttr(tag, 'stroke-dasharray');
+    lines.push({ x1, y1, x2, y2, strokeWidth, markerEnd, markerStart, dashArray, raw: tag });
   }
   return lines;
 }
@@ -124,6 +156,61 @@ function extractPolygons(svg) {
     polys.push({ points, bbox, raw: tag });
   }
   return polys;
+}
+
+function extractPaths(svg) {
+  const paths = [];
+  const tags = collectTags(svg, 'path');
+  for (const tag of tags) {
+    if (!/stroke\\s*=/.test(tag)) {
+      continue;
+    }
+    const strokeWidth = parseNumber(getAttr(tag, 'stroke-width'));
+    const markerEnd = getAttr(tag, 'marker-end');
+    const markerStart = getAttr(tag, 'marker-start');
+    const dashArray = getAttr(tag, 'stroke-dasharray');
+    const d = getAttr(tag, 'd');
+    const endpoints = parsePathEndpoints(d);
+    paths.push({ strokeWidth, markerEnd, markerStart, dashArray, d, endpoints, raw: tag });
+  }
+  return paths;
+}
+
+function parsePathEndpoints(d) {
+  if (!d) return null;
+  const startMatch = d.match(/[Mm]\s*([-\d.]+)[,\s]+([-\d.]+)/);
+  const nums = d.match(/[-\d.]+/g)?.map(Number).filter(n => Number.isFinite(n));
+  if (!startMatch || !nums || nums.length < 2) return null;
+  const start = {
+    x: parseNumber(startMatch[1]),
+    y: parseNumber(startMatch[2])
+  };
+  const end = {
+    x: nums[nums.length - 2],
+    y: nums[nums.length - 1]
+  };
+  if (!Number.isFinite(start.x) || !Number.isFinite(start.y) || !Number.isFinite(end.x) || !Number.isFinite(end.y)) {
+    return null;
+  }
+  return { start, end };
+}
+
+function distance(a, b) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return Math.hypot(dx, dy);
+}
+
+function pointToSegmentDistance(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return distance(point, start);
+  const t = ((point.x - start.x) * dx + (point.y - start.y) * dy) / lenSq;
+  if (t <= 0) return distance(point, start);
+  if (t >= 1) return distance(point, end);
+  const proj = { x: start.x + t * dx, y: start.y + t * dy };
+  return distance(point, proj);
 }
 
 function isTextInsideRect(text, rect, padding = 4) {
@@ -151,10 +238,12 @@ function analyzeSvg(svg, fileName) {
   }
 
   const rects = extractRects(svg);
+  const ellipses = extractEllipses(svg);
+  const circles = extractCircles(svg);
   const texts = extractTextNodes(svg);
   const lines = extractLines(svg);
   const polygons = extractPolygons(svg);
-  const paths = collectTags(svg, 'path');
+  const paths = extractPaths(svg);
 
   if (texts.length === 0) {
     warnings.push('No text elements detected (diagram may be too abstract).');
@@ -184,6 +273,33 @@ function analyzeSvg(svg, fileName) {
     score -= 5;
   }
 
+  // Stroke-weight refinement checks
+  const borderStrokeWidths = [
+    ...rects.map(r => r.strokeWidth),
+    ...ellipses.map(e => e.strokeWidth),
+    ...circles.map(c => c.strokeWidth)
+  ].filter(v => Number.isFinite(v));
+  const connectorStrokeWidths = [
+    ...lines.map(l => l.strokeWidth),
+    ...paths.map(p => p.strokeWidth)
+  ].filter(v => Number.isFinite(v));
+
+  if (borderStrokeWidths.length > 0) {
+    const maxBorder = Math.max(...borderStrokeWidths);
+    if (maxBorder > 1.6) {
+      warnings.push('Borders are heavy (target stroke-width <= 1.6).');
+      score -= 5;
+    }
+  }
+
+  if (connectorStrokeWidths.length > 0) {
+    const maxConnector = Math.max(...connectorStrokeWidths);
+    if (maxConnector > 2.4) {
+      warnings.push('Connectors are heavy (target stroke-width <= 2.4).');
+      score -= 5;
+    }
+  }
+
   // Text placement relative to rects
   const textOutsideBoxes = rects.length > 0
     ? texts.filter(t => !rects.some(r => isTextInsideRect(t, r)))
@@ -211,6 +327,120 @@ function analyzeSvg(svg, fileName) {
         warnings.push('Arrowheads appear on only some connectors (direction cues inconsistent).');
         score -= 6;
       }
+    }
+  }
+
+  if (hasMarkers && hasConnectors) {
+    const connectors = [
+      ...lines.map(line => ({
+        hasMarker: Boolean(line.markerEnd || line.markerStart),
+        dashed: Boolean(line.dashArray)
+      })),
+      ...paths.map(path => ({
+        hasMarker: Boolean(path.markerEnd || path.markerStart),
+        dashed: Boolean(path.dashArray)
+      }))
+    ];
+    const eligible = connectors.filter(conn => !conn.dashed);
+    if (eligible.length > 0) {
+      const missing = eligible.filter(conn => !conn.hasMarker).length;
+      const ratio = missing / eligible.length;
+      if (ratio > 0.2) {
+        warnings.push(`Markers missing on some connectors (${missing}/${eligible.length}).`);
+        score -= 6;
+      }
+    }
+  }
+
+  if (smallPolys.length > 0) {
+    const maxArrowSize = Math.max(...smallPolys.map(p => Math.max(p.bbox.width, p.bbox.height)));
+    if (maxArrowSize > 18) {
+      warnings.push('Arrowheads look oversized (target <= 18px bbox).');
+      score -= 4;
+    }
+  }
+
+  if (!hasMarkers && smallPolys.length > 0 && hasConnectors) {
+    const arrowCenters = smallPolys.map(p => ({
+      x: (p.bbox.minX + p.bbox.maxX) / 2,
+      y: (p.bbox.minY + p.bbox.maxY) / 2
+    }));
+
+    const connectors = [
+      ...lines.map(line => ({
+        start: { x: line.x1, y: line.y1 },
+        end: { x: line.x2, y: line.y2 },
+        hasMarker: Boolean(line.markerEnd || line.markerStart),
+        dashed: Boolean(line.dashArray)
+      })),
+      ...paths
+        .filter(p => p.endpoints)
+        .map(path => ({
+          start: path.endpoints.start,
+          end: path.endpoints.end,
+          hasMarker: Boolean(path.markerEnd || path.markerStart),
+          dashed: Boolean(path.dashArray)
+        }))
+    ].filter(conn => Number.isFinite(conn.start.x) && Number.isFinite(conn.start.y) && Number.isFinite(conn.end.x) && Number.isFinite(conn.end.y));
+
+    const endpointThreshold = 12;
+    const lineDistanceThreshold = 8;
+
+    let missingArrowCount = 0;
+    for (const conn of connectors) {
+      if (conn.dashed) continue;
+      if (conn.hasMarker) {
+        continue;
+      }
+      const nearStart = arrowCenters.some(center => distance(center, conn.start) <= endpointThreshold);
+      const nearEnd = arrowCenters.some(center => distance(center, conn.end) <= endpointThreshold);
+      if (!nearStart && !nearEnd) {
+        missingArrowCount++;
+      }
+    }
+
+    if (missingArrowCount > 0) {
+      const ratio = missingArrowCount / connectors.length;
+      if (ratio > 0.2) {
+        warnings.push(`Connectors missing arrowheads near endpoints (${missingArrowCount}/${connectors.length}).`);
+        score -= 6;
+      }
+    }
+
+    let midlineCount = 0;
+    let floatingCount = 0;
+    for (const center of arrowCenters) {
+      let closest = null;
+      let closestConn = null;
+      for (const conn of connectors) {
+        const d = pointToSegmentDistance(center, conn.start, conn.end);
+        if (closest === null || d < closest) {
+          closest = d;
+          closestConn = conn;
+        }
+      }
+
+      if (closest === null) continue;
+      if (closest > lineDistanceThreshold) {
+        floatingCount++;
+        continue;
+      }
+
+      const distStart = distance(center, closestConn.start);
+      const distEnd = distance(center, closestConn.end);
+      if (distStart > endpointThreshold && distEnd > endpointThreshold) {
+        midlineCount++;
+      }
+    }
+
+    if (midlineCount > 0) {
+      warnings.push(`Arrowheads appear mid-connector (${midlineCount}).`);
+      score -= 6;
+    }
+
+    if (floatingCount > 0) {
+      warnings.push(`Arrowheads not aligned with any connector (${floatingCount}).`);
+      score -= 4;
     }
   }
 

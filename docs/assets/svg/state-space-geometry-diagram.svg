@@ -9,16 +9,16 @@
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
   </defs>
-  <ellipse cx="250" cy="120" rx="200" ry="100" fill="none" stroke="#7fb3e6" stroke-width="3" stroke-dasharray="5,5"/>
+  <ellipse cx="250" cy="120" rx="200" ry="100" fill="none" stroke="#7fb3e6" stroke-width="1.2" stroke-dasharray="5,5"/>
   <text x="250" y="40" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Region A (constraints)</text>
-  <ellipse cx="550" cy="120" rx="200" ry="100" fill="none" stroke="#16b879" stroke-width="3" stroke-dasharray="5,5"/>
+  <ellipse cx="550" cy="120" rx="200" ry="100" fill="none" stroke="#16b879" stroke-width="1.2" stroke-dasharray="5,5"/>
   <text x="550" y="40" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Region B (constraints)</text>
   <circle cx="200" cy="120" r="10" fill="#0b6eff"/>
   <circle cx="300" cy="150" r="10" fill="#0b6eff"/>
   <circle cx="500" cy="120" r="10" fill="#16b879"/>
   <circle cx="600" cy="150" r="10" fill="#16b879"/>
-  <line x1="210" y1="120" x2="290" y2="150" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <line x1="310" y1="150" x2="490" y2="120" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <line x1="510" y1="120" x2="590" y2="150" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="210" y1="120" x2="290" y2="150" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="310" y1="150" x2="490" y2="120" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="510" y1="120" x2="590" y2="150" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round"/>
   <text x="400" y="110" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Instruction transition</text>
 </svg>

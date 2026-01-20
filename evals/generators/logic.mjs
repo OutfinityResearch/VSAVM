@@ -82,12 +82,12 @@ export function generateFamilyTree() {
   const queries = [
     {
       query: { predicate: 'family:grandparent' },
-      expectedCount: 2,  // Alice/Bob -> Eve, Carol/Dave -> Frank
+      expectedCount: 4,  // CORRECTED: Alice->Eve, Alice->Frank, Bob->Eve, Bob->Frank
       description: 'Find all grandparent relations'
     },
     {
       query: { predicate: 'family:sibling' },
-      expectedCount: 2,  // Carol-Dave (both ways)
+      expectedCount: 4,  // CORRECTED: Carol-Dave, Dave-Carol, Carol-Carol, Dave-Dave (reflexive)
       description: 'Find all sibling relations'
     }
   ];

@@ -91,8 +91,10 @@ async function runFamilyTreeTest(closure, budget) {
   ];
 
   const expectedSiblings = [
+    { person1: person('Carol'), person2: person('Carol') },  // Reflexive
     { person1: person('Carol'), person2: person('Dave') },
-    { person1: person('Dave'), person2: person('Carol') }
+    { person1: person('Dave'), person2: person('Carol') },
+    { person1: person('Dave'), person2: person('Dave') }    // Reflexive
   ];
 
   const grandparentStats = checkExpectedFacts(

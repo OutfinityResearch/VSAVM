@@ -24,7 +24,8 @@ export async function runCompressionTests(config) {
       avg_compression_ratio: 0,
       entropy_correlation: 0,
       patterns_compressed: 0,
-      total_patterns: 0
+      total_patterns: 0,
+      avg_decompression_fidelity: 0  // New: average decompression fidelity
     },
     details: {
       patterns: []
@@ -53,6 +54,7 @@ export async function runCompressionTests(config) {
         entropy: patternResult.entropy,
         expected_ratio: testCase.expectedRatio,
         meets_expectation: patternResult.compressionRatio >= testCase.expectedRatio,
+        decompression_fidelity: patternResult.decompressionFidelity || 0,  // New
         error: patternResult.error
       });
       
@@ -74,6 +76,11 @@ export async function runCompressionTests(config) {
     const entropies = results.details.patterns.map(p => p.entropy);
     const ratios = results.details.patterns.map(p => p.compression_ratio);
     results.metrics.entropy_correlation = calculateCorrelation(entropies, ratios);
+    
+    // NEW: Average decompression fidelity
+    const fidelities = results.details.patterns.map(p => p.decompression_fidelity).filter(f => typeof f === 'number');
+    results.metrics.avg_decompression_fidelity = fidelities.length > 0 ? 
+      fidelities.reduce((a, b) => a + b, 0) / fidelities.length : 0;
     
   } finally {
     await vm.close();
@@ -100,6 +107,7 @@ async function evaluatePatternCompression(vm, testCase, compressor) {
       compressedSize: null,
       compressionRatio: 0,
       entropy,
+      decompressionFidelity: 0,
       error: 'Compression API not available'
     };
   }
@@ -141,6 +149,7 @@ async function evaluatePatternCompression(vm, testCase, compressor) {
       compressedSize: null,
       compressionRatio: 0,
       entropy,
+      decompressionFidelity: 0,
       error: `Compression failed: ${error.message}`
     };
   }
@@ -152,17 +161,35 @@ async function evaluatePatternCompression(vm, testCase, compressor) {
       compressedSize: null,
       compressionRatio: 0,
       entropy,
+      decompressionFidelity: 0,
       error: 'Compression result missing size information'
     };
   }
 
   const compressionRatio = 1 - (compressedSize / originalSize);
 
+  // CRITICAL: Test decompression fidelity (DS005 requirement)
+  let decompressionFidelity = 0;
+  try {
+    const decompressed = await decompressData(compressionResult, vm);
+    decompressionFidelity = calculateFidelity(data, decompressed);
+  } catch (decompError) {
+    return {
+      originalSize,
+      compressedSize,
+      compressionRatio,
+      entropy,
+      decompressionFidelity: 0,
+      error: `Decompression failed: ${decompError.message}`
+    };
+  }
+
   return {
     originalSize,
     compressedSize,
     compressionRatio,
-    entropy
+    entropy,
+    decompressionFidelity
   };
 }
 
@@ -221,6 +248,63 @@ function calculateCorrelation(x, y) {
   
   if (denominator === 0) return 0;
   return numerator / denominator;
+}
+
+/**
+ * Decompress data using the compression result
+ */
+async function decompressData(compressionResult, vm) {
+  // Try different decompression methods based on result format
+  if (typeof compressionResult.decompress === 'function') {
+    return compressionResult.decompress();
+  }
+  
+  if (compressionResult.decompressor && typeof compressionResult.decompressor.decompress === 'function') {
+    return compressionResult.decompressor.decompress(compressionResult.compressed);
+  }
+  
+  if (vm.decompress && typeof vm.decompress === 'function') {
+    return vm.decompress(compressionResult);
+  }
+  
+  if (vm.decompressPattern && typeof vm.decompressPattern === 'function') {
+    return vm.decompressPattern(compressionResult);
+  }
+  
+  // If no decompression method available, assume identity (no compression)
+  if (compressionResult.original) {
+    return compressionResult.original;
+  }
+  
+  throw new Error('No decompression method available');
+}
+
+/**
+ * Calculate fidelity between original and decompressed data
+ */
+function calculateFidelity(original, decompressed) {
+  if (!original || !decompressed) return 0;
+  
+  // Convert to comparable format
+  const origStr = JSON.stringify(original);
+  const decompStr = JSON.stringify(decompressed);
+  
+  if (origStr === decompStr) return 1.0;
+  
+  // Calculate character-level similarity for partial credit
+  const maxLen = Math.max(origStr.length, decompStr.length);
+  if (maxLen === 0) return 1.0;
+  
+  let matches = 0;
+  const minLen = Math.min(origStr.length, decompStr.length);
+  
+  for (let i = 0; i < minLen; i++) {
+    if (origStr[i] === decompStr[i]) {
+      matches++;
+    }
+  }
+  
+  return matches / maxLen;
 }
 
 export default { runCompressionTests };

@@ -4,14 +4,18 @@
  */
 
 export const config = {
-  // Thresholds for passing
+  // Thresholds for passing - realistic based on DS001-DS004 requirements
   thresholds: {
     rule_accuracy: 0.90,
-    compression_ratio: 0.50,
+    compression_ratio: 0.85,  // Raised from 0.50 to match DS005 expectations
     reasoning_consistency: 0.95,
     query_response_ms: 100,
     query_accuracy: 0.95,
-    memory_usage_mb: 256
+    memory_usage_mb: 256,
+    vm_execution_success: 0.90,  // New: VM instruction execution rate
+    scope_isolation_success: 1.0,  // New: Scope isolation must be perfect
+    budget_exhaustion_handling: 1.0,  // New: Budget limits must be respected
+    decompression_fidelity: 1.0  // New: Compression must be lossless
   },
 
   // Timeouts per category (ms)
@@ -29,15 +33,28 @@ export const config = {
     num_sequences: 10,
     rule_learning_min_confidence: 0.7,
     
-    // Compression
-    pattern_repetitions: 50,
+    // Compression - more rigorous testing
+    pattern_repetitions: 100,  // Increased for better compression ratios
+    min_compression_samples: 10,  // New: minimum samples for statistical validity
     
     // Reasoning
     rule_chain_depth: 5,
     max_facts: 100,
     
     // Query response
-    query_count: 20
+    query_count: 20,
+    
+    // VM execution tests - new category
+    vm_instruction_count: 50,
+    vm_program_complexity: 3,  // nested depth
+    
+    // Scope isolation tests - new category  
+    scope_nesting_depth: 4,
+    cross_scope_queries: 10,
+    
+    // Budget exhaustion tests - new category
+    budget_stress_multiplier: 10,  // exceed normal budget by this factor
+    budget_degradation_steps: 5
   },
 
   // VSAVM configuration for tests

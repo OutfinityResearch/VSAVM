@@ -18,6 +18,8 @@ import { runRuleLearningTests } from './tests/rule-learning.mjs';
 import { runReasoningTests } from './tests/reasoning.mjs';
 import { runQueryResponseTests } from './tests/query-response.mjs';
 import { runCompressionTests } from './tests/compression.mjs';
+import { runVMExecutionTests } from './tests/vm-execution.mjs';
+import { runScopeIsolationTests } from './tests/scope-isolation.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -60,7 +62,8 @@ Usage:
 
 Options:
   --category <name>   Run only specified category
-                      (rule-learning, reasoning, query-response, compression)
+                      (rule-learning, reasoning, query-response, compression, 
+                       vm-execution, scope-isolation)
   --verbose, -v       Show detailed output
   --json              Output results as JSON only
   --help, -h          Show this help message
@@ -124,7 +127,9 @@ async function runAllEvaluations(options) {
     { name: 'rule-learning', runner: runRuleLearningTests },
     { name: 'reasoning', runner: runReasoningTests },
     { name: 'query-response', runner: runQueryResponseTests },
-    { name: 'compression', runner: runCompressionTests }
+    { name: 'compression', runner: runCompressionTests },
+    { name: 'vm-execution', runner: runVMExecutionTests },
+    { name: 'scope-isolation', runner: runScopeIsolationTests }
   ];
   
   // Filter by category if specified
@@ -241,6 +246,26 @@ function evaluateCategoryResult(result, thresholds) {
   
   // Check response time
   if (metrics.avg_response_ms !== undefined && metrics.avg_response_ms > thresholds.query_response_ms) {
+    return false;
+  }
+  
+  // NEW: Check VM execution success rate
+  if (metrics.vm_execution_success_rate !== undefined && metrics.vm_execution_success_rate < thresholds.vm_execution_success) {
+    return false;
+  }
+  
+  // NEW: Check scope isolation success rate
+  if (metrics.isolation_success_rate !== undefined && metrics.isolation_success_rate < thresholds.scope_isolation_success) {
+    return false;
+  }
+  
+  // NEW: Check budget compliance
+  if (metrics.budget_compliance_rate !== undefined && metrics.budget_compliance_rate < thresholds.budget_exhaustion_handling) {
+    return false;
+  }
+  
+  // NEW: Check decompression fidelity
+  if (metrics.decompression_fidelity !== undefined && metrics.decompression_fidelity < thresholds.decompression_fidelity) {
     return false;
   }
 

@@ -9,16 +9,16 @@
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
   </defs>
-  <rect x="50" y="30" width="700" height="180" rx="16" ry="16" fill="none" stroke="#0b6eff" stroke-width="3"/>
+  <rect x="50" y="30" width="700" height="180" rx="16" ry="16" fill="none" stroke="#0b6eff" stroke-width="1.2"/>
   <text x="70" y="55" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">VM State</text>
-  <rect x="80" y="70" rx="12" ry="12" width="200" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <rect x="80" y="70" rx="12" ry="12" width="200" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="180" y="100" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Fact store</text>
-  <rect x="300" y="70" rx="12" ry="12" width="200" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <rect x="300" y="70" rx="12" ry="12" width="200" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="400" y="100" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Rule library</text>
-  <rect x="520" y="70" rx="12" ry="12" width="200" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <rect x="520" y="70" rx="12" ry="12" width="200" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="620" y="100" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Contexts</text>
-  <rect x="80" y="140" rx="12" ry="12" width="300" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <rect x="80" y="140" rx="12" ry="12" width="300" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="230" y="170" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Typed bindings</text>
-  <rect x="400" y="140" rx="12" ry="12" width="320" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <rect x="400" y="140" rx="12" ry="12" width="320" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="560" y="170" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Execution trace</text>
 </svg>
