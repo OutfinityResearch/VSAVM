@@ -102,9 +102,8 @@ export function parseEntityId(str) {
 export function createScopeId(path) {
   const pathArray = Array.isArray(path) ? path : [path];
   
-  // CRITICAL: Reject hardcoded domain scopes
-  const forbiddenDomains = ['programming', 'biology', 'medical', 'mythology', 'science', 'history', 'literature'];
-  if (pathArray.length >= 2 && pathArray[0] === 'domain' && forbiddenDomains.includes(pathArray[1])) {
+  // CRITICAL: Reject hardcoded domain scopes - any ['domain', X] pattern is forbidden
+  if (pathArray.length >= 2 && pathArray[0] === 'domain') {
     throw new Error(`Hardcoded domain scope rejected: ${JSON.stringify(pathArray)}. Use structural separators instead.`);
   }
   

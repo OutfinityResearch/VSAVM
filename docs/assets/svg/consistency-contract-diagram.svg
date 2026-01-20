@@ -19,9 +19,12 @@
     
     
   
-    <marker id="arrowhead-deep" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
-      <path d="M 1 1 L 7 4 L 1 7" fill="none" stroke="url(#deep)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-    </marker>
+    
+    
+  
+    
+    
+  
     <marker id="arrowhead-0b6eff" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
       <path d="M 1 1 L 7 4 L 1 7" fill="none" stroke="#0b6eff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
@@ -32,9 +35,9 @@
   <text x="390" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Closure</text>
   <rect x="530" y="40" rx="12" ry="12" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="630" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Emission rules</text>
-  <line x1="250" y1="70" x2="290" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-deep)"/>
+  <line x1="250" y1="70" x2="290" y2="70" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
   
-  <line x1="490" y1="70" x2="530" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-deep)"/>
+  <line x1="490" y1="70" x2="530" y2="70" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
   
   <rect x="150" y="130" rx="12" ry="12" width="480" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="390" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Modes: strict, conditional, indeterminate</text>

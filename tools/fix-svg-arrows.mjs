@@ -29,6 +29,13 @@ function setAttr(tag, name, value) {
   return tag.replace(/<\w+/, match => `${match} ${name}="${value}"`);
 }
 
+function normalizeStrokeValue(stroke) {
+  if (stroke && /^url\\(#deep\\)$/i.test(stroke)) {
+    return CONNECTOR_COLOR;
+  }
+  return stroke;
+}
+
 function parsePoints(pointsStr) {
   if (!pointsStr) return [];
   return pointsStr
@@ -129,7 +136,11 @@ function distance(a, b) {
 }
 
 function markerIdForStroke(stroke) {
-  if (!stroke) return ARROW_MARKER_ID;
+  const normalized = normalizeStrokeValue(stroke);
+  if (!normalized) return ARROW_MARKER_ID;
+  if (normalized !== stroke) {
+    return markerIdForStroke(normalized);
+  }
   const urlMatch = stroke.match(/^url\(#([^)]+)\)$/i);
   if (urlMatch) return `arrowhead-${urlMatch[1]}`;
   const clean = stroke.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
@@ -142,9 +153,9 @@ function addMarkerToConnectors(svg) {
 
   const addMarker = tag => {
     let normalized = stripMarkerAttributes(tag);
-    const strokeValue = getAttr(normalized, 'stroke');
-    if (strokeValue && /^url\\(#deep\\)$/i.test(strokeValue)) {
-      normalized = setAttr(normalized, 'stroke', CONNECTOR_COLOR);
+    const strokeValue = normalizeStrokeValue(getAttr(normalized, 'stroke'));
+    if (strokeValue && strokeValue !== getAttr(normalized, 'stroke')) {
+      normalized = setAttr(normalized, 'stroke', strokeValue);
     }
     if (!/stroke\s*=/.test(normalized)) {
       return normalized;
@@ -152,7 +163,7 @@ function addMarkerToConnectors(svg) {
     if (/stroke-dasharray\s*=/.test(normalized)) {
       return normalized;
     }
-    const stroke = getAttr(normalized, 'stroke');
+    const stroke = normalizeStrokeValue(getAttr(normalized, 'stroke'));
     if (!stroke || stroke.toLowerCase() === 'none') {
       return normalized;
     }
@@ -196,9 +207,9 @@ function normalizeConnectorStrokes(svg) {
   const pathRegex = /<path\b[^>]*>/gi;
 
   const normalizeStroke = tag => {
-    const stroke = getAttr(tag, 'stroke');
-    if (stroke && /^url\\(#deep\\)$/i.test(stroke)) {
-      return setAttr(tag, 'stroke', CONNECTOR_COLOR);
+    const stroke = normalizeStrokeValue(getAttr(tag, 'stroke'));
+    if (stroke && stroke !== getAttr(tag, 'stroke')) {
+      return setAttr(tag, 'stroke', stroke);
     }
     return tag;
   };
@@ -208,8 +219,17 @@ function normalizeConnectorStrokes(svg) {
   return updated;
 }
 
+function normalizeArrowMarkerRefs(svg) {
+  return svg.replace(/marker-(end|start)=\"url\\(#arrowhead-deep\\)\"/gi, 'marker-$1="url(#arrowhead-0b6eff)"');
+}
+
+function removeLegacyArrowMarkers(svg) {
+  return svg.replace(/<marker\b[^>]*id=\"arrowhead-deep\"[^>]*>[\s\S]*?<\/marker>/gi, '');
+}
+
 function hasDirectionalArrows(svg) {
   if (/<marker\b[^>]*>/i.test(svg)) return true;
+  if (/marker-(end|start)\s*=\s*\"/i.test(svg)) return true;
   const polys = svg.match(/<polygon\b[^>]*>/gi) || [];
   return polys.some(isArrowPolygon);
 }
@@ -221,7 +241,7 @@ function collectConnectorStrokes(svg) {
 
   const addStroke = tag => {
     if (/stroke-dasharray\s*=/.test(tag)) return;
-    const stroke = getAttr(tag, 'stroke');
+    const stroke = normalizeStrokeValue(getAttr(tag, 'stroke'));
     if (!stroke || stroke.toLowerCase() === 'none') return;
     strokes.add(stroke);
   };
@@ -280,6 +300,9 @@ async function main() {
     let updated = ensureMarkers(cleaned, markerDefs.join(''));
     updated = addMarkerToConnectors(updated);
     updated = removeArrowPolygons(updated);
+    updated = normalizeConnectorStrokes(updated);
+    updated = normalizeArrowMarkerRefs(updated);
+    updated = removeLegacyArrowMarkers(updated);
 
     if (updated !== original) {
       await writeFile(file, updated, 'utf8');

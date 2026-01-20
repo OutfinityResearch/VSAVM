@@ -4,7 +4,7 @@ This table summarizes functional capabilities for the VSAVM system at a high lev
 
 | ID | Function | Notes | Implemented in |
 | --- | --- | --- | --- |
-| FS01 | Ingest inputs into a canonical event stream. | Normalize text, audio, and visuals with structural separators. | DS001 |
+| FS01 | Ingest inputs into a canonical event stream. | Normalize text, audio, and visuals with structural separators. | DS001, DS010 |
 | FS02 | Maintain a canonical fact store and rule library. | Store facts, rules, macro programs, and execution traces. | DS002 |
 | FS03 | Compile natural language into executable query programs. | Use VSA retrieval and guided program search. | DS003 |
 | FS04 | Execute programs in the VM and update state. | Support interpretation and reasoning modes. | DS002 |
@@ -38,8 +38,10 @@ The system should:
 ### Implementation Requirements
 
 - Separator detection must work for any discrete input stream
-- VSA clustering identifies semantically coherent regions
+- VSA clustering identifies semantically coherent regions  
 - RL shapes scope boundaries for optimal reasoning performance
 - VM execution respects discovered scope boundaries automatically
+
+**IMPLEMENTATION STATUS**: Current separator detection uses hardcoded text-specific rules. See DS010 for proper VSA-based emergent discovery specification.
 
 This ensures the system scales to new modalities and domains without manual scope engineering.

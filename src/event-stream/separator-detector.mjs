@@ -15,8 +15,8 @@ export function detectStructuralSeparators(events) {
     const event = events[i];
     const nextEvent = events[i + 1];
     
-    // Text separators
-    if (event.type === 'text_token') {
+    // Generic content separators based on payload analysis
+    if (event.payload && typeof event.payload === 'string') {
       if (isEndOfSentence(event.payload)) {
         separators.push({ position: i, type: 'sentence', strength: 0.3 });
       }
@@ -25,8 +25,8 @@ export function detectStructuralSeparators(events) {
       }
     }
     
-    // Explicit structural events
-    if (event.type === 'separator') {
+    // Explicit structural events - any event with separator payload
+    if (event.payload && typeof event.payload === 'object' && event.payload.separatorType) {
       separators.push({ 
         position: i, 
         type: event.payload.separatorType || 'generic',
@@ -64,7 +64,7 @@ function isEndOfSentence(payload) {
  */
 function isParagraphBreak(event, nextEvent) {
   // Look for double newlines or significant whitespace
-  return nextEvent.type === 'separator' || 
+  return nextEvent.payload && typeof nextEvent.payload === 'object' && nextEvent.payload.separatorType ||
          (nextEvent.payload && /^\s*\n\s*\n/.test(nextEvent.payload));
 }
 

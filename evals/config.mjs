@@ -15,7 +15,8 @@ export const config = {
     vm_execution_success: 0.90,  // New: VM instruction execution rate
     scope_isolation_success: 1.0,  // New: Scope isolation must be perfect
     budget_exhaustion_handling: 1.0,  // New: Budget limits must be respected
-    decompression_fidelity: 1.0  // New: Compression must be lossless
+    decompression_fidelity: 1.0,  // New: Compression must be lossless
+    emergent_separator_discovery: 0.0  // New: DS010 - Currently not implemented
   },
 
   // Timeouts per category (ms)
@@ -54,7 +55,12 @@ export const config = {
     
     // Budget exhaustion tests - new category
     budget_stress_multiplier: 10,  // exceed normal budget by this factor
-    budget_degradation_steps: 5
+    budget_degradation_steps: 5,
+    
+    // Emergent separator discovery tests - DS010
+    vsa_embedding_dimensions: 512,
+    boundary_detection_samples: 100,
+    cross_modal_test_count: 5
   },
 
   // VSAVM configuration for tests

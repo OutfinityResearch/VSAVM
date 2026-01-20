@@ -52,3 +52,20 @@ This table lists non-functional constraints and high-level implementation modes.
 - **Evaluation tests** verify no domain-specific logic exists
 - **Code review** must flag any modality-specific branching
 - **Separator detection** must work identically across text, video, audio, code
+
+### Scope Path Semantics
+
+**CRITICAL**: The system does NOT learn or recognize domain names. It only enforces structural patterns:
+
+#### ❌ FORBIDDEN: Domain Pattern
+- `['domain', 'programming']` - Hardcoded domain classification
+- `['domain', 'biology']` - Hardcoded domain classification
+- `['domain', X]` - ANY domain pattern is rejected
+
+#### ✅ ALLOWED: Structural Paths
+- `['video', 'scene_1', 'shot_3']` - Video file structure (scene → shot)
+- `['document', 'section_1', 'paragraph_3']` - Document structure (section → paragraph)
+- `['file', 'function_main', 'line_10']` - Code file structure (function → line)
+- `['audio', 'speaker_A', 'segment_5']` - Audio stream structure (speaker → segment)
+
+The word "video" in `['video', 'scene_1', 'shot_3']` is NOT a domain classification - it's a structural container type, like "document" or "file". The system treats all structural paths equally without domain knowledge.

@@ -20,6 +20,7 @@ import { runQueryResponseTests } from './tests/query-response.mjs';
 import { runCompressionTests } from './tests/compression.mjs';
 import { runVMExecutionTests } from './tests/vm-execution.mjs';
 import { runScopeIsolationTests } from './tests/scope-isolation.mjs';
+import { runEmergentSeparatorTests } from './tests/emergent-separator-discovery.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -63,7 +64,7 @@ Usage:
 Options:
   --category <name>   Run only specified category
                       (rule-learning, reasoning, query-response, compression, 
-                       vm-execution, scope-isolation)
+                       vm-execution, scope-isolation, emergent-separator-discovery)
   --verbose, -v       Show detailed output
   --json              Output results as JSON only
   --help, -h          Show this help message
@@ -129,7 +130,8 @@ async function runAllEvaluations(options) {
     { name: 'query-response', runner: runQueryResponseTests },
     { name: 'compression', runner: runCompressionTests },
     { name: 'vm-execution', runner: runVMExecutionTests },
-    { name: 'scope-isolation', runner: runScopeIsolationTests }
+    { name: 'scope-isolation', runner: runScopeIsolationTests },
+    { name: 'emergent-separator-discovery', runner: runEmergentSeparatorTests }
   ];
   
   // Filter by category if specified
@@ -266,6 +268,11 @@ function evaluateCategoryResult(result, thresholds) {
   
   // NEW: Check decompression fidelity
   if (metrics.decompression_fidelity !== undefined && metrics.decompression_fidelity < thresholds.decompression_fidelity) {
+    return false;
+  }
+
+  // NEW: Check emergent separator discovery (DS010)
+  if (metrics.vsa_boundary_precision !== undefined && metrics.vsa_boundary_precision < thresholds.emergent_separator_discovery) {
     return false;
   }
 

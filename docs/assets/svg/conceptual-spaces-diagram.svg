@@ -15,9 +15,9 @@
 <circle cx="370" cy="220" r="12" fill="#0b6eff"/>
 <circle cx="610" cy="170" r="12" fill="#16b879"/>
 <circle cx="715" cy="205" r="12" fill="#16b879"/>
-<line x1="262" y1="185" x2="358" y2="220" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round"/>
-<line x1="382" y1="220" x2="598" y2="170" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round"/>
-<line x1="622" y1="170" x2="703" y2="205" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="262" y1="185" x2="358" y2="220" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="382" y1="220" x2="598" y2="170" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="622" y1="170" x2="703" y2="205" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round"/>
 <rect x="90" y="270" width="360" height="91.6" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="1.2"/>
 <text x="106" y="292" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
 <text x="106" y="314" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Regions are concepts as constraints.</text>

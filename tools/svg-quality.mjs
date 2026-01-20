@@ -430,6 +430,16 @@ function analyzeSvg(svg, fileName) {
     }
   }
 
+  const gradientConnectors = [
+    ...lines.map(line => getAttr(line.raw, 'stroke')),
+    ...paths.map(path => getAttr(path.raw, 'stroke'))
+  ].filter(stroke => typeof stroke === 'string' && /^url\(#/i.test(stroke));
+
+  if (gradientConnectors.length > 0) {
+    warnings.push(`Connector strokes use gradients (${gradientConnectors.length}).`);
+    score -= 4;
+  }
+
   // Text placement relative to rects
   const textOutsideBoxes = rects.length > 0
     ? texts.filter(t => !rects.some(r => isTextInsideRect(t, r)))
