@@ -8,6 +8,7 @@ export { logicOps, match, applyRule, closure } from './logic-ops.mjs';
 export { controlOps, branch, jump, call, returnOp } from './control-ops.mjs';
 export { contextOps, pushContext, popContext, mergeContext, isolateContext } from './context-ops.mjs';
 export { builtinOps, count, filter, map, reduce } from './builtin-ops.mjs';
+export { inferenceOps, infer } from './inference-ops.mjs';
 
 /**
  * All operations combined
@@ -18,6 +19,7 @@ import { logicOps } from './logic-ops.mjs';
 import { controlOps } from './control-ops.mjs';
 import { contextOps } from './context-ops.mjs';
 import { builtinOps } from './builtin-ops.mjs';
+import { inferenceOps } from './inference-ops.mjs';
 
 export const allOps = {
   ...termOps,
@@ -25,5 +27,6 @@ export const allOps = {
   ...logicOps,
   ...controlOps,
   ...contextOps,
-  ...builtinOps
+  ...builtinOps,
+  ...inferenceOps
 };

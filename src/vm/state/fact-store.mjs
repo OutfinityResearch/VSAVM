@@ -21,7 +21,7 @@ export class FactStore {
   }
 
   /**
-   * Assert a fact (add to context and storage)
+   * Assert a fact (add to context and optionally storage)
    * @param {Object} fact
    * @returns {Promise<{conflicts: Object[]}>}
    */
@@ -32,8 +32,11 @@ export class FactStore {
     // Add to current context
     this.contextStack.addFact(fact);
     
-    // Persist to storage
-    await this.storage.assertFact(fact);
+    // Only persist to storage if not in isolated context
+    const current = this.contextStack.current;
+    if (!current.isolated) {
+      await this.storage.assertFact(fact);
+    }
     
     return { conflicts };
   }
@@ -73,24 +76,34 @@ export class FactStore {
    * @returns {Promise<Object[]>}
    */
   async query(pattern) {
-    // Get from storage
-    const storageFacts = await this.storage.query(pattern);
-    
-    // Filter through context (respect denials, add local facts)
-    const contextFacts = this.contextStack.getAllFacts();
     const results = new Map();
     
-    // Add storage facts (if not denied)
-    for (const fact of storageFacts) {
-      if (this.contextStack.getFact(fact.factId) !== null) {
-        results.set(fact.factId, fact);
+    // If in isolated context, only check context facts
+    const current = this.contextStack.current;
+    if (current.isolated) {
+      const contextFacts = this.contextStack.getAllFacts();
+      for (const [factId, fact] of contextFacts) {
+        if (this.matchesPattern(fact, pattern)) {
+          results.set(factId, fact);
+        }
       }
-    }
-    
-    // Add context facts (override storage)
-    for (const [factId, fact] of contextFacts) {
-      if (this.matchesPattern(fact, pattern)) {
-        results.set(factId, fact);
+    } else {
+      // Normal mode: check storage + context
+      const storageFacts = await this.storage.query(pattern);
+      
+      // Add storage facts (if not denied)
+      for (const fact of storageFacts) {
+        if (this.contextStack.getFact(fact.factId) !== null) {
+          results.set(fact.factId, fact);
+        }
+      }
+      
+      // Add context facts (override storage)
+      const contextFacts = this.contextStack.getAllFacts();
+      for (const [factId, fact] of contextFacts) {
+        if (this.matchesPattern(fact, pattern)) {
+          results.set(factId, fact);
+        }
       }
     }
     

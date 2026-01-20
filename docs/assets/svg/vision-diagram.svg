@@ -11,18 +11,25 @@
       <stop offset="0" stop-color="#0b6eff"/>
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
+  
+    <marker id="arrowhead-deep" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="url(#deep)" stroke="url(#deep)" stroke-width="0"/>
+    </marker>
+    <marker id="arrowhead-0b6eff" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="#0b6eff" stroke="#0b6eff" stroke-width="0"/>
+    </marker>
   </defs>
   <rect x="50" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="140" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">LLM-like interface</text>
-  <line x1="230" y1="70" x2="270" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead)"/>
+  <line x1="230" y1="70" x2="270" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-deep)"/>
   
   <rect x="270" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="360" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Executable VM core</text>
-  <line x1="450" y1="70" x2="490" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead)"/>
+  <line x1="450" y1="70" x2="490" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-deep)"/>
   
   <rect x="490" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="580" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Consistency contract</text>
-  <line x1="580" y1="100" x2="580" y2="130" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead)"/>
+  <line x1="580" y1="100" x2="580" y2="130" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
   
   <rect x="430" y="130" rx="12" ry="12" width="300" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="580" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Bounded closure gates emission</text>

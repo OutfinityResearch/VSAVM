@@ -403,9 +403,9 @@ function createScopeQueryProgram(predicate, scopeId) {
         op: 'QUERY',
         args: {
           predicate,
-          pattern: {},
-          outputVar: 'scoped_results'
-        }
+          pattern: {}
+        },
+        out: 'scoped_results'
       },
       {
         op: 'POP_CONTEXT'

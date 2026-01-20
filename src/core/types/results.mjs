@@ -113,7 +113,7 @@ export function createTraceRef(logSegmentId, startOffset, endOffset) {
  * @returns {Object}
  */
 export function createQueryResult(options = {}) {
-  return {
+  const result = {
     mode: options.mode ?? ResponseMode.INDETERMINATE,
     budgetUsed: options.budgetUsed ?? createBudgetUsage({}, {}),
     claims: options.claims ?? [],
@@ -122,6 +122,13 @@ export function createQueryResult(options = {}) {
     traceRefs: options.traceRefs ?? [],
     executionMs: options.executionMs ?? 0
   };
+  
+  // Add bindings if provided
+  if (options.bindings) {
+    result.bindings = options.bindings;
+  }
+  
+  return result;
 }
 
 /**

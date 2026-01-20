@@ -11,20 +11,27 @@
       <stop offset="0" stop-color="#0b6eff"/>
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
+  
+    <marker id="arrowhead-deep" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="url(#deep)" stroke="url(#deep)" stroke-width="0"/>
+    </marker>
+    <marker id="arrowhead-0b6eff" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="#0b6eff" stroke="#0b6eff" stroke-width="0"/>
+    </marker>
   </defs>
   <rect x="50" y="40" rx="12" ry="12" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="150" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">VM result (object + trace)</text>
-  <line x1="250" y1="70" x2="290" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead)"/>
+  <line x1="250" y1="70" x2="290" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-deep)"/>
   
   <rect x="290" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="380" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Content planning</text>
-  <line x1="470" y1="70" x2="510" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead)"/>
+  <line x1="470" y1="70" x2="510" y2="70" stroke="url(#deep)" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-deep)"/>
   
   <rect x="510" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="600" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Surface realization</text>
   <rect x="150" y="130" rx="12" ry="12" width="480" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="390" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Fidelity constraint: no new facts</text>
-  <line x1="390" y1="100" x2="390" y2="130" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead)"/>
+  <line x1="390" y1="100" x2="390" y2="130" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
   
   <rect x="100" y="210" rx="12" ry="12" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="190" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Multimodal output</text>
@@ -32,7 +39,7 @@
   <text x="400" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Quality validation</text>
   <rect x="520" y="210" rx="12" ry="12" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="610" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Final Output</text>
-  <line x1="390" y1="180" x2="190" y2="210" stroke="#0b6eff" stroke-width="1.6" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
-  <line x1="390" y1="180" x2="400" y2="210" stroke="#0b6eff" stroke-width="1.6" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
-  <line x1="390" y1="180" x2="610" y2="210" stroke="#0b6eff" stroke-width="1.6" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+  <line x1="390" y1="180" x2="190" y2="210" stroke="#0b6eff" stroke-width="1.6" stroke-dasharray="5,5"/>
+  <line x1="390" y1="180" x2="400" y2="210" stroke="#0b6eff" stroke-width="1.6" stroke-dasharray="5,5"/>
+  <line x1="390" y1="180" x2="610" y2="210" stroke="#0b6eff" stroke-width="1.6" stroke-dasharray="5,5"/>
 </svg>

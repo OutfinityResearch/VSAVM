@@ -77,7 +77,8 @@ export class VMService {
       'MATCH', 'APPLY_RULE', 'CLOSURE',
       'BRANCH', 'JUMP', 'CALL', 'RETURN',
       'PUSH_CONTEXT', 'POP_CONTEXT', 'MERGE_CONTEXT', 'ISOLATE_CONTEXT',
-      'COUNT', 'FILTER', 'MAP', 'REDUCE'
+      'COUNT', 'FILTER', 'MAP', 'REDUCE',
+      'INFER'  // Add inference operation
     ]);
     
     const labels = new Set();

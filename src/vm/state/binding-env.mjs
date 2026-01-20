@@ -134,6 +134,19 @@ export class BindingEnv {
   }
 
   /**
+   * Get all bindings as plain object
+   * @returns {Object}
+   */
+  getAllBindings() {
+    const all = this.getAll();
+    const result = {};
+    for (const [name, value] of all) {
+      result[name] = value;
+    }
+    return result;
+  }
+
+  /**
    * Create a snapshot of current state
    * @returns {Object}
    */

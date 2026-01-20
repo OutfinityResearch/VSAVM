@@ -245,7 +245,8 @@ export class Executor {
       assumptions: [],
       conflicts: conflictReports,
       traceRefs: [vmState.log.createTraceRef(0, vmState.log.entries.length - 1)],
-      executionMs
+      executionMs,
+      bindings: vmState.bindings.getAllBindings()  // Add bindings to result
     });
   }
 }

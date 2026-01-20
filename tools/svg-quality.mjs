@@ -63,6 +63,25 @@ function collectTags(svg, tagName) {
   return svg.match(re) || [];
 }
 
+function collectMarkerDefinitions(svg) {
+  const markers = new Map();
+  const re = /<marker\b[^>]*id="([^"]+)"[^>]*>[\s\S]*?<\/marker>/gi;
+  let match;
+  while ((match = re.exec(svg)) !== null) {
+    markers.set(match[1], match[0]);
+  }
+  return markers;
+}
+
+function extractMarkerPaint(markerTag) {
+  const pathMatch = markerTag.match(/<path\b[^>]*>/i);
+  const tag = pathMatch ? pathMatch[0] : '';
+  return {
+    fill: getAttr(tag, 'fill'),
+    stroke: getAttr(tag, 'stroke')
+  };
+}
+
 function collectPairedTags(svg, tagName) {
   const re = new RegExp(`<${tagName}\\b[^>]*>[\\s\\S]*?<\\/${tagName}>`, 'gi');
   return svg.match(re) || [];
@@ -244,6 +263,7 @@ function analyzeSvg(svg, fileName) {
   const lines = extractLines(svg);
   const polygons = extractPolygons(svg);
   const paths = extractPaths(svg);
+  const markers = collectMarkerDefinitions(svg);
 
   if (texts.length === 0) {
     warnings.push('No text elements detected (diagram may be too abstract).');
@@ -313,6 +333,32 @@ function analyzeSvg(svg, fileName) {
     }
   }
 
+  if (rects.length > 1) {
+    const minVerticalGap = 10;
+    const tooClose = [];
+    for (let i = 0; i < rects.length; i++) {
+      for (let j = i + 1; j < rects.length; j++) {
+        const a = rects[i];
+        const b = rects[j];
+        if (!Number.isFinite(a.width) || !Number.isFinite(b.width)) continue;
+        const ax2 = a.x + a.width;
+        const bx2 = b.x + b.width;
+        const overlapX = Math.min(ax2, bx2) - Math.max(a.x, b.x);
+        if (overlapX <= 0) continue;
+        const aBottom = a.y + a.height;
+        const bBottom = b.y + b.height;
+        const gap = aBottom <= b.y ? b.y - aBottom : bBottom <= a.y ? a.y - bBottom : -1;
+        if (gap >= 0 && gap < minVerticalGap) {
+          tooClose.push({ gap });
+        }
+      }
+    }
+    if (tooClose.length > 0) {
+      warnings.push(`Boxes are vertically crowded (gap < ${minVerticalGap}px).`);
+      score -= 4;
+    }
+  }
+
   // Arrowhead heuristic
   const hasMarkers = /marker-end\s*=|marker-start\s*=/i.test(svg);
   const smallPolys = polygons.filter(p => p.bbox && p.bbox.width <= 24 && p.bbox.height <= 24);
@@ -334,14 +380,18 @@ function analyzeSvg(svg, fileName) {
     const connectors = [
       ...lines.map(line => ({
         hasMarker: Boolean(line.markerEnd || line.markerStart),
-        dashed: Boolean(line.dashArray)
+        dashed: Boolean(line.dashArray),
+        length: Number.isFinite(line.x1) && Number.isFinite(line.y1) && Number.isFinite(line.x2) && Number.isFinite(line.y2)
+          ? distance({ x: line.x1, y: line.y1 }, { x: line.x2, y: line.y2 })
+          : null
       })),
       ...paths.map(path => ({
         hasMarker: Boolean(path.markerEnd || path.markerStart),
-        dashed: Boolean(path.dashArray)
+        dashed: Boolean(path.dashArray),
+        length: path.endpoints ? distance(path.endpoints.start, path.endpoints.end) : null
       }))
     ];
-    const eligible = connectors.filter(conn => !conn.dashed);
+    const eligible = connectors.filter(conn => !conn.dashed && (conn.length === null || conn.length >= 18));
     if (eligible.length > 0) {
       const missing = eligible.filter(conn => !conn.hasMarker).length;
       const ratio = missing / eligible.length;
@@ -349,6 +399,43 @@ function analyzeSvg(svg, fileName) {
         warnings.push(`Markers missing on some connectors (${missing}/${eligible.length}).`);
         score -= 6;
       }
+    }
+  }
+
+  if (hasMarkers) {
+    const connectors = [
+      ...lines.map(line => ({
+        stroke: getAttr(line.raw, 'stroke'),
+        markerEnd: line.markerEnd
+      })),
+      ...paths.map(path => ({
+        stroke: getAttr(path.raw, 'stroke'),
+        markerEnd: path.markerEnd
+      }))
+    ].filter(conn => conn.markerEnd && conn.stroke);
+
+    let mismatched = 0;
+    for (const conn of connectors) {
+      const markerRef = conn.markerEnd.match(/url\\(#([^)]+)\\)/i);
+      if (!markerRef) continue;
+      const markerTag = markers.get(markerRef[1]);
+      if (!markerTag) continue;
+      const paint = extractMarkerPaint(markerTag);
+
+      const paintValues = [paint.fill, paint.stroke].filter(Boolean).map(v => v.toLowerCase());
+      const strokeValue = conn.stroke.toLowerCase();
+
+      const inherits = paintValues.some(v => v === 'context-stroke' || v === 'currentcolor');
+      const matches = paintValues.includes(strokeValue);
+
+      if (!inherits && !matches) {
+        mismatched++;
+      }
+    }
+
+    if (mismatched > 0) {
+      warnings.push(`Arrowheads do not inherit connector color (${mismatched}).`);
+      score -= 4;
     }
   }
 
@@ -389,6 +476,8 @@ function analyzeSvg(svg, fileName) {
     let missingArrowCount = 0;
     for (const conn of connectors) {
       if (conn.dashed) continue;
+      const length = distance(conn.start, conn.end);
+      if (length < 18) continue;
       if (conn.hasMarker) {
         continue;
       }

@@ -11,6 +11,10 @@
       <stop offset="0" stop-color="#0b6eff"/>
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
+  
+    <marker id="arrowhead-0b6eff" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="#0b6eff" stroke="#0b6eff" stroke-width="0"/>
+    </marker>
   </defs>
   <rect x="50" y="30" width="500" height="220" rx="16" ry="16" fill="none" stroke="#0b6eff" stroke-width="1.2"/>
   <text x="70" y="55" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">VM Core (Authority)</text>
@@ -32,6 +36,6 @@
   <text x="675" y="125" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">VSA Index</text>
   <rect x="620" y="160" rx="12" ry="12" width="110" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="675" y="185" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Top-K</text>
-  <line x1="600" y1="140" x2="550" y2="140" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead)"/>
+  <line x1="600" y1="140" x2="550" y2="140" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
   
 </svg>

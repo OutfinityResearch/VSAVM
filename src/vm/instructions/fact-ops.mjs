@@ -24,6 +24,23 @@ import { isStruct, termToString } from '../../core/types/terms.mjs';
 import { ExecutionError, ErrorCode } from '../../core/errors.mjs';
 
 /**
+ * Convert primitive value to appropriate term
+ */
+function convertToTerm(value) {
+  if (typeof value === 'string') {
+    return { type: 'string', value };
+  }
+  if (typeof value === 'number') {
+    return { type: 'number', value };
+  }
+  if (typeof value === 'boolean') {
+    return { type: 'boolean', value };
+  }
+  // Already a term
+  return value;
+}
+
+/**
  * ASSERT: Add a fact to the fact store
  * @param {Object} vmState
  * @param {Object} args
@@ -42,7 +59,9 @@ export async function assertFact(vmState, args) {
   const resolvedArgs = {};
   for (const [slot, value] of Object.entries(factArgs || {})) {
     const resolvedValue = resolveValue(vmState, value);
-    resolvedArgs[canonicalizeText(slot, canonOpts)] = canonicalizeTerm(resolvedValue, canonOpts);
+    // Convert primitive values to atoms
+    const termValue = convertToTerm(resolvedValue);
+    resolvedArgs[canonicalizeText(slot, canonOpts)] = canonicalizeTerm(termValue, canonOpts);
   }
   
   // Build fact
