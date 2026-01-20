@@ -24,12 +24,38 @@
         <h1>Unified input representation</h1>
 <p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
 <p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
+<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS001-foundations-and-architecture.md">DS001 Foundations and Architecture</a>.</p>
+
 <h2>Overview</h2>
 <p>Multimodality becomes tractable when all inputs are mapped into a single canonical representation. VSAVM uses an event stream where each event is discrete and typed and carries an explicit structural context. This creates a shared substrate so that execution, closure, and auditing do not fragment across modality-specific pipelines.</p>
-<h2>Terminology</h2>
-<p>An event has a type and a discrete payload, plus a context path such as document → section → paragraph → sentence → span. Structural separators are explicit events that delimit scopes for reasoning. Macro units are compressed patterns discovered by learning, but they must remain reversible into lexical events so evaluation and decoding remain deterministic.</p>
-<h2>How it supports reasoning</h2>
-<p>Stable structure and scope allow the VM to build local theories and to avoid global inconsistency. The event stream also provides stable indexing hooks for retrieval, schema discovery, and program construction. Reversible compression reduces cost while keeping the ability to reconstruct the exact basis of a claim.</p>
+
+<h2>Event stream structure</h2>
+<p>Each event within the stream carries three essential components:</p>
+<ul>
+  <li><strong>Type identifier</strong>: Specifies the nature of information (text_token, visual_element, temporal_marker, structural_separator).</li>
+  <li><strong>Discrete payload</strong>: Contains actual data in standardized format that the VM can process directly.</li>
+  <li><strong>Structural context path</strong>: Hierarchical positioning (document → chapter → section → paragraph → sentence → span).</li>
+</ul>
+
+<h2>Modality-specific processing</h2>
+<ul>
+  <li><strong>Text</strong>: Words/subwords become events with type "text_token". Sentence boundaries generate separator events.</li>
+  <li><strong>Audio</strong>: Transcription events plus temporal metadata preserving alignment. Speaker change markers, pauses, prosodic features.</li>
+  <li><strong>Visual</strong>: Symbolic descriptions or discrete visual tokens. Key requirement is discreteness and structural segmentability.</li>
+  <li><strong>Video</strong>: Combines visual token events with temporal separators for scene changes and motion patterns.</li>
+</ul>
+
+<h2>Two granularities</h2>
+<p>The system operates on two granularities:</p>
+<ul>
+  <li><strong>Lexical layer</strong>: Stable, reversible tokens.</li>
+  <li><strong>Phrase layer</strong>: Macro units discovered by compression, but they must remain reversible into lexical events for scoring and evaluation.</li>
+</ul>
+<p>Reversibility is essential: every macro unit must expand deterministically into elementary units.</p>
+
+<h2>VSA attachment</h2>
+<p>VSA attaches in parallel to each unit. Tokens and macro tokens have deterministic hypervectors derived from stable hashes. Spans combine these through bundling with role and position signals. This hypervector is an associative index for fast retrieval and paraphrase clustering, not a direct representation of truth.</p>
+
 <h2>Implementation considerations</h2>
 <p>Representation fails when boundaries are ambiguous or when compression cannot expand deterministically. VSAVM therefore prioritizes deterministic segmentation and deterministic expansion. This makes later stages predictable and keeps the correctness contract enforceable.</p>
 <figure class="diagram">
