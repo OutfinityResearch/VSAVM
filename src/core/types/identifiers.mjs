@@ -94,12 +94,21 @@ export function parseEntityId(str) {
 }
 
 /**
- * Create a ScopeId from context path
+ * Create a ScopeId from context path with validation
  * @param {string[]} path - e.g., ["doc_001", "section_2", "para_1"]
  * @returns {{path: string[]}}
+ * @throws {Error} If path contains hardcoded domain patterns
  */
 export function createScopeId(path) {
-  return { path: Array.isArray(path) ? path : [path] };
+  const pathArray = Array.isArray(path) ? path : [path];
+  
+  // CRITICAL: Reject hardcoded domain scopes
+  const forbiddenDomains = ['programming', 'biology', 'medical', 'mythology', 'science', 'history', 'literature'];
+  if (pathArray.length >= 2 && pathArray[0] === 'domain' && forbiddenDomains.includes(pathArray[1])) {
+    throw new Error(`Hardcoded domain scope rejected: ${JSON.stringify(pathArray)}. Use structural separators instead.`);
+  }
+  
+  return { path: pathArray };
 }
 
 /**

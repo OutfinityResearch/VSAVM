@@ -6,6 +6,7 @@
 import { factsConflict } from '../../core/types/facts.mjs';
 import { timeOverlaps, isAtom, isStruct, termsEqual } from '../../core/types/terms.mjs';
 import { scopeContains, symbolIdToString } from '../../core/types/identifiers.mjs';
+import { detectStructuralSeparators, createStructuralScopeId } from '../../event-stream/separator-detector.mjs';
 
 /**
  * Fact store with context awareness and conflict detection
@@ -71,11 +72,12 @@ export class FactStore {
   }
 
   /**
-   * Query facts matching pattern
+   * Query facts matching pattern within specific scope
    * @param {Object} pattern
+   * @param {Object} scopeFilter - Optional scope to filter by
    * @returns {Promise<Object[]>}
    */
-  async query(pattern) {
+  async query(pattern, scopeFilter = null) {
     const results = new Map();
     
     // If in isolated context, only check context facts
@@ -83,7 +85,7 @@ export class FactStore {
     if (current.isolated) {
       const contextFacts = this.contextStack.getAllFacts();
       for (const [factId, fact] of contextFacts) {
-        if (this.matchesPattern(fact, pattern)) {
+        if (this.matchesPattern(fact, pattern) && this.matchesScope(fact, scopeFilter)) {
           results.set(factId, fact);
         }
       }
@@ -91,9 +93,9 @@ export class FactStore {
       // Normal mode: check storage + context
       const storageFacts = await this.storage.query(pattern);
       
-      // Add storage facts (if not denied)
+      // Add storage facts (if not denied and scope matches)
       for (const fact of storageFacts) {
-        if (this.contextStack.getFact(fact.factId) !== null) {
+        if (this.contextStack.getFact(fact.factId) !== null && this.matchesScope(fact, scopeFilter)) {
           results.set(fact.factId, fact);
         }
       }
@@ -101,13 +103,31 @@ export class FactStore {
       // Add context facts (override storage)
       const contextFacts = this.contextStack.getAllFacts();
       for (const [factId, fact] of contextFacts) {
-        if (this.matchesPattern(fact, pattern)) {
+        if (this.matchesPattern(fact, pattern) && this.matchesScope(fact, scopeFilter)) {
           results.set(factId, fact);
         }
       }
     }
     
     return [...results.values()];
+  }
+
+  /**
+   * Check if fact matches scope filter
+   * @private
+   */
+  matchesScope(fact, scopeFilter) {
+    if (!scopeFilter) return true;
+    
+    const factScope = fact.scopeId;
+    if (!factScope || !factScope.path) return false;
+    
+    // Exact scope match
+    if (scopeFilter.path && Array.isArray(scopeFilter.path)) {
+      return JSON.stringify(factScope.path) === JSON.stringify(scopeFilter.path);
+    }
+    
+    return true;
   }
 
   /**

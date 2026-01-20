@@ -156,7 +156,7 @@ export async function denyFact(vmState, args) {
  * @returns {Promise<Object[]>}
  */
 export async function queryFacts(vmState, args) {
-  const { pattern, predicate, arguments: queryArgs, limit } = args;
+  const { pattern, predicate, arguments: queryArgs, limit, scope } = args;
   const canonOpts = resolveCanonicalizationOptions(vmState.canonicalizer?.options);
   
   // Build query pattern
@@ -197,8 +197,9 @@ export async function queryFacts(vmState, args) {
     }
   }
   
-  // Execute query
-  const results = await vmState.factStore.query(queryPattern);
+  // Execute query with optional scope filter
+  const scopeFilter = scope ? resolveValue(vmState, scope) : null;
+  const results = await vmState.factStore.query(queryPattern, scopeFilter);
   
   // Apply limit
   const limited = limit ? results.slice(0, limit) : results;

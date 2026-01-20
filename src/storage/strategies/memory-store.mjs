@@ -94,6 +94,17 @@ export class MemoryStore extends StorageStrategy {
   async query(pattern) {
     const results = [];
     
+    // If pattern has scope filter, use scope-based filtering
+    if (pattern.scope) {
+      for (const fact of this.facts.values()) {
+        if (this.matchesPattern(fact, pattern) && this.matchesScope(fact, pattern.scope)) {
+          results.push(fact);
+        }
+      }
+      return results;
+    }
+    
+    // Original logic for no scope filter
     for (const fact of this.facts.values()) {
       if (this.matchesPattern(fact, pattern)) {
         results.push(fact);
@@ -101,6 +112,20 @@ export class MemoryStore extends StorageStrategy {
     }
     
     return results;
+  }
+
+  /**
+   * Check if fact matches scope
+   * @private
+   */
+  matchesScope(fact, scopeFilter) {
+    if (!scopeFilter || !fact.scopeId) return true;
+    
+    const factScope = fact.scopeId.path;
+    const filterScope = scopeFilter.path;
+    
+    // Exact match
+    return JSON.stringify(factScope) === JSON.stringify(filterScope);
   }
 
   async queryByPredicate(predicate) {

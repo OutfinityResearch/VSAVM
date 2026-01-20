@@ -14,3 +14,32 @@ This table summarizes functional capabilities for the VSAVM system at a high lev
 | FS08 | Expose configurable reasoning budgets and response modes. | Provide strict and conditional behaviors. | DS004 |
 | FS09 | Record execution logs for audit and explanation. | Enable operational traceability of answers. | DS004 |
 | FS10 | Support multimodal reasoning and cross-modal inference. | Handle relationships between text, audio, visual, and temporal data. | DS001, DS003 |
+
+## Critical Implementation Insight: Emergent Scope Discovery
+
+**Problem**: Current implementation hardcodes domain-specific scopes (e.g., "programming", "biology") which violates the modality-agnostic principle.
+
+**Solution**: Scopes must emerge automatically from structural separators in the data, not be predefined by domain knowledge.
+
+### Modality-Agnostic Scope Discovery
+
+Structural separators exist naturally in all modalities:
+- **Text**: Paragraphs, sections, documents, speaker changes
+- **Video**: Scene cuts, shot boundaries, temporal segments  
+- **Audio**: Silence gaps, speaker transitions, topic shifts
+- **Code**: Function boundaries, class definitions, module imports
+
+The system should:
+1. **Detect separators** automatically from input structure
+2. **Cluster similar contexts** through VSA similarity
+3. **Optimize boundaries** through RL based on reasoning effectiveness
+4. **Maintain scope isolation** without domain-specific knowledge
+
+### Implementation Requirements
+
+- Separator detection must work for any discrete input stream
+- VSA clustering identifies semantically coherent regions
+- RL shapes scope boundaries for optimal reasoning performance
+- VM execution respects discovered scope boundaries automatically
+
+This ensures the system scales to new modalities and domains without manual scope engineering.

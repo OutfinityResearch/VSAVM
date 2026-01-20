@@ -63,6 +63,10 @@ function collectTags(svg, tagName) {
   return svg.match(re) || [];
 }
 
+function stripDefs(svg) {
+  return svg.replace(/<defs[\s\S]*?<\/defs>/gi, '');
+}
+
 function collectMarkerDefinitions(svg) {
   const markers = new Map();
   const re = /<marker\b[^>]*id="([^"]+)"[^>]*>[\s\S]*?<\/marker>/gi;
@@ -98,9 +102,10 @@ function extractTextNodes(svg) {
     const y = parseNumber(getAttr(openTag, 'y'));
     const fontSize = parseNumber(getAttr(openTag, 'font-size'));
     const anchor = getAttr(openTag, 'text-anchor') || 'start';
+    const fill = getAttr(openTag, 'fill');
     const content = node.replace(/<text\b[^>]*>/i, '').replace(/<\/text>/i, '').trim();
 
-    texts.push({ x, y, fontSize, anchor, content, raw: node });
+    texts.push({ x, y, fontSize, anchor, fill, content, raw: node });
   }
 
   return texts;
@@ -116,7 +121,8 @@ function extractRects(svg) {
     const width = parseNumber(getAttr(tag, 'width'));
     const height = parseNumber(getAttr(tag, 'height'));
     const strokeWidth = parseNumber(getAttr(tag, 'stroke-width'));
-    rects.push({ x, y, width, height, strokeWidth, raw: tag });
+    const fill = getAttr(tag, 'fill');
+    rects.push({ x, y, width, height, strokeWidth, fill, raw: tag });
   }
 
   return rects;
@@ -244,25 +250,67 @@ function isTextInsideRect(text, rect, padding = 4) {
   return text.x >= left && text.x <= right && text.y >= top && text.y <= bottom;
 }
 
+function findRectForText(text, rects) {
+  if (!Number.isFinite(text.x) || !Number.isFinite(text.y)) return null;
+  const inside = rects.filter(rect => isTextInsideRect(text, rect, 2));
+  if (inside.length > 0) {
+    inside.sort((a, b) => {
+      const areaA = Number.isFinite(a.width) && Number.isFinite(a.height) ? a.width * a.height : Infinity;
+      const areaB = Number.isFinite(b.width) && Number.isFinite(b.height) ? b.width * b.height : Infinity;
+      if (areaA !== areaB) return areaA - areaB;
+      const centerA = a.y + (a.height ?? 0) / 2;
+      const centerB = b.y + (b.height ?? 0) / 2;
+      return Math.abs(centerA - text.y) - Math.abs(centerB - text.y);
+    });
+    return inside[0] || null;
+  }
+
+  const fontSize = Number.isFinite(text.fontSize) ? text.fontSize : 12;
+  const xMargin = 6;
+  const yMargin = Math.max(12, fontSize * 1.2);
+  let best = null;
+  let bestDist = Infinity;
+
+  for (const rect of rects) {
+    const left = rect.x - xMargin;
+    const right = rect.x + rect.width + xMargin;
+    if (text.x < left || text.x > right) continue;
+
+    const top = rect.y - yMargin;
+    const bottom = rect.y + rect.height + yMargin;
+    if (text.y < top || text.y > bottom) continue;
+
+    const centerY = rect.y + rect.height / 2;
+    const dist = Math.abs(centerY - text.y);
+    if (dist < bestDist) {
+      best = rect;
+      bestDist = dist;
+    }
+  }
+
+  return best;
+}
+
 function analyzeSvg(svg, fileName) {
   const warnings = [];
   let score = 100;
 
   const svgTag = svg.match(/<svg\b[^>]*>/i)?.[0] || '';
   const viewBox = parseViewBox(svgTag);
+  const contentSvg = stripDefs(svg);
 
   if (!viewBox) {
     warnings.push('Missing viewBox (responsive scaling may be off).');
     score -= 12;
   }
 
-  const rects = extractRects(svg);
-  const ellipses = extractEllipses(svg);
-  const circles = extractCircles(svg);
-  const texts = extractTextNodes(svg);
-  const lines = extractLines(svg);
-  const polygons = extractPolygons(svg);
-  const paths = extractPaths(svg);
+  const rects = extractRects(contentSvg);
+  const ellipses = extractEllipses(contentSvg);
+  const circles = extractCircles(contentSvg);
+  const texts = extractTextNodes(contentSvg);
+  const lines = extractLines(contentSvg);
+  const polygons = extractPolygons(contentSvg);
+  const paths = extractPaths(contentSvg);
   const markers = collectMarkerDefinitions(svg);
 
   if (texts.length === 0) {
@@ -273,6 +321,68 @@ function analyzeSvg(svg, fileName) {
   if (rects.length === 0 && paths.length === 0 && lines.length === 0) {
     warnings.push('No basic shapes detected (rect/line/path).');
     score -= 15;
+  }
+
+  if (viewBox) {
+    const viewMinX = viewBox.x;
+    const viewMinY = viewBox.y;
+    const viewMaxX = viewBox.x + viewBox.width;
+    const viewMaxY = viewBox.y + viewBox.height;
+    const margin = 1;
+    let outOfBounds = 0;
+
+    const checkBounds = (minX, minY, maxX, maxY) => {
+      if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+        return;
+      }
+      if (minX < viewMinX - margin || minY < viewMinY - margin || maxX > viewMaxX + margin || maxY > viewMaxY + margin) {
+        outOfBounds += 1;
+      }
+    };
+
+    for (const rect of rects) {
+      const pad = (rect.strokeWidth ?? 0) / 2;
+      checkBounds(rect.x - pad, rect.y - pad, rect.x + rect.width + pad, rect.y + rect.height + pad);
+    }
+
+    for (const ellipse of ellipses) {
+      const pad = (ellipse.strokeWidth ?? 0) / 2;
+      checkBounds(ellipse.cx - ellipse.rx - pad, ellipse.cy - ellipse.ry - pad, ellipse.cx + ellipse.rx + pad, ellipse.cy + ellipse.ry + pad);
+    }
+
+    for (const circle of circles) {
+      const pad = (circle.strokeWidth ?? 0) / 2;
+      checkBounds(circle.cx - circle.r - pad, circle.cy - circle.r - pad, circle.cx + circle.r + pad, circle.cy + circle.r + pad);
+    }
+
+    for (const line of lines) {
+      const pad = (line.strokeWidth ?? 0) / 2;
+      const minX = Math.min(line.x1, line.x2) - pad;
+      const minY = Math.min(line.y1, line.y2) - pad;
+      const maxX = Math.max(line.x1, line.x2) + pad;
+      const maxY = Math.max(line.y1, line.y2) + pad;
+      checkBounds(minX, minY, maxX, maxY);
+    }
+
+    for (const poly of polygons) {
+      if (!poly.bbox) continue;
+      checkBounds(poly.bbox.minX, poly.bbox.minY, poly.bbox.maxX, poly.bbox.maxY);
+    }
+
+    for (const path of paths) {
+      if (!path.endpoints) continue;
+      const pad = (path.strokeWidth ?? 0) / 2;
+      const minX = Math.min(path.endpoints.start.x, path.endpoints.end.x) - pad;
+      const minY = Math.min(path.endpoints.start.y, path.endpoints.end.y) - pad;
+      const maxX = Math.max(path.endpoints.start.x, path.endpoints.end.x) + pad;
+      const maxY = Math.max(path.endpoints.start.y, path.endpoints.end.y) + pad;
+      checkBounds(minX, minY, maxX, maxY);
+    }
+
+    if (outOfBounds > 0) {
+      warnings.push(`Elements exceed viewBox bounds (${outOfBounds}).`);
+      score -= 6;
+    }
   }
 
   // Font-size consistency
@@ -359,6 +469,67 @@ function analyzeSvg(svg, fileName) {
     }
   }
 
+  // Text overflow estimation inside boxes
+  if (rects.length > 0 && texts.length > 0) {
+    const overflowed = [];
+    let tightPaddingCount = 0;
+    for (const text of texts) {
+      const rect = findRectForText(text, rects);
+      if (!rect) continue;
+      if (!Number.isFinite(text.x) || !Number.isFinite(text.fontSize)) continue;
+
+      const content = String(text.content || '').trim();
+      if (!content) continue;
+
+      const avgCharWidth = text.fontSize * 0.55;
+      const estWidth = content.length * avgCharWidth;
+      const padding = 8;
+      const leftBound = rect.x + padding;
+      const rightBound = rect.x + rect.width - padding;
+      let left = text.x;
+      let right = text.x + estWidth;
+
+      if (text.anchor === 'middle') {
+        left = text.x - estWidth / 2;
+        right = text.x + estWidth / 2;
+      } else if (text.anchor === 'end') {
+        left = text.x - estWidth;
+        right = text.x;
+      }
+
+      const overflowAmount = Math.max(0, leftBound - left, right - rightBound);
+      const ascender = text.fontSize * 0.8;
+      const descender = text.fontSize * 0.3;
+      const top = text.y - ascender;
+      const bottom = text.y + descender;
+      const topBound = rect.y + padding;
+      const bottomBound = rect.y + rect.height - padding;
+      const verticalOverflow = Math.max(0, topBound - top, bottom - bottomBound);
+
+      if (overflowAmount > 6 || verticalOverflow > 1) {
+        overflowed.push({ content, estWidth, rectWidth: rect.width });
+      } else {
+        const leftMargin = left - rect.x;
+        const rightMargin = rect.x + rect.width - right;
+        const topMargin = top - rect.y;
+        const bottomMargin = rect.y + rect.height - bottom;
+        const minMargin = Math.min(leftMargin, rightMargin, topMargin, bottomMargin);
+        if (minMargin < 6) {
+          tightPaddingCount++;
+        }
+      }
+    }
+
+    if (overflowed.length > 0) {
+      warnings.push(`Text likely overflows boxes (${overflowed.length}).`);
+      score -= 6;
+    }
+    if (tightPaddingCount > 0) {
+      warnings.push(`Text sits too close to box edges (${tightPaddingCount}).`);
+      score -= 4;
+    }
+  }
+
   // Arrowhead heuristic
   const hasMarkers = /marker-end\s*=|marker-start\s*=/i.test(svg);
   const smallPolys = polygons.filter(p => p.bbox && p.bbox.width <= 24 && p.bbox.height <= 24);
@@ -399,6 +570,12 @@ function analyzeSvg(svg, fileName) {
         warnings.push(`Markers missing on some connectors (${missing}/${eligible.length}).`);
         score -= 6;
       }
+    }
+
+    const shortMarked = connectors.filter(conn => conn.hasMarker && conn.length !== null && conn.length < 18 && !conn.dashed);
+    if (shortMarked.length > 0) {
+      warnings.push(`Arrowheads on very short connectors (${shortMarked.length}).`);
+      score -= 4;
     }
   }
 

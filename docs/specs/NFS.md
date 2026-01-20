@@ -28,3 +28,27 @@ This table lists non-functional constraints and high-level implementation modes.
 | NFS08 | Portable deployment across research environments. | Support local runs and controlled cluster execution. | DS001, DS005 |
 | NFS09 | Configurable implementation modes. | Allow strict, exploratory, and analysis modes. | DS004 |
 | NFS10 | Scalable performance optimization strategies. | Memory management, parallel processing, and distributed execution. | DS005 |
+| NFS11 | **Zero hardcoded domain/modality scopes.** | **All scopes must emerge from structural separators. No domain-specific logic, no modality-specific if/else branches, no hardcoded scope patterns.** | **DS001, Emergent Discovery** |
+## Emergent Scope Discovery Enforcement
+
+**CRITICAL CONSTRAINT NFS11**: The system must maintain complete modality-agnostic design:
+
+### ❌ FORBIDDEN PATTERNS
+- `createScopeId(['domain', 'programming'])` - Hardcoded domain scopes
+- `if (modality === 'video')` - Modality-specific branching logic  
+- `switch (contentType)` - Content-type discrimination
+- Domain-specific separator rules or thresholds
+- Hardcoded scope validation lists
+
+### ✅ REQUIRED PATTERNS  
+- `createScopeId(['document', 'section_3', 'paragraph_1'])` - Structural paths only
+- Automatic separator detection from event stream structure
+- Context path analysis for scope boundaries
+- Strength-based separator classification without domain knowledge
+- Universal structural patterns across all modalities
+
+### Enforcement Mechanisms
+- **Runtime validation** in `createScopeId()` rejects hardcoded domain patterns
+- **Evaluation tests** verify no domain-specific logic exists
+- **Code review** must flag any modality-specific branching
+- **Separator detection** must work identically across text, video, audio, code

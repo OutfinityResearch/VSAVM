@@ -11,6 +11,7 @@ import { join, extname } from 'node:path';
 
 const DEFAULT_DIR = join('docs', 'assets', 'svg');
 const TARGET_GAP = 14;
+const DESCENDER_RATIO = 0.3;
 
 function getAttr(tag, name) {
   const re = new RegExp(`${name}\\s*=\\s*"([^"]+)"`, 'i');
@@ -62,6 +63,28 @@ function collectRectTags(svg) {
   });
 }
 
+function collectTextTags(svg) {
+  const tags = svg.match(/<text\b[^>]*>[\s\S]*?<\/text>/gi) || [];
+  return tags.map(tag => {
+    const x = parseNumber(getAttr(tag, 'x')) ?? 0;
+    const y = parseNumber(getAttr(tag, 'y')) ?? 0;
+    const fontSize = parseNumber(getAttr(tag, 'font-size')) ?? 12;
+    const content = tag.replace(/<text\b[^>]*>/i, '').replace(/<\/text>/i, '').trim();
+    return { tag, x, y, fontSize, content };
+  });
+}
+
+function isSameRect(tag, rect) {
+  const x = parseNumber(getAttr(tag, 'x')) ?? 0;
+  const y = parseNumber(getAttr(tag, 'y')) ?? 0;
+  const width = parseNumber(getAttr(tag, 'width')) ?? 0;
+  const height = parseNumber(getAttr(tag, 'height')) ?? 0;
+  return Math.abs(x - rect.x) < 0.5 &&
+    Math.abs(y - rect.y) < 0.5 &&
+    Math.abs(width - rect.width) < 0.5 &&
+    Math.abs(height - rect.height) < 0.5;
+}
+
 function shiftY(tag, delta) {
   const y = parseNumber(getAttr(tag, 'y'));
   if (!Number.isFinite(y)) return tag;
@@ -82,9 +105,9 @@ function shiftText(tag, delta) {
 }
 
 function adjustLegend(svg) {
-  const rects = collectRectTags(svg);
-  const legendCandidates = rects.filter(r => r.fill === 'none');
-  const legendRect = legendCandidates.sort((a, b) => b.y - a.y)[0];
+  let rects = collectRectTags(svg);
+  let legendCandidates = rects.filter(r => r.fill === 'none');
+  let legendRect = legendCandidates.sort((a, b) => b.y - a.y)[0];
   if (!legendRect) return { svg, delta: 0 };
 
   const above = rects
@@ -92,40 +115,68 @@ function adjustLegend(svg) {
     .map(r => r.y + r.height);
   const maxBottom = above.length > 0 ? Math.max(...above) : null;
 
-  if (maxBottom === null) return { svg, delta: 0 };
-  const gap = legendRect.y - maxBottom;
-  if (gap >= TARGET_GAP) return { svg, delta: 0 };
-
-  const delta = TARGET_GAP - gap;
+  const gap = maxBottom === null ? null : legendRect.y - maxBottom;
+  const delta = gap === null || gap >= TARGET_GAP ? 0 : TARGET_GAP - gap;
 
   let updated = svg;
-  updated = updated.replace(/<rect\b[^>]*>/gi, tag => {
-    if (tag === legendRect.tag) {
-      return shiftY(tag, delta);
-    }
-    return tag;
-  });
+  if (delta > 0) {
+    updated = updated.replace(/<rect\b[^>]*>/gi, tag => {
+      if (isSameRect(tag, legendRect)) {
+        return shiftY(tag, delta);
+      }
+      return tag;
+    });
 
-  updated = updated.replace(/<text\b[^>]*>/gi, tag => {
-    const y = parseNumber(getAttr(tag, 'y'));
-    if (!Number.isFinite(y)) return tag;
-    if (y >= legendRect.y - 1) {
-      return shiftText(tag, delta);
-    }
-    return tag;
-  });
+    updated = updated.replace(/<text\b[^>]*>/gi, tag => {
+      const y = parseNumber(getAttr(tag, 'y'));
+      if (!Number.isFinite(y)) return tag;
+      if (y >= legendRect.y - 1) {
+        return shiftText(tag, delta);
+      }
+      return tag;
+    });
 
-  updated = updated.replace(/<line\b[^>]*>/gi, tag => {
-    const y1 = parseNumber(getAttr(tag, 'y1'));
-    const y2 = parseNumber(getAttr(tag, 'y2'));
-    if (!Number.isFinite(y1) || !Number.isFinite(y2)) return tag;
-    if (y1 >= legendRect.y - 1 && y2 >= legendRect.y - 1) {
-      return shiftLineY(tag, delta);
-    }
-    return tag;
-  });
+    updated = updated.replace(/<line\b[^>]*>/gi, tag => {
+      const y1 = parseNumber(getAttr(tag, 'y1'));
+      const y2 = parseNumber(getAttr(tag, 'y2'));
+      if (!Number.isFinite(y1) || !Number.isFinite(y2)) return tag;
+      if (y1 >= legendRect.y - 1 && y2 >= legendRect.y - 1) {
+        return shiftLineY(tag, delta);
+      }
+      return tag;
+    });
 
-  updated = updateViewBox(updated, delta);
+    updated = updateViewBox(updated, delta);
+  }
+
+  rects = collectRectTags(updated);
+  legendCandidates = rects.filter(r => r.fill === 'none');
+  legendRect = legendCandidates.sort((a, b) => b.y - a.y)[0];
+  if (!legendRect) return { svg: updated, delta };
+
+  const texts = collectTextTags(updated);
+  const legendTexts = texts.filter(t => t.y >= legendRect.y - 1 && t.x >= legendRect.x - 4 && t.x <= legendRect.x + legendRect.width + 4);
+  if (legendTexts.length > 0) {
+    const maxBottom = Math.max(...legendTexts.map(t => t.y + t.fontSize * DESCENDER_RATIO));
+    const neededHeight = maxBottom + 8 - legendRect.y;
+    if (neededHeight > legendRect.height + 0.5) {
+      updated = updated.replace(/<rect\b[^>]*>/gi, tag => {
+        if (!isSameRect(tag, legendRect)) return tag;
+        return setAttr(tag, 'height', formatNumber(neededHeight));
+      });
+
+      const viewBox = parseViewBox(updated);
+      if (viewBox) {
+        const [, vy, , vh] = viewBox.values;
+        const viewBottom = vy + vh;
+        const legendBottom = legendRect.y + neededHeight;
+        if (legendBottom + 2 > viewBottom) {
+          updated = updateViewBox(updated, legendBottom + 2 - viewBottom);
+        }
+      }
+    }
+  }
+
   return { svg: updated, delta };
 }
 
@@ -159,7 +210,7 @@ async function main() {
   for (const file of svgFiles) {
     const original = await readFile(file, 'utf8');
     const result = adjustLegend(original);
-    if (result.delta > 0 && result.svg !== original) {
+    if (result.svg !== original) {
       await writeFile(file, result.svg, 'utf8');
       updatedCount++;
     }

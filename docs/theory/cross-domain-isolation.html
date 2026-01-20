@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cross-Domain Scope Isolation | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs/">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+          <a href="../eval/index.html">Eval</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Cross-Domain Scope Isolation</h1>
+<p>This page documents the critical problem of knowledge domain separation in LLM-like systems and how VSAVM addresses it through emergent structural scoping.</p>
+
+<h2>The Domain Bleeding Problem</h2>
+<p>Traditional LLMs suffer from domain bleeding where knowledge from different contexts interferes inappropriately. For example:</p>
+<ul>
+  <li><strong>Python</strong> in programming context: "Object-oriented language created by Guido van Rossum"</li>
+  <li><strong>Python</strong> in biology context: "Large constrictor snake found in tropical regions"</li>
+  <li><strong>Python</strong> in mythology context: "Dragon killed by Apollo at Delphi"</li>
+</ul>
+<p>Without proper isolation, these definitions conflict and create hallucinations or incorrect cross-domain associations.</p>
+
+<h2>Emergent Structural Scope Solution</h2>
+<p><strong>CRITICAL PRINCIPLE:</strong> Scopes must emerge automatically from structural separators in the data, not be hardcoded by domain.</p>
+
+<h3>❌ Wrong Approach: Hardcoded Domains</h3>
+<pre><code>// AVOID: Domain-specific hardcoded scopes
+scope: ['domain', 'programming']
+scope: ['domain', 'biology'] 
+scope: ['domain', 'mythology']
+</code></pre>
+<p>Problems: Requires manual domain engineering, not modality-agnostic, doesn't scale to new domains.</p>
+
+<h3>✅ Correct Approach: Structural Separators</h3>
+<pre><code>// Emergent scopes from document structure
+scope: ['document', 'section_1', 'paragraph_3']
+scope: ['file', 'function_calculateSum', 'body']
+scope: ['video', 'scene_2', 'shot_5']
+scope: ['audio', 'speaker_A', 'segment_10']
+</code></pre>
+<p>Benefits: Automatic separator detection, works across modalities, no domain knowledge hardcoded.</p>
+
+<h2>Modality-Agnostic Design</h2>
+<p>The system detects structural separators across different modalities:</p>
+<ul>
+  <li><strong>Text:</strong> Paragraphs, sentences, sections, chapters</li>
+  <li><strong>Code:</strong> Functions, classes, modules, files</li>
+  <li><strong>Video:</strong> Scenes, shots, frames, speakers</li>
+  <li><strong>Audio:</strong> Speakers, segments, pauses, tracks</li>
+</ul>
+<p>All boundaries emerge from structural analysis, not domain-specific rules.</p>
+
+<h2>Query Context Switching</h2>
+<p>When processing queries, the system can explicitly switch between domain contexts:</p>
+<pre><code>User: "What is Python?"
+System: "In which domain? Programming, biology, or mythology?"
+
+User: "Programming"
+System: [queries programming scope] → "Python is a programming language..."
+
+User: "What about in biology?"
+System: [queries biology scope] → "Python is a large constrictor snake..."
+</code></pre>
+
+<h2>Cross-Domain Learning</h2>
+<p>The system can learn connections between domains while maintaining separation:</p>
+<pre><code>// Meta-knowledge scope
+scope: ['meta', 'etymology']
+fact: { 
+  connection: 'Python (programming) named after Monty Python, not the snake',
+  domains: ['programming', 'biology'],
+  type: 'etymology'
+}
+</code></pre>
+
+<h2>Implementation Benefits</h2>
+<ul>
+  <li><strong>Eliminates hallucinations</strong> from domain confusion</li>
+  <li><strong>Enables precise context</strong> for specialized knowledge</li>
+  <li><strong>Supports multi-domain reasoning</strong> when explicitly requested</li>
+  <li><strong>Maintains knowledge integrity</strong> across different sources</li>
+</ul>
+
+<h2>Evaluation Validation</h2>
+<p>The scope isolation is validated through:</p>
+<ul>
+  <li>Cross-domain query tests ensuring no knowledge leakage</li>
+  <li>Domain-specific accuracy measurements</li>
+  <li>Context switching performance benchmarks</li>
+  <li>Multi-domain reasoning correctness checks</li>
+</ul>
+
+<p>Related: <a href="structure-and-scope.html">Structural boundaries and scope</a>, <a href="../eval/index.html">Evaluation Framework</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

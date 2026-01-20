@@ -14,11 +14,19 @@ const DEFAULT_DIR = join('docs', 'assets', 'svg');
 const ARROW_MARKER_ID = 'arrowhead';
 const ARROW_MAX_SIZE = 30;
 const MIN_CONNECTOR_LENGTH = 20;
+const CONNECTOR_COLOR = '#0b6eff';
 
 function getAttr(tag, name) {
   const re = new RegExp(`${name}\\s*=\\s*"([^"]+)"`, 'i');
   const match = tag.match(re);
   return match ? match[1] : null;
+}
+
+function setAttr(tag, name, value) {
+  if (new RegExp(`${name}\\s*=`, 'i').test(tag)) {
+    return tag.replace(new RegExp(`${name}\\s*=\\s*"[^"]+"`, 'i'), `${name}="${value}"`);
+  }
+  return tag.replace(/<\w+/, match => `${match} ${name}="${value}"`);
 }
 
 function parsePoints(pointsStr) {
@@ -60,7 +68,11 @@ function isArrowPolygon(tag) {
 }
 
 function buildMarkerDefinition(markerId, paint) {
-  return `\n    <marker id=\"${markerId}\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"4\" orient=\"auto\" markerUnits=\"strokeWidth\">\n      <path d=\"M 0 0 L 8 4 L 0 8 Z\" fill=\"${paint}\" stroke=\"${paint}\" stroke-width=\"0\"/>\n    </marker>`;
+  return `\n    <marker id=\"${markerId}\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"4\" orient=\"auto\" markerUnits=\"userSpaceOnUse\">\n      <path d=\"M 1 1 L 7 4 L 1 7\" fill=\"none\" stroke=\"${paint}\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n    </marker>`;
+}
+
+function removeArrowMarkers(svg) {
+  return svg.replace(/<marker\b[^>]*id="arrowhead[^"]*"[^>]*>[\s\S]*?<\/marker>/gi, '');
 }
 
 function ensureMarkers(svg, markerDefs) {
@@ -129,7 +141,11 @@ function addMarkerToConnectors(svg) {
   const pathRegex = /<path\b[^>]*>/gi;
 
   const addMarker = tag => {
-    const normalized = stripMarkerAttributes(tag);
+    let normalized = stripMarkerAttributes(tag);
+    const strokeValue = getAttr(normalized, 'stroke');
+    if (strokeValue && /^url\\(#deep\\)$/i.test(strokeValue)) {
+      normalized = setAttr(normalized, 'stroke', CONNECTOR_COLOR);
+    }
     if (!/stroke\s*=/.test(normalized)) {
       return normalized;
     }
@@ -173,6 +189,23 @@ function addMarkerToConnectors(svg) {
 function removeArrowPolygons(svg) {
   const polyRegex = /<polygon\b[^>]*>/gi;
   return svg.replace(polyRegex, tag => (isArrowPolygon(tag) ? '' : tag));
+}
+
+function normalizeConnectorStrokes(svg) {
+  const lineRegex = /<line\b[^>]*>/gi;
+  const pathRegex = /<path\b[^>]*>/gi;
+
+  const normalizeStroke = tag => {
+    const stroke = getAttr(tag, 'stroke');
+    if (stroke && /^url\\(#deep\\)$/i.test(stroke)) {
+      return setAttr(tag, 'stroke', CONNECTOR_COLOR);
+    }
+    return tag;
+  };
+
+  let updated = svg.replace(lineRegex, normalizeStroke);
+  updated = updated.replace(pathRegex, normalizeStroke);
+  return updated;
 }
 
 function hasDirectionalArrows(svg) {
@@ -232,17 +265,19 @@ async function main() {
       continue;
     }
 
-    const strokes = collectConnectorStrokes(original);
+    const normalized = normalizeConnectorStrokes(original);
+    const cleaned = removeArrowMarkers(normalized);
+    const strokes = collectConnectorStrokes(cleaned);
     const markerDefs = [];
     for (const stroke of strokes) {
       const markerId = markerIdForStroke(stroke);
-      if (new RegExp(`<marker\\b[^>]*id=\"${markerId}\"`, 'i').test(original)) {
+      if (new RegExp(`<marker\\b[^>]*id=\"${markerId}\"`, 'i').test(cleaned)) {
         continue;
       }
       markerDefs.push(buildMarkerDefinition(markerId, stroke));
     }
 
-    let updated = ensureMarkers(original, markerDefs.join(''));
+    let updated = ensureMarkers(cleaned, markerDefs.join(''));
     updated = addMarkerToConnectors(updated);
     updated = removeArrowPolygons(updated);
 

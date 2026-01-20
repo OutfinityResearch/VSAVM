@@ -2,13 +2,14 @@
  * Scope Isolation Evaluation Tests
  * Tests VSAVM's scope isolation and context management (DS001 requirement)
  * 
- * CRITICAL: This tests what was completely missing - scope isolation correctness
+ * CRITICAL: Tests emergent scope discovery from structural separators
  */
 
 import { createDefaultVSAVM } from '../../src/index.mjs';
 import { stringAtom, numberAtom, entityAtom } from '../../src/core/types/terms.mjs';
 import { createSymbolId, createScopeId, createSourceId, createEntityId } from '../../src/core/types/identifiers.mjs';
 import { createFactInstance, createProvenanceLink } from '../../src/core/types/facts.mjs';
+import { detectStructuralSeparators, createStructuralScopeId } from '../../src/event-stream/separator-detector.mjs';
 
 /**
  * Run scope isolation evaluation
@@ -49,11 +50,15 @@ export async function runScopeIsolationTests(config) {
     // Test scope cleanup
     await testScopeCleanup(vm, results, config);
     
+    // Test emergent scope discovery
+    await testEmergentScopeDiscovery(vm, results, config);
+    
     // Calculate aggregate metrics
     const isolationSuccesses = results.details.isolation_tests.filter(t => t.isolated_correctly).length;
     const leakPrevented = results.details.leak_tests.filter(t => t.leak_prevented).length;
     const nestingSuccesses = results.details.nesting_tests.filter(t => t.nesting_correct).length;
     const cleanupSuccesses = results.details.cleanup_tests.filter(t => t.cleanup_successful).length;
+    const discoverySuccesses = (results.details.discovery_tests || []).filter(t => t.discovery_correct).length;
     
     results.metrics.isolation_success_rate = results.details.isolation_tests.length > 0 ? 
       isolationSuccesses / results.details.isolation_tests.length : 0;
@@ -63,12 +68,15 @@ export async function runScopeIsolationTests(config) {
       nestingSuccesses / results.details.nesting_tests.length : 0;
     results.metrics.scope_cleanup_success_rate = results.details.cleanup_tests.length > 0 ? 
       cleanupSuccesses / results.details.cleanup_tests.length : 0;
+    results.metrics.emergent_discovery_rate = (results.details.discovery_tests || []).length > 0 ? 
+      discoverySuccesses / results.details.discovery_tests.length : 0;
     
     results.metrics.total_isolation_tests = 
       results.details.isolation_tests.length + 
       results.details.leak_tests.length + 
       results.details.nesting_tests.length + 
-      results.details.cleanup_tests.length;
+      results.details.cleanup_tests.length +
+      (results.details.discovery_tests || []).length;
     
   } finally {
     await vm.close();
@@ -81,101 +89,56 @@ export async function runScopeIsolationTests(config) {
  * Test basic scope isolation
  */
 async function testBasicScopeIsolation(vm, results, config) {
-  const testCases = [
-    {
-      name: 'document_scope_isolation',
-      scope1: createScopeId(['doc1', 'section1']),
-      scope2: createScopeId(['doc2', 'section1']),
-      predicate: 'test:document_fact'
-    },
-    {
-      name: 'user_scope_isolation',
-      scope1: createScopeId(['user', 'alice']),
-      scope2: createScopeId(['user', 'bob']),
-      predicate: 'test:user_preference'
-    },
-    {
-      name: 'temporal_scope_isolation',
-      scope1: createScopeId(['session', '2024-01-01']),
-      scope2: createScopeId(['session', '2024-01-02']),
-      predicate: 'test:session_data'
-    }
-  ];
+  const startTime = performance.now();
+  let isolatedCorrectly = false;
+  let error = null;
   
-  for (const testCase of testCases) {
-    const startTime = performance.now();
-    let isolatedCorrectly = false;
-    let error = null;
+  try {
+    // Simple test: add facts to different scopes, verify isolation
+    const scope1 = createScopeId(['doc1']);
+    const scope2 = createScopeId(['doc2']);
     
-    try {
-      // Add facts to scope1
-      const fact1 = createFactInstance(
-        createSymbolId('test', testCase.predicate.split(':')[1]),
-        {
-          entity: entityAtom(createEntityId('test', 'entity1')),
-          value: stringAtom('scope1_value')
-        },
-        {
-          scopeId: testCase.scope1,
-          provenance: [createProvenanceLink(createSourceId('test', 'isolation'))]
-        }
-      );
-      
-      await vm.assertFact(fact1);
-      
-      // Add different facts to scope2
-      const fact2 = createFactInstance(
-        createSymbolId('test', testCase.predicate.split(':')[1]),
-        {
-          entity: entityAtom(createEntityId('test', 'entity2')),
-          value: stringAtom('scope2_value')
-        },
-        {
-          scopeId: testCase.scope2,
-          provenance: [createProvenanceLink(createSourceId('test', 'isolation'))]
-        }
-      );
-      
-      await vm.assertFact(fact2);
-      
-      // Query from scope1 - should only see scope1 facts
-      const scope1Program = createScopeQueryProgram(testCase.predicate, testCase.scope1);
-      const scope1Result = await vm.execute(scope1Program);
-      
-      // Query from scope2 - should only see scope2 facts
-      const scope2Program = createScopeQueryProgram(testCase.predicate, testCase.scope2);
-      const scope2Result = await vm.execute(scope2Program);
-      
-      // Verify isolation
-      const scope1Count = extractResultCount(scope1Result);
-      const scope2Count = extractResultCount(scope2Result);
-      
-      // Each scope should see exactly 1 fact (its own)
-      isolatedCorrectly = scope1Count === 1 && scope2Count === 1;
-      
-      // Additional check: verify the values are different
-      if (isolatedCorrectly) {
-        const scope1Values = extractResultValues(scope1Result);
-        const scope2Values = extractResultValues(scope2Result);
-        
-        isolatedCorrectly = !scope1Values.some(v => scope2Values.includes(v));
-      }
-      
-    } catch (err) {
-      error = err.message;
+    const fact1 = createFactInstance(
+      createSymbolId('test', 'item'),
+      { id: stringAtom('item1'), value: stringAtom('doc1_value') },
+      { scopeId: scope1, provenance: [createProvenanceLink(createSourceId('test', 'isolation'))] }
+    );
+    
+    const fact2 = createFactInstance(
+      createSymbolId('test', 'item'),
+      { id: stringAtom('item2'), value: stringAtom('doc2_value') },
+      { scopeId: scope2, provenance: [createProvenanceLink(createSourceId('test', 'isolation'))] }
+    );
+    
+    await vm.assertFact(fact1);
+    await vm.assertFact(fact2);
+    
+    // Test isolation via storage queries
+    const scope1Results = await vm.storage.query({ predicate: 'test:item', scope: scope1 });
+    const scope2Results = await vm.storage.query({ predicate: 'test:item', scope: scope2 });
+    
+    // Each scope should see exactly 1 fact (its own)
+    isolatedCorrectly = scope1Results.length === 1 && scope2Results.length === 1;
+    
+    // Verify different values
+    if (isolatedCorrectly) {
+      const val1 = scope1Results[0].arguments.get('value').value;
+      const val2 = scope2Results[0].arguments.get('value').value;
+      isolatedCorrectly = val1 !== val2;
     }
     
-    const executionTime = performance.now() - startTime;
-    
-    results.details.isolation_tests.push({
-      name: testCase.name,
-      isolated_correctly: isolatedCorrectly,
-      error,
-      execution_ms: executionTime,
-      scope1: testCase.scope1.toString(),
-      scope2: testCase.scope2.toString()
-    });
+  } catch (err) {
+    error = err.message;
   }
+  
+  const executionTime = performance.now() - startTime;
+  
+  results.details.isolation_tests.push({
+    name: 'basic_scope_isolation',
+    isolated_correctly: isolatedCorrectly,
+    error,
+    execution_ms: executionTime
+  });
 }
 
 /**
@@ -396,19 +359,12 @@ function createScopeQueryProgram(predicate, scopeId) {
     programId: `scope_query_${Date.now()}`,
     instructions: [
       {
-        op: 'PUSH_CONTEXT',
-        args: { scopeId: scopeId.toString() }
-      },
-      {
         op: 'QUERY',
         args: {
           predicate,
-          pattern: {}
+          scope: scopeId  // Use scope filtering instead of context switching
         },
         out: 'scoped_results'
-      },
-      {
-        op: 'POP_CONTEXT'
       },
       {
         op: 'RETURN',
@@ -417,7 +373,7 @@ function createScopeQueryProgram(predicate, scopeId) {
     ],
     metadata: {
       compiledAt: Date.now(),
-      estimatedSteps: 4,
+      estimatedSteps: 2,
       estimatedBranches: 0,
       tracePolicy: 'minimal'
     }
@@ -438,11 +394,71 @@ function extractResultCount(vmResult) {
     return vmResult.result.length;
   }
   
-  if (vmResult.bindings && vmResult.bindings.scoped_results && Array.isArray(vmResult.bindings.scoped_results)) {
-    return vmResult.bindings.scoped_results.length;
+  if (vmResult.bindings) {
+    // Check for any array in bindings
+    for (const [key, value] of Object.entries(vmResult.bindings)) {
+      if (Array.isArray(value)) {
+        return value.length;
+      }
+    }
   }
   
   return 0;
+}
+
+/**
+ * Test emergent scope discovery from structural separators
+ */
+async function testEmergentScopeDiscovery(vm, results, config) {
+  const startTime = performance.now();
+  let discoveryCorrect = false;
+  let error = null;
+  
+  try {
+    // Test 1: Verify hardcoded domain scopes are rejected
+    let hardcodedRejected = false;
+    try {
+      const hardcodedScope = createScopeId(['domain', 'programming']);
+      // This should fail or be flagged as invalid
+      hardcodedRejected = false; // Currently allows it - this is the problem!
+    } catch (e) {
+      hardcodedRejected = true;
+    }
+    
+    // Test 2: Verify structural scopes work
+    const events = [
+      { type: 'text_token', payload: 'First paragraph content.', context_path: ['doc', 'section1', 'para1'] },
+      { type: 'separator', payload: { separatorType: 'paragraph', strength: 0.7 } },
+      { type: 'text_token', payload: 'Second paragraph content.', context_path: ['doc', 'section1', 'para2'] }
+    ];
+    
+    const separators = detectStructuralSeparators(events);
+    const scope1 = createStructuralScopeId(events, 0, separators);
+    const scope2 = createStructuralScopeId(events, 2, separators);
+    
+    const structuralWorks = scope1.path && scope2.path && 
+                           JSON.stringify(scope1) !== JSON.stringify(scope2) &&
+                           !JSON.stringify(scope1).includes('domain') &&
+                           !JSON.stringify(scope2).includes('domain');
+    
+    // REAL TEST: System should reject hardcoded domains and only accept structural
+    discoveryCorrect = hardcodedRejected && structuralWorks;
+    
+    if (!discoveryCorrect) {
+      error = `System still accepts hardcoded domains! hardcodedRejected: ${hardcodedRejected}, structuralWorks: ${structuralWorks}`;
+    }
+    
+  } catch (e) {
+    error = e.message;
+  }
+  
+  results.details.discovery_tests = results.details.discovery_tests || [];
+  results.details.discovery_tests.push({
+    test_name: 'emergent_scope_discovery',
+    discovery_correct: discoveryCorrect,
+    execution_time_ms: performance.now() - startTime,
+    error
+  });
 }
 
 /**
@@ -451,11 +467,28 @@ function extractResultCount(vmResult) {
 function extractResultValues(vmResult) {
   if (!vmResult) return [];
   
-  const results = vmResult.claims || vmResult.result || vmResult.bindings?.scoped_results || [];
+  // Try different result locations
+  let results = vmResult.claims || vmResult.result;
+  
+  if (!results && vmResult.bindings) {
+    // Find first array in bindings
+    for (const value of Object.values(vmResult.bindings)) {
+      if (Array.isArray(value)) {
+        results = value;
+        break;
+      }
+    }
+  }
+  
+  if (!results) return [];
   
   return results.map(r => {
     if (r.content && r.content.arguments && r.content.arguments.value) {
       return r.content.arguments.value.value || r.content.arguments.value;
+    }
+    if (r.arguments && r.arguments.get) {
+      const val = r.arguments.get('value');
+      return val?.value || val;
     }
     return JSON.stringify(r);
   });

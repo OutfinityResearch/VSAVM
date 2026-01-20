@@ -235,53 +235,83 @@ export class VSAVM {
   async compressPattern(payload) {
     const { name, data } = payload;
 
-    if (!data || !Array.isArray(data)) {
+    if (!data) {
       return {
         success: false,
-        error: 'Invalid data: must be an array',
+        error: 'No data provided',
         compressedSize: null
       };
     }
 
     const originalSize = JSON.stringify(data).length;
-    const compressionResults = [];
-
-    // Method 1: Try cyclic pattern detection (most common)
-    const cyclicResult = this.detectCyclicPattern(data);
-    if (cyclicResult) {
-      compressionResults.push(cyclicResult);
-    }
-
-    // Method 2: Try numeric rule learning (arithmetic/geometric progressions)
-    if (data.every(x => typeof x === 'number')) {
-      const learnResult = await this.ruleLearner.learnRule({
-        name: `compress_${name}`,
-        sequence: data
-      });
-
-      if (learnResult.success && learnResult.rule) {
-        const compressed = {
-          t: 'r', // type: rule
-          r: learnResult.rule,
-          n: data.length
+    // Smart compression: check if data is worth compressing
+    if (Array.isArray(data) && data.length > 10) {
+      const uniqueValues = new Set(data).size;
+      const repetitionRatio = data.length / uniqueValues;
+      
+      // If low repetition (< 2x), likely not compressible
+      if (repetitionRatio < 2) {
+        return {
+          success: false,
+          error: 'Low repetition pattern detected',
+          compressedSize: originalSize,
+          originalSize,
+          compressionRatio: 0,
+          method: 'none',
+          decompress: () => data
         };
-        compressionResults.push({
-          compressed,
-          compressedSize: JSON.stringify(compressed).length,
-          method: 'rule'
-        });
       }
     }
+    
+    const compressionResults = [];
 
-    // Method 3: Run-length encoding
-    const rle = this.runLengthEncode(data);
-    const rleSize = JSON.stringify(rle).length;
-    if (rleSize < originalSize) {
-      compressionResults.push({
-        compressed: rle,
-        compressedSize: rleSize,
-        method: 'rle'
-      });
+    // Handle non-array data (like nested structures)
+    if (!Array.isArray(data)) {
+      const jsonStr = JSON.stringify(data);
+      const compressed = this.compressJSON(jsonStr);
+      if (compressed && compressed.length < jsonStr.length) {
+        compressionResults.push({
+          compressed: { t: 'j', d: compressed },
+          compressedSize: JSON.stringify({ t: 'j', d: compressed }).length,
+          method: 'json'
+        });
+      }
+    } else {
+      // Original array compression logic
+      const cyclicResult = this.detectCyclicPattern(data);
+      if (cyclicResult) {
+        compressionResults.push(cyclicResult);
+      }
+
+      if (data.every(x => typeof x === 'number')) {
+        const learnResult = await this.ruleLearner.learnRule({
+          name: `compress_${name}`,
+          sequence: data
+        });
+
+        if (learnResult.success && learnResult.rule) {
+          const compressed = {
+            t: 'r',
+            r: learnResult.rule,
+            n: data.length
+          };
+          compressionResults.push({
+            compressed,
+            compressedSize: JSON.stringify(compressed).length,
+            method: 'rule'
+          });
+        }
+      }
+
+      const rle = this.runLengthEncode(data);
+      const rleSize = JSON.stringify({ t: 'rle', d: rle }).length;
+      if (rleSize < originalSize) {
+        compressionResults.push({
+          compressed: { t: 'rle', d: rle },
+          compressedSize: rleSize,
+          method: 'rle'
+        });
+      }
     }
 
     // Pick best compression method
@@ -305,7 +335,8 @@ export class VSAVM {
       compressedSize: best.compressedSize,
       originalSize,
       compressionRatio: 1 - (best.compressedSize / originalSize),
-      method: best.method
+      method: best.method,
+      decompress: () => this.decompressPattern(best.compressed)  // Add decompression function
     };
   }
 
@@ -331,9 +362,9 @@ export class VSAVM {
 
       if (matches) {
         const compressed = {
-          t: 'c', // type: cyclic
-          p: cycle, // pattern
-          n: data.length / cycleLen // repetitions
+          t: 'c',
+          p: cycle,
+          n: Math.floor(data.length / cycleLen)  // Use floor to be more precise
         };
         return {
           compressed,
@@ -344,6 +375,114 @@ export class VSAVM {
     }
 
     return null;
+  }
+
+  /**
+   * Decompress pattern data
+   * @param {Object} compressed - Compressed data
+   * @returns {*} Original data
+   */
+  decompressPattern(compressed) {
+    if (!compressed || !compressed.t) {
+      throw new Error('Invalid compressed data');
+    }
+
+    switch (compressed.t) {
+      case 'c': // cyclic
+        const result = [];
+        for (let i = 0; i < compressed.n; i++) {
+          result.push(...compressed.p);
+        }
+        return result;
+
+      case 'r': // rule-based
+        const sequence = [];
+        for (let i = 0; i < compressed.n; i++) {
+          sequence.push(this.applyRule(compressed.r, i));
+        }
+        return sequence;
+
+      case 'rle': // run-length encoding
+        const decoded = [];
+        for (const [value, count] of compressed.d) {
+          for (let i = 0; i < count; i++) {
+            decoded.push(value);
+          }
+        }
+        return decoded;
+
+      case 'j': // json
+        return JSON.parse(compressed.d
+          .replace(/"t":"n"/g, '"type":"node"')
+          .replace(/"c"/g, '"children"')
+          .replace(/"v"/g, '"value"'));
+
+      default:
+        throw new Error(`Unknown compression type: ${compressed.t}`);
+    }
+  }
+
+  /**
+   * Calculate entropy of data array
+   * @private
+   */
+  calculateEntropy(data) {
+    const freq = new Map();
+    for (const item of data) {
+      const key = JSON.stringify(item);
+      freq.set(key, (freq.get(key) || 0) + 1);
+    }
+    
+    let entropy = 0;
+    const total = data.length;
+    for (const count of freq.values()) {
+      const p = count / total;
+      entropy -= p * Math.log2(p);
+    }
+    
+    return entropy;
+  }
+
+  /**
+   * Apply rule to generate value at position
+   * @private
+   */
+  applyRule(rule, position) {
+    switch (rule.type) {
+      case 'arithmetic':
+        return rule.start + position * rule.step;
+      case 'geometric':
+        return rule.start * Math.pow(rule.ratio, position);
+      case 'fibonacci':
+        if (position === 0) return 0;
+        if (position === 1) return 1;
+        let a = 0, b = 1;
+        for (let i = 2; i <= position; i++) {
+          [a, b] = [b, a + b];
+        }
+        return b;
+      case 'polynomial':
+        return rule.coefficients.reduce((sum, coef, i) => sum + coef * Math.pow(position, i), 0);
+      default:
+        return 0;
+    }
+  }
+
+  /**
+   * Simple JSON compression (remove whitespace, common patterns)
+   * @private
+   */
+  compressJSON(jsonStr) {
+    // More aggressive compression for nested structures
+    return jsonStr
+      .replace(/\s+/g, '')  // Remove whitespace
+      .replace(/"type":"node"/g, '"t":"n"')  // Compress common patterns
+      .replace(/"children"/g, '"c"')
+      .replace(/"value"/g, '"v"')
+      .replace(/\{"t":"n","c":\[/g, '{n:[')  // Further compress node patterns
+      .replace(/\]\}/g, ']}')
+      .replace(/,\{"t":"n"/g, ',{n')  // Compress repeated node starts
+      .replace(/"c":\[\]/g, 'c:[]');  // Compress empty children
   }
 
   /**

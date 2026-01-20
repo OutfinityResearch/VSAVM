@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 324" role="img" aria-label="Macro program diagram">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 362.6" role="img" aria-label="Macro program diagram">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#e8f3ff"/>
@@ -8,15 +8,22 @@
       <stop offset="0" stop-color="#0b6eff"/>
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
-    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#16b879"/>
-    </marker>
+    
   
-    <marker id="arrowhead-deep" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
-      <path d="M 0 0 L 8 4 L 0 8 Z" fill="url(#deep)" stroke="url(#deep)" stroke-width="0"/>
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    <marker id="arrowhead-deep" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 1 1 L 7 4 L 1 7" fill="none" stroke="url(#deep)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
-    <marker id="arrowhead-0b6eff" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
-      <path d="M 0 0 L 8 4 L 0 8 Z" fill="#0b6eff" stroke="#0b6eff" stroke-width="0"/>
+    <marker id="arrowhead-0b6eff" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 1 1 L 7 4 L 1 7" fill="none" stroke="#0b6eff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
   </defs>
   <rect x="120" y="80" rx="18" ry="18" width="190" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
@@ -32,7 +39,7 @@
 <path d="M 215 140 C 260 170, 310 190, 350 205" fill="none" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
 <path d="M 425 140 C 430 165, 430 185, 450 205" fill="none" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
 <path d="M 635 140 C 590 170, 555 190, 550 205" fill="none" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
-<rect x="120" y="269" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="1.2"/>
+<rect x="120" y="269" width="360" height="91.6" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="1.2"/>
 <text x="136" y="291" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
 <text x="136" y="313" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Macros compress repeated routines.</text>
 <text x="136" y="331" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Promoted after stable success.</text>
