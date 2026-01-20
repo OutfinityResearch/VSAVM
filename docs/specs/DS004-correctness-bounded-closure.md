@@ -1,7 +1,5 @@
 # DS004 Correctness and Bounded Closure
 
-Note: This document was previously numbered DS019 in earlier drafts. The canonical number is DS004 to match the consolidated spec set in `docs/specs/`.
-
 ## Correctness Contract Definition
 
 The correctness contract establishes the fundamental guarantee that the VSAVM system provides to users: conclusions will not be emitted if they would create contradictions within the explored reasoning space.

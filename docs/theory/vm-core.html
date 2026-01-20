@@ -80,7 +80,7 @@
 <h2>Engineering benefits</h2>
 <p>The explicit VM core makes it possible to unit test rules, regression test closure behavior, and audit decisions. Retrieval can be swapped or improved without changing semantics, because semantics are enforced by the VM and contract rather than by similarity ranking. Memory management uses reference counting, garbage collection, and caching with locality optimization for related facts and rules.</p>
 <figure class="diagram">
-<svg viewBox="0 0 900 420" role="img" aria-label="VM architecture diagram">
+<svg viewBox="0 0 800 280" role="img" aria-label="VM architecture diagram">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#e8f3ff"/>
@@ -91,34 +91,28 @@
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
   </defs>
-  <rect x="90" y="55" width="540" height="290" rx="26" ry="26" fill="none" stroke="#0b6eff" stroke-width="3"/>
-<text x="120" y="85" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">VM core</text>
-<rect x="130" y="105" rx="18" ry="18" width="210" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="235.0" y="139.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Fact store</text>
-<rect x="360" y="105" rx="18" ry="18" width="210" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="465.0" y="139.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Rule memory</text>
-<rect x="130" y="180" rx="18" ry="18" width="210" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="235.0" y="214.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Context stack</text>
-<rect x="360" y="180" rx="18" ry="18" width="210" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="465.0" y="214.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Execution log</text>
-<rect x="130" y="255" rx="18" ry="18" width="210" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="235.0" y="289.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Binding environment</text>
-<rect x="360" y="255" rx="18" ry="18" width="210" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="465.0" y="289.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Macro-programs</text>
-<rect x="670" y="85" width="160" height="260" rx="26" ry="26" fill="none" stroke="#16b879" stroke-width="3"/>
-<text x="690" y="115" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">Retrieval</text>
-<rect x="690" y="130" rx="18" ry="18" width="120" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="750.0" y="161.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">VSA</text>
-<rect x="690" y="195" rx="18" ry="18" width="120" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="750.0" y="226.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Top-K</text>
-<rect x="690" y="260" rx="18" ry="18" width="120" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="750.0" y="291.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Schema index</text>
-<line x1="630" y1="200" x2="670" y2="200" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="660,193 660,207 680,200" fill="#16b879"/>
-<rect x="90" y="355" width="420" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
-<text x="106" y="377" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
-<text x="106" y="399" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">VM is the authority via execution. Retrieval proposes; VM validates.</text>
-<text x="106" y="417" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Logs enable audit. Macro-programs consolidate recurring patterns.</text>
+  <rect x="50" y="30" width="500" height="220" rx="16" ry="16" fill="none" stroke="#0b6eff" stroke-width="3"/>
+  <text x="70" y="55" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">VM Core (Authority)</text>
+  <rect x="80" y="70" rx="12" ry="12" width="130" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="145" y="95" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Fact store</text>
+  <rect x="230" y="70" rx="12" ry="12" width="130" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="295" y="95" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Rule memory</text>
+  <rect x="380" y="70" rx="12" ry="12" width="140" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="450" y="95" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Context stack</text>
+  <rect x="80" y="130" rx="12" ry="12" width="200" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="180" y="155" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Binding env</text>
+  <rect x="300" y="130" rx="12" ry="12" width="220" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="410" y="155" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Macro-programs</text>
+  <rect x="80" y="190" rx="12" ry="12" width="440" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="300" y="215" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Execution Log (Audit)</text>
+  <rect x="600" y="60" width="150" height="160" rx="16" ry="16" fill="none" stroke="#16b879" stroke-width="3"/>
+  <text x="620" y="85" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">Retrieval</text>
+  <rect x="620" y="100" rx="12" ry="12" width="110" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="675" y="125" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">VSA Index</text>
+  <rect x="620" y="160" rx="12" ry="12" width="110" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="675" y="185" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Top-K</text>
+  <line x1="600" y1="140" x2="550" y2="140" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="555,135 565,135 550,140" fill="#0b6eff"/>
 </svg>
 <figcaption>A compact VM core remains the authority; retrieval accelerates candidate selection without changing semantics. The four memory structures maintain complete operational state.</figcaption>
 </figure>

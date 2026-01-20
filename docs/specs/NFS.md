@@ -2,6 +2,20 @@
 
 This table lists non-functional constraints and high-level implementation modes.
 
+## Technology Stack
+
+| Constraint | Specification |
+| --- | --- |
+| **Language** | JavaScript (ES2022+) |
+| **Module System** | ES Modules (.mjs files) |
+| **Async Pattern** | async/await syntax throughout |
+| **TypeScript** | Not used - pure JavaScript only |
+| **External Dependencies** | None - zero npm dependencies |
+| **Code Style** | Clean, straightforward, minimal abstraction |
+| **Runtime** | Node.js 18+ (native ES modules support) |
+
+## Non-Functional Requirements
+
 | ID | Constraint | Notes | Implemented in |
 | --- | --- | --- | --- |
 | NFS01 | Predictable performance under configurable budgets. | Time and memory scale with closure depth and branching limits. | DS004, DS005 |

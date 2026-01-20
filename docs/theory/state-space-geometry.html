@@ -34,7 +34,7 @@
 <h2>Budgets as resolution</h2>
 <p>Budgets define exploration depth and breadth. Small budgets yield shallow checks; larger budgets reveal deeper consequences and more conflicts. This makes the system’s certainty a function of explored coverage rather than a stylistic tone.</p>
 <figure class="diagram">
-<svg viewBox="0 0 900 340" role="img" aria-label="State space diagram">
+<svg viewBox="0 0 800 240" role="img" aria-label="State space diagram">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#e8f3ff"/>
@@ -45,23 +45,18 @@
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
   </defs>
-  <ellipse cx="300" cy="185" rx="240" ry="125" fill="none" stroke="#7fb3e6" stroke-width="3"/>
-<ellipse cx="650" cy="170" rx="230" ry="125" fill="none" stroke="#16b879" stroke-width="3"/>
-<text x="300" y="70" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Region A (constraints)</text>
-<text x="650" y="60" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Region B (constraints)</text>
-<circle cx="240" cy="185" r="12" fill="#0b6eff"/>
-<circle cx="360" cy="220" r="12" fill="#0b6eff"/>
-<circle cx="610" cy="170" r="12" fill="#16b879"/>
-<circle cx="715" cy="205" r="12" fill="#16b879"/>
-<line x1="252" y1="185" x2="348" y2="220" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<line x1="372" y1="220" x2="598" y2="170" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<line x1="622" y1="170" x2="703" y2="205" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<text x="470" y="155" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">instructions are transitions</text>
-<rect x="90" y="270" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
-<text x="106" y="292" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
-<text x="106" y="314" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Nodes are VM states.</text>
-<text x="106" y="332" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Edges are instruction transitions.</text>
-<text x="106" y="350" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Regions are conceptual constraints.</text>
+  <ellipse cx="250" cy="120" rx="200" ry="100" fill="none" stroke="#7fb3e6" stroke-width="3" stroke-dasharray="5,5"/>
+  <text x="250" y="40" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Region A (constraints)</text>
+  <ellipse cx="550" cy="120" rx="200" ry="100" fill="none" stroke="#16b879" stroke-width="3" stroke-dasharray="5,5"/>
+  <text x="550" y="40" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Region B (constraints)</text>
+  <circle cx="200" cy="120" r="10" fill="#0b6eff"/>
+  <circle cx="300" cy="150" r="10" fill="#0b6eff"/>
+  <circle cx="500" cy="120" r="10" fill="#16b879"/>
+  <circle cx="600" cy="150" r="10" fill="#16b879"/>
+  <line x1="210" y1="120" x2="290" y2="150" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="310" y1="150" x2="490" y2="120" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="510" y1="120" x2="590" y2="150" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+  <text x="400" y="110" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Instruction transition</text>
 </svg>
 <figcaption>The relevant geometry is the VM state graph: concepts appear as regions stabilized by constraints, not as points in an embedding space.</figcaption>
 </figure>

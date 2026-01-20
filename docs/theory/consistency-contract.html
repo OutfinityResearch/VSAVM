@@ -34,7 +34,7 @@
 <h2>Auditability</h2>
 <p>The contract implies logs and metadata: budget used, branches explored, rules applied, and conflicts detected. This allows operational explanations and makes the system testable. It also provides a practical mechanism to debug where and why reasoning fails.</p>
 <figure class="diagram">
-<svg viewBox="0 0 900 340" role="img" aria-label="Contract diagram">
+<svg viewBox="0 0 800 240" role="img" aria-label="Contract diagram">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#e8f3ff"/>
@@ -45,27 +45,22 @@
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
   </defs>
-  <rect x="80" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="200.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Budgets</text>
-<rect x="340" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="460.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Closure</text>
-<rect x="600" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="720.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Emission rules</text>
-<line x1="320" y1="105" x2="340" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="330,98 330,112 350,105" fill="#16b879"/>
-<line x1="580" y1="105" x2="600" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="590,98 590,112 610,105" fill="#16b879"/>
-<rect x="160" y="170" rx="18" ry="18" width="580" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="450.0" y="209.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Modes: strict, conditional, indeterminate</text>
-<line x1="470" y1="140" x2="470" y2="170" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
-<polygon points="460,163 460,177 480,170" fill="#16b879"/>
-<rect x="160" y="250" rx="16" ry="16" width="640" height="48" fill="none" stroke="#7fb3e6" stroke-width="2"/>
-<text x="176" y="272" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">The system reports what was checked, not just what it predicts.</text>
-<rect x="80" y="295" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
-<text x="96" y="317" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
-<text x="96" y="339" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Budgets define exploration boundaries.</text>
-<text x="96" y="357" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Emission depends on closure outcome.</text>
-<text x="96" y="375" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Boundary behavior is explicit and repeatable.</text>
+  <rect x="50" y="40" rx="12" ry="12" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="150" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Budgets</text>
+  <rect x="290" y="40" rx="12" ry="12" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="390" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Closure</text>
+  <rect x="530" y="40" rx="12" ry="12" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="630" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Emission rules</text>
+  <line x1="250" y1="70" x2="290" y2="70" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="280,65 280,75 290,70" fill="#16b879"/>
+  <line x1="490" y1="70" x2="530" y2="70" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="520,65 520,75 530,70" fill="#16b879"/>
+  <rect x="150" y="130" rx="12" ry="12" width="480" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+  <text x="390" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Modes: strict, conditional, indeterminate</text>
+  <line x1="630" y1="100" x2="630" y2="130" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="625,120 635,120 630,130" fill="#0b6eff"/>
+  <line x1="630" y1="130" x2="390" y2="130" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
+  <text x="390" y="210" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Budgets define boundaries. Modes define honest degradation.</text>
 </svg>
 <figcaption>The contract makes boundary behavior explicit by tying emission to budgeted closure and named response modes.</figcaption>
 </figure>

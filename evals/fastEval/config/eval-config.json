@@ -1,0 +1,62 @@
+{
+  "timeouts": {
+    "rule_learning": 30000,
+    "compression": 15000,
+    "reasoning": 10000,
+    "rl_prediction": 60000,
+    "query_response": 5000
+  },
+  "thresholds": {
+    "rule_accuracy": 0.90,
+    "compression_ratio": 0.50,
+    "reasoning_consistency": 0.95,
+    "rl_convergence_episodes": 1000,
+    "query_response_time": 100,
+    "memory_usage_mb": 500,
+    "generalization_accuracy": 0.85
+  },
+  "data_sizes": {
+    "small": 100,
+    "medium": 1000,
+    "large": 10000
+  },
+  "domains": {
+    "arithmetic": {
+      "sequence_length": 20,
+      "max_difference": 10,
+      "operations": ["add", "multiply", "modular"]
+    },
+    "logic": {
+      "max_variables": 5,
+      "max_clauses": 10,
+      "operators": ["and", "or", "implies", "not"]
+    },
+    "temporal": {
+      "max_events": 50,
+      "time_window": 1000,
+      "causality_depth": 3
+    },
+    "graph": {
+      "max_nodes": 100,
+      "max_edges": 200,
+      "graph_types": ["tree", "dag", "cycle"]
+    },
+    "string": {
+      "max_length": 100,
+      "alphabet_size": 26,
+      "pattern_types": ["regex", "grammar", "substitution"]
+    }
+  },
+  "evaluation": {
+    "runs_per_test": 5,
+    "confidence_level": 0.95,
+    "regression_threshold": 0.05,
+    "baseline_comparison": true
+  },
+  "output": {
+    "format": "json",
+    "include_details": true,
+    "save_intermediate": false,
+    "generate_plots": true
+  }
+}

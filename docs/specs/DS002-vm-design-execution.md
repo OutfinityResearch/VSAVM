@@ -1,6 +1,5 @@
 # DS002 Virtual Machine Design and Execution
 
-Note: This document was previously numbered DS017 in earlier drafts. The canonical number is DS002 to match the consolidated spec set in `docs/specs/`.
 
 ## VM State and Memory Model
 

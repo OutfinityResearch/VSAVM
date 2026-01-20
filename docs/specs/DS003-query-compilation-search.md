@@ -1,7 +1,5 @@
 # DS003 Query Compilation and Program Search
 
-Note: This document was previously numbered DS018 in earlier drafts. The canonical number is DS003 to match the consolidated spec set in `docs/specs/`.
-
 ## Natural Language to Query Compilation
 
 The transformation of natural language queries into executable programs represents one of the most sophisticated capabilities of the VSAVM system.

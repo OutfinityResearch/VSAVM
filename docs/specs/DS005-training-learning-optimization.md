@@ -1,7 +1,5 @@
 # DS005 Training, Learning, and Optimization
 
-Note: This document was previously numbered DS020 in earlier drafts. The canonical number is DS005 to match the consolidated spec set in `docs/specs/`.
-
 ## Two-Loop Training Architecture
 
 The VSAVM training process operates through a sophisticated dual-loop architecture that simultaneously optimizes surface-level language generation and deep symbolic reasoning capabilities.

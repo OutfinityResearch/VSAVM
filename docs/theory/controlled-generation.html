@@ -77,7 +77,7 @@
 <h2>Budget as user-controlled effort</h2>
 <p>When a user asks the system to think more, the budget increases. This increases the depth or breadth of closure and therefore changes what is safe to claim. The system should surface that budget explicitly because it defines the strength of the response.</p>
 <figure class="diagram">
-<svg viewBox="0 0 900 420" role="img" aria-label="Controlled generation diagram">
+<svg viewBox="0 0 800 280" role="img" aria-label="Controlled generation diagram">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#e8f3ff"/>
@@ -88,36 +88,29 @@
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
   </defs>
-  <rect x="80" y="60" rx="18" ry="18" width="220" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="190.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Propose phrases</text>
-<rect x="320" y="60" rx="18" ry="18" width="220" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="430.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Simulate + check</text>
-<rect x="560" y="60" rx="18" ry="18" width="220" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="670.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Accept / reject</text>
-<line x1="300" y1="95" x2="320" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="310,88 310,102 330,95" fill="#16b879"/>
-<line x1="540" y1="95" x2="560" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="550,88 550,102 570,95" fill="#16b879"/>
-
-<rect x="180" y="160" rx="18" ry="18" width="540" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="450.0" y="199.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Gate: bounded closure rejects contradictions</text>
-<line x1="430" y1="130" x2="450" y2="160" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
-<polygon points="440,153 440,167 460,160" fill="#16b879"/>
-
-<rect x="80" y="260" rx="18" ry="18" width="260" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="210.0" y="299.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">VM state conditioning</text>
-<rect x="360" y="260" rx="18" ry="18" width="260" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="490.0" y="299.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Quality optimization</text>
-<rect x="640" y="260" rx="18" ry="18" width="180" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="730.0" y="299.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Resolution</text>
-<line x1="450" y1="230" x2="210" y2="260" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
-<line x1="450" y1="230" x2="490" y2="260" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
-<line x1="450" y1="230" x2="730" y2="260" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
-
-<rect x="80" y="350" width="500" height="70" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
-<text x="96" y="372" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
-<text x="96" y="394" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Generation is proposal + verification. Closure is a gate, not an afterthought.</text>
-<text x="96" y="412" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">VM conditioning + quality optimization + resolution strategies ensure coherent output.</text>
+  <rect x="50" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="140" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Propose phrases</text>
+<rect x="270" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="360" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Simulate + check</text>
+<rect x="490" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="580" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Accept / reject</text>
+<line x1="230" y1="70" x2="270" y2="70" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+<polygon points="260,65 260,75 270,70" fill="#16b879"/>
+<line x1="450" y1="70" x2="490" y2="70" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+<polygon points="480,65 480,75 490,70" fill="#16b879"/>
+<rect x="150" y="130" rx="12" ry="12" width="480" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="390" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Gate: bounded closure rejects contradictions</text>
+<line x1="360" y1="100" x2="390" y2="130" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
+<polygon points="380,125 390,120 390,130" fill="#0b6eff"/>
+<rect x="50" y="210" rx="12" ry="12" width="200" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="150" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">VM state conditioning</text>
+<rect x="290" y="210" rx="12" ry="12" width="200" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="390" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Quality optimization</text>
+<rect x="530" y="210" rx="12" ry="12" width="140" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="600" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Resolution</text>
+<line x1="390" y1="180" x2="150" y2="210" stroke="#0b6eff" stroke-width="2" stroke-dasharray="5,5"/>
+<line x1="390" y1="180" x2="390" y2="210" stroke="#0b6eff" stroke-width="2" stroke-dasharray="5,5"/>
+<line x1="390" y1="180" x2="600" y2="210" stroke="#0b6eff" stroke-width="2" stroke-dasharray="5,5"/>
 </svg>
 <figcaption>Generation is treated as proposal followed by verification: candidates must pass closure-based consistency checks before being emitted. VM state conditioning ensures logical coherence.</figcaption>
 </figure>
