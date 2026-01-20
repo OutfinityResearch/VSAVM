@@ -23,17 +23,67 @@
       <main class="main content">
         <h1>Question compilation pipeline</h1>
 <p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
-<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
+<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>, <a href="../wiki/query-compiler.html">query compiler</a>, <a href="../wiki/schema.html">schema</a>.</p>
+<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS018-query-compilation-search.md">DS018</a>.</p>
+
 <h2>Overview</h2>
-<p>A question is treated as a request to produce an executable query program. The pipeline is explicit to support audit and control: normalization creates a structured span, retrieval proposes candidate schemas, slot filling binds discrete values, and compilation emits a program in the VM instruction set.</p>
-<h2>Retrieval and slot filling</h2>
-<p>Retrieval uses VSA to propose nearby schemas and macro programs. Slot filling binds entities, roles, and references using discrete matching and coreference heuristics, augmented by associative retrieval. The result is an executable artifact rather than a textual template.</p>
+<p>A question is treated as a request to produce an executable query program. The pipeline is explicit to support audit and control: normalization creates a structured span, retrieval proposes candidate schemas, slot filling binds discrete values, and compilation emits a program in the VM instruction set. This transformation operates through a learned pipeline rather than hand-coded rules.</p>
+
+<h2>Natural language to query compilation</h2>
+<p>The compilation process follows explicit stages:</p>
+<ul>
+  <li><strong>Query normalization</strong>: Convert input text to the standard event stream representation. Identify interrogative markers, entity references, relationship indicators, and logical connectives.</li>
+  <li><strong>Entity identification</strong>: Disambiguate entity mentions (specific individuals, general categories, abstract concepts) using local query context and global knowledge base context. Maintain coreference tracking for pronouns and definite descriptions.</li>
+  <li><strong>Schema retrieval</strong>: Use VSA similarity measures to identify candidate schemas from the library. Hypervector comparison produces a ranked list of potential matches that handle linguistic variations.</li>
+  <li><strong>Schema matching</strong>: Evaluate structural compatibility beyond surface similarity. Maintain multiple candidate schemas rather than committing to a single interpretation early.</li>
+</ul>
+
+<h2>Slot filling and program instantiation</h2>
+<p>Slot filling binds entities, roles, and references using discrete matching and coreference heuristics, augmented by associative retrieval:</p>
+<ul>
+  <li><strong>Direct matching</strong>: Query elements corresponding exactly to schema slots.</li>
+  <li><strong>Type-based inference</strong>: Use slot type constraints to identify appropriate elements even with different surface forms.</li>
+  <li><strong>Semantic association</strong>: VSA similarity measures identify related elements when direct matching fails.</li>
+</ul>
+<p>Complex queries may require multiple schemas combined or nested. The composition system maintains explicit data flow graphs tracking information movement through composite reasoning.</p>
+<p>Program instantiation translates filled schemas into executable VM instruction sequences, including optimization steps: common subexpression identification, redundant operation elimination, and operation reordering for cache locality.</p>
+
+<h2>Program search and selection</h2>
+<p>The search process explores the space of possible reasoning strategies:</p>
+<ul>
+  <li><strong>Candidate generation</strong>: Modify existing programs by changing parameters, reordering operations, or substituting alternative sub-programs. Learned heuristics guide exploration toward promising directions.</li>
+  <li><strong>Population management</strong>: Maintain candidate diversity through mutation and recombination. Use fitness-based selection while preserving potentially valuable less-fit candidates.</li>
+  <li><strong>MDL-based scoring</strong>: Minimum Description Length balances performance and simplicity. Score components include complexity (program length/intricacy), accuracy (correct results on test cases), and generality (performance on unseen examples). Computational efficiency is also weighted.</li>
+  <li><strong>Consistency checking</strong>: Each candidate is evaluated via bounded closure analysis to prevent logical contradictions.</li>
+  <li><strong>Beam pruning</strong>: Retain only the most promising candidates at each stage while maintaining diversity to avoid premature convergence.</li>
+</ul>
+
+<h2>Schema learning and consolidation</h2>
+<p>The schema learning process discovers recurring patterns in query-program relationships:</p>
+<ul>
+  <li><strong>Pattern recognition</strong>: Statistical analysis of compilation logs identifies correlations between linguistic patterns and reasoning strategies. Rigorous significance testing ensures genuine regularities.</li>
+  <li><strong>Compression-driven emergence</strong>: Schemas providing significant MDL compression are promoted. The analysis evaluates both individual schema benefits and interaction effects with other schemas.</li>
+  <li><strong>Schema abstraction</strong>: Hierarchical clustering of similar query-program pairs creates general patterns. Common structure is preserved while varying aspects are parameterized.</li>
+  <li><strong>Consolidation triggers</strong>: Conservative criteria require substantial evidence before creating or modifying schemas. Validation on held-out examples ensures generalization beyond training data.</li>
+  <li><strong>Schema generalization</strong>: Existing schemas can be extended for new query types through careful analysis of differences from existing patterns.</li>
+</ul>
+
+<h2>Multimodal query processing</h2>
+<p>Queries spanning multiple input modalities require sophisticated coordination:</p>
+<ul>
+  <li><strong>Cross-modal reference resolution</strong>: Determine when entities in different modalities refer to the same real-world objects. Combine explicit linking (demonstratives, temporal synchronization) with implicit similarity-based association. Maintain uncertainty estimates for correspondence hypotheses.</li>
+  <li><strong>Temporal and spatial slot filling</strong>: Resolve absolute and relative temporal references against audio/video timestamps. Align spatial references with coordinate systems and object locations in visual inputs.</li>
+  <li><strong>Unified execution</strong>: The VM operates seamlessly across different symbolic representations through the canonical fact format. Cross-modal consistency checking accounts for modality-specific error patterns and uncertainty characteristics.</li>
+  <li><strong>Modality-specific adaptations</strong>: Learned associations between reasoning strategies and modality characteristics enable optimized strategy selection.</li>
+</ul>
+
 <h2>Managing ambiguity</h2>
 <p>Instead of forcing a single interpretation, VSAVM carries multiple candidate programs in a beam. Candidates are evaluated by explanatory fit and by early closure checks that detect contradictions. This makes uncertainty explicit and supports conditional outputs when necessary.</p>
+
 <h2>Engineering implications</h2>
 <p>Because compilation is explicit, it is testable. You can measure how often a schema is retrieved, how often slot filling is ambiguous, and how often a candidate fails under closure. These metrics can guide consolidation and improve robustness over time.</p>
 <figure class="diagram">
-<svg viewBox="0 0 900 340" role="img" aria-label="Question compilation diagram">
+<svg viewBox="0 0 900 420" role="img" aria-label="Question compilation diagram">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#e8f3ff"/>
@@ -44,34 +94,42 @@
       <stop offset="1" stop-color="#16b879"/>
     </linearGradient>
   </defs>
-  <rect x="80" y="60" rx="18" ry="18" width="180" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="170.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Normalize</text>
-<rect x="280" y="60" rx="18" ry="18" width="180" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="370.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Retrieve</text>
-<rect x="480" y="60" rx="18" ry="18" width="180" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="570.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Fill slots</text>
-<rect x="680" y="60" rx="18" ry="18" width="180" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="770.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Program</text>
-<line x1="260" y1="95" x2="280" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="270,88 270,102 290,95" fill="#16b879"/>
-<line x1="460" y1="95" x2="480" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="470,88 470,102 490,95" fill="#16b879"/>
-<line x1="660" y1="95" x2="680" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="670,88 670,102 690,95" fill="#16b879"/>
-<rect x="210" y="170" rx="18" ry="18" width="480" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="450.0" y="209.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Beam: evaluate fit and early consistency</text>
-<line x1="570" y1="130" x2="450" y2="170" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
-<polygon points="440,163 440,177 460,170" fill="#16b879"/>
-<rect x="80" y="260" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
-<text x="96" y="282" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
-<text x="96" y="304" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Retrieval narrows search surface (VSA).</text>
-<text x="96" y="322" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Slot filling stays discrete and auditable.</text>
-<text x="96" y="340" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Beam keeps ambiguity explicit under budget.</text>
+  <rect x="80" y="60" rx="18" ry="18" width="160" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="160.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Normalize</text>
+<rect x="260" y="60" rx="18" ry="18" width="160" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="340.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Retrieve</text>
+<rect x="440" y="60" rx="18" ry="18" width="160" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="520.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Fill slots</text>
+<rect x="620" y="60" rx="18" ry="18" width="160" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="700.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Instantiate</text>
+<line x1="240" y1="95" x2="260" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="250,88 250,102 270,95" fill="#16b879"/>
+<line x1="420" y1="95" x2="440" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="430,88 430,102 450,95" fill="#16b879"/>
+<line x1="600" y1="95" x2="620" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="610,88 610,102 630,95" fill="#16b879"/>
+
+<rect x="180" y="160" rx="18" ry="18" width="540" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="450.0" y="199.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Beam: search, MDL scoring, consistency checking</text>
+<line x1="520" y1="130" x2="450" y2="160" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
+<polygon points="440,153 440,167 460,160" fill="#16b879"/>
+
+<rect x="180" y="250" rx="18" ry="18" width="250" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="305.0" y="289.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Schema learning</text>
+<rect x="450" y="250" rx="18" ry="18" width="270" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="585.0" y="289.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Multimodal coordination</text>
+<line x1="450" y1="230" x2="350" y2="250" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
+<line x1="450" y1="230" x2="550" y2="250" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
+
+<rect x="80" y="340" width="420" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="96" y="362" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="96" y="384" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Retrieval narrows search surface (VSA). Slot filling stays discrete.</text>
+<text x="96" y="402" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Beam keeps ambiguity explicit. MDL guides schema consolidation.</text>
 </svg>
-<figcaption>Questions are compiled into executable programs through explicit stages, with ambiguity managed by beam evaluation and consistency checks.</figcaption>
+<figcaption>Questions are compiled into executable programs through explicit stages, with ambiguity managed by beam evaluation and consistency checks. Schema learning and multimodal coordination extend the core pipeline.</figcaption>
 </figure>
 <h2>References</h2>
-<p><a href="https://en.wikipedia.org/wiki/Program_synthesis">Program synthesis (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Beam_search">Beam search (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Information_retrieval">Information retrieval (Wikipedia)</a></p>
+<p><a href="https://en.wikipedia.org/wiki/Program_synthesis">Program synthesis (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Beam_search">Beam search (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Information_retrieval">Information retrieval (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Minimum_description_length">Minimum description length (Wikipedia)</a></p>
       </main>
       <footer class="footer">
         VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
