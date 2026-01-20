@@ -78,6 +78,14 @@ a:hover {
   font-size: clamp(1.3rem, 2.5vw, 1.8rem);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brand svg {
+  color: var(--accent);
 }
 
 .nav {
