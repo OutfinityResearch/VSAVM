@@ -21,6 +21,20 @@ export {
   FactStore
 } from './vm/index.mjs';
 
+// Training exports
+export {
+  RuleLearner,
+  createRuleLearner,
+  TrainingService,
+  createTrainingService,
+  PatternMiner,
+  createPatternMiner,
+  SchemaProposer,
+  createSchemaProposer,
+  Consolidator,
+  createConsolidator
+} from './training/index.mjs';
+
 // VSA exports
 export { VSAService, MockVSA, BinarySparseVSA } from './vsa/index.mjs';
 
@@ -50,6 +64,7 @@ import {
   StrictCanonicalizer, 
   FuzzyCanonicalizer 
 } from './core/canonicalization/index.mjs';
+import { createRuleLearner } from './training/rule-learner.mjs';
 
 // Register default strategies
 registerVSAStrategy('mock', (config) => new MockVSA(
@@ -113,6 +128,11 @@ export class VSAVM {
       traceLevel: this.config.vm?.traceLevel ?? 'standard',
       defaultBudget: this.config.vm?.defaultBudget ?? {},
       canonicalizer: this.canonicalizer
+    });
+
+    // Rule learner for training
+    this.ruleLearner = createRuleLearner({
+      minConfidence: this.config.training?.minConfidence ?? 0.7
     });
     
     this.initialized = false;
@@ -179,6 +199,29 @@ export class VSAVM {
       storageStrategy: this.storage.name,
       config: this.config
     };
+  }
+
+  /**
+   * Learn a rule from a sequence
+   * Per DS005: Training and rule learning
+   * @param {Object} payload - Learning payload
+   * @param {string} payload.name - Rule name
+   * @param {string} [payload.type] - Expected pattern type hint
+   * @param {number[]} payload.sequence - Input sequence
+   * @param {Object} [payload.expectedRule] - Expected rule for validation
+   * @returns {Promise<Object>} Learning result
+   */
+  async learnRule(payload) {
+    return this.ruleLearner.learnRule(payload);
+  }
+
+  /**
+   * Learn multiple rules from sequences
+   * @param {Object[]} payloads - Array of learning payloads
+   * @returns {Promise<Object[]>}
+   */
+  async learnRules(payloads) {
+    return this.ruleLearner.learnRules(payloads);
   }
 }
 

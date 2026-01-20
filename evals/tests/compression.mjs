@@ -6,8 +6,7 @@
 import { createDefaultVSAVM } from '../../src/index.mjs';
 import { 
   generateCompressionTestCases, 
-  calculateEntropy,
-  theoreticalCompressionRatio 
+  calculateEntropy
 } from '../generators/patterns.mjs';
 import { stringAtom, numberAtom } from '../../src/core/types/terms.mjs';
 import { createSymbolId, createScopeId, createSourceId } from '../../src/core/types/identifiers.mjs';
@@ -39,10 +38,11 @@ export async function runCompressionTests(config) {
   await vm.initialize();
   
   try {
+    const compressor = resolveCompressor(vm);
     const compressionRatios = [];
     
     for (const testCase of testCases) {
-      const patternResult = await evaluatePatternCompression(vm, testCase);
+      const patternResult = await evaluatePatternCompression(vm, testCase, compressor);
       
       results.details.patterns.push({
         name: testCase.name,
@@ -52,7 +52,8 @@ export async function runCompressionTests(config) {
         compression_ratio: patternResult.compressionRatio,
         entropy: patternResult.entropy,
         expected_ratio: testCase.expectedRatio,
-        meets_expectation: patternResult.compressionRatio >= testCase.expectedRatio * 0.5
+        meets_expectation: patternResult.compressionRatio >= testCase.expectedRatio,
+        error: patternResult.error
       });
       
       compressionRatios.push(patternResult.compressionRatio);
@@ -84,7 +85,7 @@ export async function runCompressionTests(config) {
 /**
  * Evaluate compression for a single pattern
  */
-async function evaluatePatternCompression(vm, testCase) {
+async function evaluatePatternCompression(vm, testCase, compressor) {
   const { data, name } = testCase;
   
   // Calculate original size (bytes)
@@ -93,10 +94,20 @@ async function evaluatePatternCompression(vm, testCase) {
   // Calculate entropy
   const entropy = calculateEntropy(Array.isArray(data) ? data : [data]);
   
-  // Store as facts
+  if (!compressor) {
+    return {
+      originalSize,
+      compressedSize: null,
+      compressionRatio: 0,
+      entropy,
+      error: 'Compression API not available'
+    };
+  }
+
+  // Store as facts to support compressors that read from the VM
   const scope = createScopeId(['eval', 'compression', name]);
   const source = createSourceId('eval', 'pattern_gen');
-  
+
   if (Array.isArray(data)) {
     for (let i = 0; i < data.length; i++) {
       const fact = createFactInstance(
@@ -111,33 +122,85 @@ async function evaluatePatternCompression(vm, testCase) {
           provenance: [createProvenanceLink(source)]
         }
       );
-      
+
       await vm.assertFact(fact);
     }
   }
-  
-  // Estimate compressed size based on storage efficiency
-  // In a real implementation, this would use VSA and MDL compression
-  const stats = await vm.getStats();
-  
-  // Simplified compression model:
-  // - High repetition patterns compress well (low unique values)
-  // - Random patterns don't compress (high unique values)
-  const uniqueValues = new Set(Array.isArray(data) ? data.map(x => JSON.stringify(x)) : []).size;
-  const repetitionRatio = 1 - (uniqueValues / (Array.isArray(data) ? data.length : 1));
-  
-  // Estimated compressed size
-  const compressedSize = originalSize * (1 - repetitionRatio * 0.8);
-  
+
+  let compressionResult;
+  try {
+    compressionResult = await compressor({
+      name,
+      data,
+      scopeId: scope,
+      vm
+    });
+  } catch (error) {
+    return {
+      originalSize,
+      compressedSize: null,
+      compressionRatio: 0,
+      entropy,
+      error: `Compression failed: ${error.message}`
+    };
+  }
+
+  const compressedSize = extractCompressedSize(compressionResult);
+  if (!Number.isFinite(compressedSize) || compressedSize <= 0) {
+    return {
+      originalSize,
+      compressedSize: null,
+      compressionRatio: 0,
+      entropy,
+      error: 'Compression result missing size information'
+    };
+  }
+
   const compressionRatio = 1 - (compressedSize / originalSize);
-  
+
   return {
     originalSize,
-    compressedSize: Math.round(compressedSize),
+    compressedSize,
     compressionRatio,
-    entropy,
-    factCount: stats.factCount
+    entropy
   };
+}
+
+function resolveCompressor(vm) {
+  if (typeof vm.compressPattern === 'function') {
+    return (payload) => vm.compressPattern(payload);
+  }
+  if (typeof vm.compressPatterns === 'function') {
+    return (payload) => vm.compressPatterns(payload);
+  }
+  if (vm.compressor && typeof vm.compressor.compress === 'function') {
+    return (payload) => vm.compressor.compress(payload);
+  }
+  if (vm.vsa && typeof vm.vsa.compress === 'function') {
+    return (payload) => vm.vsa.compress(payload);
+  }
+  return null;
+}
+
+function extractCompressedSize(result) {
+  if (!result) return null;
+
+  if (Number.isFinite(result.compressedBytes)) return result.compressedBytes;
+  if (Number.isFinite(result.compressedSize)) return result.compressedSize;
+  if (Number.isFinite(result.byteLength)) return result.byteLength;
+  if (Number.isFinite(result.size)) return result.size;
+
+  if (result.compressed && typeof result.compressed === 'string') {
+    return Buffer.byteLength(result.compressed, 'utf8');
+  }
+  if (result.compressed instanceof Uint8Array) {
+    return result.compressed.byteLength;
+  }
+  if (result.bytes instanceof Uint8Array) {
+    return result.bytes.byteLength;
+  }
+
+  return null;
 }
 
 /**

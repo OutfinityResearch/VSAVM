@@ -243,6 +243,11 @@ function evaluateCategoryResult(result, thresholds) {
   if (metrics.avg_response_ms !== undefined && metrics.avg_response_ms > thresholds.query_response_ms) {
     return false;
   }
+
+  // Check response accuracy
+  if (metrics.response_accuracy !== undefined && metrics.response_accuracy < thresholds.query_accuracy) {
+    return false;
+  }
   
   return true;
 }
@@ -268,6 +273,9 @@ function printCategoryResult(result, thresholds, verbose) {
   }
   if (metrics.avg_response_ms !== undefined) {
     printMetric('Avg Response', metrics.avg_response_ms, thresholds.query_response_ms, false);
+  }
+  if (metrics.response_accuracy !== undefined) {
+    printMetric('Response Accuracy', metrics.response_accuracy, thresholds.query_accuracy);
   }
   if (metrics.inference_accuracy !== undefined) {
     printMetric('Inference Accuracy', metrics.inference_accuracy, 0.9);

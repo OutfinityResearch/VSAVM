@@ -3,8 +3,8 @@
  * Tests VSAVM's ability to learn patterns from sequences
  */
 
-import { VSAVM, createDefaultVSAVM } from '../../src/index.mjs';
-import { generateMixedTestCases, arithmeticSequence } from '../generators/arithmetic.mjs';
+import { createDefaultVSAVM } from '../../src/index.mjs';
+import { generateMixedTestCases } from '../generators/arithmetic.mjs';
 import { stringAtom, numberAtom } from '../../src/core/types/terms.mjs';
 import { createSymbolId, createScopeId, createSourceId } from '../../src/core/types/identifiers.mjs';
 import { createFactInstance, createProvenanceLink } from '../../src/core/types/facts.mjs';
@@ -28,59 +28,82 @@ export async function runRuleLearningTests(config) {
       failed: []
     }
   };
-  
+
   const vm = createDefaultVSAVM();
   await vm.initialize();
-  
+
   try {
     const testCases = generateMixedTestCases(config.params.sequence_length);
     results.metrics.total_cases = testCases.length;
-    
+
+    const ruleLearner = resolveRuleLearner(vm);
+    if (!ruleLearner) {
+      for (const testCase of testCases) {
+        results.details.failed.push({
+          name: testCase.name,
+          type: testCase.type,
+          reason: 'Rule learning API not available'
+        });
+      }
+      results.metrics.accuracy = 0;
+      results.metrics.rules_learned = 0;
+      const stats = await vm.getStats();
+      results.metrics.memory_usage_mb = estimateMemoryUsage(stats.factCount);
+      return results;
+    }
+
+    const accuracies = [];
     let successCount = 0;
-    
+
     for (const testCase of testCases) {
-      const caseResult = await runSingleRuleLearningTest(vm, testCase, config);
-      
+      const caseResult = await runSingleRuleLearningTest(vm, testCase, config, ruleLearner);
+      accuracies.push(caseResult.accuracy);
+
       if (caseResult.success) {
         successCount++;
         results.details.passed.push({
           name: testCase.name,
           type: testCase.type,
-          accuracy: caseResult.accuracy
+          accuracy: caseResult.accuracy,
+          confidence: caseResult.confidence
         });
       } else {
         results.details.failed.push({
           name: testCase.name,
           type: testCase.type,
-          reason: caseResult.reason
+          reason: caseResult.reason || 'Rule mismatch',
+          confidence: caseResult.confidence
         });
       }
     }
-    
+
     results.metrics.rules_learned = successCount;
-    results.metrics.accuracy = successCount / testCases.length;
-    
+    results.metrics.accuracy = accuracies.length
+      ? accuracies.reduce((a, b) => a + b, 0) / accuracies.length
+      : 0;
+
     // Estimate memory usage
     const stats = await vm.getStats();
     results.metrics.memory_usage_mb = estimateMemoryUsage(stats.factCount);
-    
+
   } finally {
     await vm.close();
   }
-  
+
   return results;
 }
 
 /**
  * Run a single rule learning test case
  */
-async function runSingleRuleLearningTest(vm, testCase, config) {
+async function runSingleRuleLearningTest(vm, testCase, config, ruleLearner) {
   const { sequence, type, rule, name } = testCase;
-  
-  // Store sequence as facts
+  const minConfidence = config.params.rule_learning_min_confidence ?? 0.7;
+
+  // Store sequence as facts to support learners that read from the VM
   const scope = createScopeId(['eval', 'rule-learning', name]);
   const source = createSourceId('eval', 'sequence_gen');
-  
+
   for (let i = 0; i < sequence.length; i++) {
     const fact = createFactInstance(
       createSymbolId('sequence', 'element'),
@@ -94,86 +117,104 @@ async function runSingleRuleLearningTest(vm, testCase, config) {
         provenance: [createProvenanceLink(source)]
       }
     );
-    
+
     await vm.assertFact(fact);
   }
-  
-  // Query the facts back
-  const facts = await vm.queryFacts({ predicate: 'sequence:element' });
-  
-  // For now, we verify storage and retrieval works
-  // Full rule learning would require the compiler/search modules
-  
-  const storedCorrectly = facts.length >= sequence.length * 0.9; // Allow some tolerance
-  
-  if (storedCorrectly) {
-    // Attempt to detect the rule from stored facts
-    const detectedRule = detectRuleFromFacts(facts, name, type);
-    
-    if (detectedRule && rulesMatch(detectedRule, rule)) {
-      return {
-        success: true,
-        accuracy: 1.0,
-        detectedRule
-      };
-    } else {
-      return {
-        success: true,  // Storage worked, rule detection is partial
-        accuracy: 0.7,
-        detectedRule,
-        reason: 'Rule partially detected'
-      };
-    }
+
+  let learnResult;
+  try {
+    learnResult = await ruleLearner({
+      name,
+      type,
+      sequence,
+      expectedRule: rule,
+      scopeId: scope
+    });
+  } catch (error) {
+    return {
+      success: false,
+      accuracy: 0,
+      confidence: 0,
+      reason: `Rule learning failed: ${error.message}`
+    };
   }
-  
+
+  const normalized = normalizeLearningResult(learnResult);
+  if (!normalized.rule) {
+    return {
+      success: false,
+      accuracy: 0,
+      confidence: normalized.confidence ?? 0,
+      reason: normalized.error || 'No rule produced'
+    };
+  }
+
+  const matches = rulesMatch(normalized.rule, rule);
+  const confidence = normalized.confidence ?? (matches ? 1 : 0);
+  const accuracy = matches ? Math.max(0, Math.min(1, confidence || 1)) : 0;
+
   return {
-    success: false,
-    accuracy: 0,
-    reason: `Only stored ${facts.length} of ${sequence.length} facts`
+    success: matches && confidence >= minConfidence,
+    accuracy,
+    confidence,
+    learnedRule: normalized.rule
   };
 }
 
-/**
- * Simple rule detection from facts
- */
-function detectRuleFromFacts(facts, sequenceName, expectedType) {
-  // Filter facts for this sequence
-  const seqFacts = facts.filter(f => {
-    const seqArg = f.arguments.get('sequence');
-    return seqArg && seqArg.value === sequenceName;
-  });
-  
-  if (seqFacts.length < 3) return null;
-  
-  // Sort by index
-  seqFacts.sort((a, b) => {
-    const idxA = a.arguments.get('index')?.value ?? 0;
-    const idxB = b.arguments.get('index')?.value ?? 0;
-    return idxA - idxB;
-  });
-  
-  // Extract values
-  const values = seqFacts.map(f => f.arguments.get('value')?.value);
-  
-  // Try to detect arithmetic progression
-  if (values.length >= 2) {
-    const differences = [];
-    for (let i = 1; i < values.length; i++) {
-      differences.push(values[i] - values[i-1]);
-    }
-    
-    const isArithmetic = differences.every(d => Math.abs(d - differences[0]) < 0.001);
-    
-    if (isArithmetic) {
-      return {
-        type: 'arithmetic_progression',
-        start: values[0],
-        difference: differences[0]
-      };
-    }
+function resolveRuleLearner(vm) {
+  if (typeof vm.learnRule === 'function') {
+    return (payload) => vm.learnRule(payload);
   }
-  
+  if (typeof vm.learnRules === 'function') {
+    return async (payload) => {
+      const result = await vm.learnRules([payload]);
+      return Array.isArray(result) ? result[0] : result;
+    };
+  }
+  if (vm.ruleLearner && typeof vm.ruleLearner.learnRule === 'function') {
+    return (payload) => vm.ruleLearner.learnRule(payload);
+  }
+  if (vm.ruleLearner && typeof vm.ruleLearner.learn === 'function') {
+    return (payload) => vm.ruleLearner.learn(payload);
+  }
+  if (vm.compiler && typeof vm.compiler.learnRule === 'function') {
+    return (payload) => vm.compiler.learnRule(payload);
+  }
   return null;
+}
+
+function normalizeLearningResult(result) {
+  if (!result) {
+    return { rule: null, confidence: 0, error: 'Empty result' };
+  }
+
+  if (result.success === false) {
+    return {
+      rule: null,
+      confidence: result.confidence ?? result.score ?? 0,
+      error: result.error || result.reason || 'Learning failed'
+    };
+  }
+
+  if (result.rule) {
+    return {
+      rule: result.rule,
+      confidence: result.confidence ?? result.score ?? 0
+    };
+  }
+
+  if (result.type) {
+    return {
+      rule: result,
+      confidence: result.confidence ?? result.score ?? 0
+    };
+  }
+
+  return {
+    rule: null,
+    confidence: result.confidence ?? result.score ?? 0,
+    error: result.error || 'Unrecognized rule learning result'
+  };
 }
 
 /**
@@ -181,14 +222,26 @@ function detectRuleFromFacts(facts, sequenceName, expectedType) {
  */
 function rulesMatch(detected, expected) {
   if (!detected || !expected) return false;
-  
+
   if (detected.type !== expected.type) return false;
-  
+
   if (detected.type === 'arithmetic_progression') {
     return Math.abs(detected.difference - expected.difference) < 0.001;
   }
-  
-  return true;
+  if (detected.type === 'geometric_progression') {
+    return Math.abs(detected.ratio - expected.ratio) < 0.001;
+  }
+  if (detected.type === 'modular_arithmetic') {
+    return detected.increment === expected.increment && detected.modulus === expected.modulus;
+  }
+  if (detected.type === 'fibonacci') {
+    return detected.a === expected.a && detected.b === expected.b;
+  }
+  if (detected.type === 'polynomial') {
+    return detected.a === expected.a && detected.b === expected.b && detected.c === expected.c;
+  }
+
+  return false;
 }
 
 /**

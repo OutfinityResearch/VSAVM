@@ -1,6 +1,6 @@
 # VSAVM Evaluation System
 
-Rapid evaluation suite demonstrating core VSAVM capabilities.
+Fast-eval is a capability gate, not a smoke test. It is meant to fail unless the corresponding VSAVM modules are implemented and wired correctly. The suite avoids heuristic shortcuts and uses real execution paths.
 
 ## Structure
 
@@ -9,14 +9,7 @@ evals/
 ├── run.mjs              # Main evaluation runner
 ├── config.mjs           # Evaluation configuration
 ├── generators/          # Synthetic data generators
-│   ├── arithmetic.mjs   # Arithmetic sequence generators
-│   ├── logic.mjs        # Logical relation generators
-│   └── patterns.mjs     # General pattern generators
 ├── tests/               # Test implementations
-│   ├── rule-learning.mjs
-│   ├── compression.mjs
-│   ├── reasoning.mjs
-│   └── query-response.mjs
 └── results/             # Output directory
 ```
 
@@ -39,20 +32,43 @@ Per NFS requirements, this evaluation system uses:
 - Pure JavaScript (ES2022+)
 - ES Modules (.mjs)
 - Node.js built-in APIs only
-- async/await patterns
 
-## Evaluation Categories
+## Evaluation Categories (Strict)
 
-1. **Rule Learning** - Learns arithmetic, logical, and pattern rules
-2. **Compression** - Tests MDL-based pattern compression
-3. **Reasoning** - Forward chaining and inference
-4. **Query Response** - Query compilation and execution
+1. **Rule Learning** - Requires a real rule-learning module. If no rule learner is wired, the category fails.
+2. **Compression** - Requires a real compression implementation. Estimated ratios are not accepted.
+3. **Reasoning** - Uses bounded forward chaining and conflict detection to verify inference correctness.
+4. **Query Response** - Checks correctness and latency for structured queries.
+
+## Required Interfaces (Adapters)
+
+Rule learning (one of these must exist):
+- `VSAVM.learnRule(payload)`
+- `VSAVM.learnRules([payload])`
+- `VSAVM.ruleLearner.learnRule(payload)`
+- `VSAVM.ruleLearner.learn(payload)`
+
+Payload shape:
+`{ name, type, sequence, expectedRule, scopeId }`
+
+Return shape (minimum):
+`{ rule, confidence? }` or a rule object (`{ type, ... }`)
+
+Compression (one of these must exist):
+- `VSAVM.compressPattern(payload)`
+- `VSAVM.compressPatterns(payload)`
+- `VSAVM.compressor.compress(payload)`
+- `VSAVM.vsa.compress(payload)`
+
+Return must include a concrete size via one of:
+`compressedBytes`, `compressedSize`, `byteLength`, `size`, or `compressed` (string/Uint8Array).
 
 ## Thresholds
 
 | Metric | Threshold |
 |--------|-----------|
-| Rule Learning Accuracy | ≥90% |
-| Compression Ratio | ≥50% |
-| Reasoning Consistency | ≥95% |
+| Rule Learning Accuracy | ≥0.90 |
+| Compression Ratio | ≥0.50 |
+| Reasoning Consistency | ≥0.95 |
 | Query Response Time | ≤100ms |
+| Query Response Accuracy | ≥0.95 |

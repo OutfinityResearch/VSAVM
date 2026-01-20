@@ -10,6 +10,7 @@ export const config = {
     compression_ratio: 0.50,
     reasoning_consistency: 0.95,
     query_response_ms: 100,
+    query_accuracy: 0.95,
     memory_usage_mb: 256
   },
 
@@ -26,6 +27,7 @@ export const config = {
     // Rule learning
     sequence_length: 20,
     num_sequences: 10,
+    rule_learning_min_confidence: 0.7,
     
     // Compression
     pattern_repetitions: 50,

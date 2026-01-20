@@ -20,6 +20,7 @@ export async function runQueryResponseTests(config) {
       avg_response_ms: 0,
       max_response_ms: 0,
       min_response_ms: Infinity,
+      response_accuracy: 0,
       queries_under_threshold: 0,
       total_queries: 0
     },
@@ -33,7 +34,7 @@ export async function runQueryResponseTests(config) {
   
   try {
     // Populate with test data
-    await populateTestData(vm, config.params.max_facts || 100);
+    const predicateCounts = await populateTestData(vm, config.params.max_facts || 100);
     
     // Run queries
     const queryCount = config.params.query_count || 20;
@@ -41,8 +42,11 @@ export async function runQueryResponseTests(config) {
     
     const responseTimes = [];
     
+    let correctCount = 0;
+
     for (let i = 0; i < queryCount; i++) {
       const query = generateTestQuery(i);
+      const expectedCount = predicateCounts[query.predicate] ?? 0;
       
       const startTime = performance.now();
       const queryResult = await vm.queryFacts(query);
@@ -55,9 +59,15 @@ export async function runQueryResponseTests(config) {
         predicate: query.predicate,
         response_ms: responseTime,
         result_count: queryResult.length,
+        expected_count: expectedCount,
+        correct: queryResult.length === expectedCount,
         under_threshold: responseTime <= threshold
       });
-      
+
+      if (queryResult.length === expectedCount) {
+        correctCount++;
+      }
+
       if (responseTime <= threshold) {
         results.metrics.queries_under_threshold++;
       }
@@ -68,6 +78,7 @@ export async function runQueryResponseTests(config) {
     results.metrics.avg_response_ms = responseTimes.reduce((a, b) => a + b, 0) / queryCount;
     results.metrics.max_response_ms = Math.max(...responseTimes);
     results.metrics.min_response_ms = Math.min(...responseTimes);
+    results.metrics.response_accuracy = queryCount > 0 ? correctCount / queryCount : 0;
     
   } finally {
     await vm.close();
@@ -84,9 +95,12 @@ async function populateTestData(vm, factCount) {
   const source = createSourceId('eval', 'test_data');
   
   const predicates = ['person', 'location', 'event', 'property', 'relation'];
+  const predicateCounts = {};
   
   for (let i = 0; i < factCount; i++) {
     const predicate = predicates[i % predicates.length];
+    const fullPredicate = `test:${predicate}`;
+    predicateCounts[fullPredicate] = (predicateCounts[fullPredicate] ?? 0) + 1;
     
     const fact = createFactInstance(
       createSymbolId('test', predicate),
@@ -103,6 +117,8 @@ async function populateTestData(vm, factCount) {
     
     await vm.assertFact(fact);
   }
+
+  return predicateCounts;
 }
 
 /**

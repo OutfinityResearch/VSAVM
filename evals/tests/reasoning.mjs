@@ -3,15 +3,24 @@
  * Tests VSAVM's inference and logical reasoning capabilities
  */
 
-import { createDefaultVSAVM } from '../../src/index.mjs';
-import { VMService } from '../../src/vm/vm-service.mjs';
-import { MemoryStore } from '../../src/storage/strategies/memory-store.mjs';
-import { 
-  generateFamilyTree, 
+import { ClosureService } from '../../src/closure/closure-service.mjs';
+import { createRule } from '../../src/closure/algorithms/forward-chain.mjs';
+import { ResponseMode } from '../../src/core/types/results.mjs';
+import { createEntityId, symbolIdToString } from '../../src/core/types/identifiers.mjs';
+import { entityAtom, stringAtom, termToString } from '../../src/core/types/terms.mjs';
+import {
+  generateFamilyTree,
   generateTaxonomy,
   generatePropositionalLogic,
-  generateContradictionTest 
+  generateContradictionTest
 } from '../generators/logic.mjs';
+
+const DEFAULT_BUDGET = {
+  maxDepth: 6,
+  maxSteps: 500,
+  maxBranches: 5,
+  maxTimeMs: 3000
+};
 
 /**
  * Run reasoning evaluation
@@ -31,81 +40,84 @@ export async function runReasoningTests(config) {
       tests: []
     }
   };
-  
-  const store = new MemoryStore();
-  await store.initialize();
-  
-  const vm = new VMService(store, {
-    strictMode: true,
-    traceLevel: 'standard'
-  });
-  
-  try {
-    // Test 1: Family tree inference
-    const familyResult = await runFamilyTreeTest(store, vm);
-    results.details.tests.push(familyResult);
-    
-    // Test 2: Taxonomy transitive closure
-    await store.clear();
-    const taxonomyResult = await runTaxonomyTest(store, vm);
-    results.details.tests.push(taxonomyResult);
-    
-    // Test 3: Propositional logic modus ponens
-    await store.clear();
-    const logicResult = await runPropositionalLogicTest(store, vm);
-    results.details.tests.push(logicResult);
-    
-    // Test 4: Contradiction detection
-    await store.clear();
-    const contradictionResult = await runContradictionTest(store, vm);
-    results.details.tests.push(contradictionResult);
-    
-    // Calculate aggregate metrics
-    const testResults = results.details.tests;
-    const passedTests = testResults.filter(t => t.passed);
-    
-    results.metrics.consistency_score = passedTests.length / testResults.length;
-    results.metrics.inference_accuracy = calculateAverageMetric(testResults, 'inference_accuracy');
-    results.metrics.conflict_detection_rate = calculateAverageMetric(testResults, 'conflict_detected') ? 1.0 : 0.0;
-    results.metrics.closure_completeness = calculateAverageMetric(testResults, 'completeness');
-    
-  } finally {
-    await store.close();
-  }
-  
+
+  const closure = new ClosureService({ defaultMode: ResponseMode.STRICT });
+  const budget = config?.vsavm?.vm?.defaultBudget ?? DEFAULT_BUDGET;
+
+  // Test 1: Family tree inference
+  const familyResult = await runFamilyTreeTest(closure, budget);
+  results.details.tests.push(familyResult);
+
+  // Test 2: Taxonomy transitive closure
+  const taxonomyResult = await runTaxonomyTest(closure, budget);
+  results.details.tests.push(taxonomyResult);
+
+  // Test 3: Propositional logic modus ponens
+  const logicResult = await runPropositionalLogicTest(closure, budget);
+  results.details.tests.push(logicResult);
+
+  // Test 4: Contradiction detection
+  const contradictionResult = await runContradictionTest(closure, budget);
+  results.details.tests.push(contradictionResult);
+
+  // Calculate aggregate metrics
+  const testResults = results.details.tests;
+  const passedTests = testResults.filter(t => t.passed);
+
+  results.metrics.consistency_score = passedTests.length / testResults.length;
+  results.metrics.inference_accuracy = calculateAverageMetric(testResults, 'inference_accuracy');
+  results.metrics.conflict_detection_rate = contradictionResult.passed ? 1.0 : 0.0;
+  results.metrics.closure_completeness = calculateAverageMetric(testResults, 'completeness');
+
   return results;
 }
 
 /**
  * Test family tree inference
  */
-async function runFamilyTreeTest(store, vm) {
-  const { facts, rules, queries } = generateFamilyTree();
+async function runFamilyTreeTest(closure, budget) {
+  const { facts, rules } = generateFamilyTree();
   const startTime = Date.now();
-  
-  // Load facts
-  for (const fact of facts) {
-    await store.assertFact(fact);
-  }
-  
-  // Execute a simple query program
-  const program = {
-    instructions: [
-      {
-        op: 'QUERY',
-        args: { predicate: 'family:parent' },
-        out: 'parentFacts'
-      }
-    ]
-  };
-  
-  const result = await vm.execute(program);
-  
+
+  const normalizedRules = normalizeRules(rules);
+  const result = await closure.runClosure(facts, normalizedRules, budget, ResponseMode.STRICT);
+  const derivedFacts = collectDerivedFacts(result);
+
+  const expectedGrandparents = [
+    { grandparent: person('Alice'), grandchild: person('Eve') },
+    { grandparent: person('Alice'), grandchild: person('Frank') },
+    { grandparent: person('Bob'), grandchild: person('Eve') },
+    { grandparent: person('Bob'), grandchild: person('Frank') }
+  ];
+
+  const expectedSiblings = [
+    { person1: person('Carol'), person2: person('Dave') },
+    { person1: person('Dave'), person2: person('Carol') }
+  ];
+
+  const grandparentStats = checkExpectedFacts(
+    derivedFacts,
+    'family:grandparent',
+    ['grandparent', 'grandchild'],
+    expectedGrandparents
+  );
+
+  const siblingStats = checkExpectedFacts(
+    derivedFacts,
+    'family:sibling',
+    ['person1', 'person2'],
+    expectedSiblings
+  );
+
+  const expectedTotal = expectedGrandparents.length + expectedSiblings.length;
+  const foundTotal = grandparentStats.found + siblingStats.found;
+
   return {
     name: 'family_tree',
-    passed: result.mode === 'strict',
-    inference_accuracy: 1.0,  // Basic query succeeded
-    completeness: 1.0,
+    passed: grandparentStats.missing.length === 0 && siblingStats.missing.length === 0,
+    inference_accuracy: expectedTotal > 0 ? foundTotal / expectedTotal : 0,
+    completeness: expectedTotal > 0 ? foundTotal / expectedTotal : 0,
+    missing: [...grandparentStats.missing, ...siblingStats.missing],
     execution_ms: Date.now() - startTime
   };
 }
@@ -113,34 +125,32 @@ async function runFamilyTreeTest(store, vm) {
 /**
  * Test taxonomy transitive closure
  */
-async function runTaxonomyTest(store, vm) {
-  const { facts, rules, queries } = generateTaxonomy();
+async function runTaxonomyTest(closure, budget) {
+  const { facts, rules } = generateTaxonomy();
   const startTime = Date.now();
-  
-  // Load facts
-  for (const fact of facts) {
-    await store.assertFact(fact);
-  }
-  
-  // Query is-a relationships
-  const program = {
-    instructions: [
-      {
-        op: 'QUERY',
-        args: { predicate: 'taxonomy:is_a' },
-        out: 'isaFacts'
-      }
-    ]
-  };
-  
-  const result = await vm.execute(program);
-  const factCount = await store.count();
-  
+
+  const normalizedRules = normalizeRules(rules);
+  const result = await closure.runClosure(facts, normalizedRules, budget, ResponseMode.STRICT);
+  const derivedFacts = collectDerivedFacts(result);
+
+  const expectedAnimals = ['Dog', 'Cat', 'Eagle', 'Sparrow'].map(name => ({
+    subtype: concept(name),
+    supertype: concept('Animal')
+  }));
+
+  const expectedStats = checkExpectedFacts(
+    derivedFacts,
+    'taxonomy:is_a',
+    ['subtype', 'supertype'],
+    expectedAnimals
+  );
+
   return {
     name: 'taxonomy_closure',
-    passed: factCount >= 6,  // At least the base facts
-    inference_accuracy: factCount >= 6 ? 1.0 : factCount / 6,
-    completeness: 1.0,
+    passed: expectedStats.missing.length === 0,
+    inference_accuracy: expectedStats.expected > 0 ? expectedStats.found / expectedStats.expected : 0,
+    completeness: expectedStats.expected > 0 ? expectedStats.found / expectedStats.expected : 0,
+    missing: expectedStats.missing,
     execution_ms: Date.now() - startTime
   };
 }
@@ -148,24 +158,31 @@ async function runTaxonomyTest(store, vm) {
 /**
  * Test propositional logic modus ponens
  */
-async function runPropositionalLogicTest(store, vm) {
-  const { facts, rules, expectedInferences } = generatePropositionalLogic();
+async function runPropositionalLogicTest(closure, budget) {
+  const { facts, rules } = generatePropositionalLogic();
   const startTime = Date.now();
-  
-  // Load facts
-  for (const fact of facts) {
-    await store.assertFact(fact);
-  }
-  
-  // Query holdings
-  const holdsFacts = await store.queryByPredicate('logic:holds');
-  const impliesFacts = await store.queryByPredicate('logic:implies');
-  
+
+  const normalizedRules = normalizeRules(rules);
+  const result = await closure.runClosure(facts, normalizedRules, budget, ResponseMode.STRICT);
+  const derivedFacts = collectDerivedFacts(result);
+
+  const expectedPropositions = ['Q', 'R', 'S'].map(value => ({
+    proposition: stringAtom(value)
+  }));
+
+  const expectedStats = checkExpectedFacts(
+    derivedFacts,
+    'logic:holds',
+    ['proposition'],
+    expectedPropositions
+  );
+
   return {
     name: 'propositional_logic',
-    passed: holdsFacts.length >= 1 && impliesFacts.length >= 3,
-    inference_accuracy: 1.0,
-    completeness: 1.0,
+    passed: expectedStats.missing.length === 0,
+    inference_accuracy: expectedStats.expected > 0 ? expectedStats.found / expectedStats.expected : 0,
+    completeness: expectedStats.expected > 0 ? expectedStats.found / expectedStats.expected : 0,
+    missing: expectedStats.missing,
     execution_ms: Date.now() - startTime
   };
 }
@@ -173,30 +190,13 @@ async function runPropositionalLogicTest(store, vm) {
 /**
  * Test contradiction detection
  */
-async function runContradictionTest(store, vm) {
+async function runContradictionTest(closure, budget) {
   const { facts, hasContradiction } = generateContradictionTest();
   const startTime = Date.now();
-  
-  let conflictDetected = false;
-  
-  // Check for conflicts before asserting each fact
-  for (const fact of facts) {
-    const conflicts = await store.findConflicting(fact);
-    if (conflicts.length > 0) {
-      conflictDetected = true;
-    }
-    await store.assertFact(fact);
-  }
-  
-  // Also check all stored facts for conflicts with each other
-  const allFacts = await store.query({});
-  for (const fact of allFacts) {
-    const conflicts = await store.findConflicting(fact);
-    if (conflicts.length > 0) {
-      conflictDetected = true;
-    }
-  }
-  
+
+  const result = await closure.runClosure(facts, [], budget, ResponseMode.STRICT);
+  const conflictDetected = (result.conflicts?.length ?? 0) > 0;
+
   return {
     name: 'contradiction_detection',
     passed: conflictDetected === hasContradiction,
@@ -206,6 +206,77 @@ async function runContradictionTest(store, vm) {
   };
 }
 
+function normalizeRules(rules) {
+  return rules.map((rule, index) => createRule({
+    ruleId: rule.ruleId ?? rule.name ?? `rule_${index}`,
+    premises: rule.premises ?? [],
+    conclusions: rule.conclusions ?? (rule.conclusion ? [rule.conclusion] : []),
+    priority: rule.priority ?? 0,
+    estimatedCost: rule.estimatedCost ?? 5
+  }));
+}
+
+function collectDerivedFacts(result) {
+  return (result.claims ?? [])
+    .map(claim => claim.content)
+    .filter(Boolean);
+}
+
+function checkExpectedFacts(derivedFacts, predicate, slots, expectedRows) {
+  const derivedSet = new Set();
+
+  for (const fact of derivedFacts) {
+    if (predicateKey(fact.predicate) !== predicate) {
+      continue;
+    }
+
+    const key = buildFactKey(predicate, slots, slot => termToString(getArgument(fact, slot)));
+    derivedSet.add(key);
+  }
+
+  const missing = [];
+  for (const expected of expectedRows) {
+    const key = buildFactKey(predicate, slots, slot => termToString(expected[slot]));
+    if (!derivedSet.has(key)) {
+      missing.push(key);
+    }
+  }
+
+  return {
+    expected: expectedRows.length,
+    found: expectedRows.length - missing.length,
+    missing
+  };
+}
+
+function buildFactKey(predicate, slots, valueFn) {
+  const values = slots.map(slot => valueFn(slot));
+  return `${predicate}|${values.join('|')}`;
+}
+
+function getArgument(fact, slot) {
+  if (fact.arguments?.get) {
+    return fact.arguments.get(slot);
+  }
+  return fact.arguments?.[slot];
+}
+
+function predicateKey(pred) {
+  if (typeof pred === 'string') return pred;
+  if (pred?.namespace && pred?.name) {
+    return symbolIdToString(pred);
+  }
+  return String(pred);
+}
+
+function person(name) {
+  return entityAtom(createEntityId('person', name));
+}
+
+function concept(name) {
+  return entityAtom(createEntityId('concept', name));
+}
+
 /**
  * Calculate average of a metric across test results
  */
@@ -213,7 +284,7 @@ function calculateAverageMetric(results, metricName) {
   const values = results
     .map(r => r[metricName])
     .filter(v => typeof v === 'number');
-  
+
   if (values.length === 0) return 0;
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
