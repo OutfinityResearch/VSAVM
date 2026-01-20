@@ -22,28 +22,31 @@
           </header>
           <main class="main content">
             <h1>Binding</h1>
-    <p>Binding is a VSA operation that associates two hypervectors into a composite representation. It is used to capture role and relation structure.</p>
+    <p>Binding is a VSA operation that combines two hypervectors into a structured composite. It captures relations such as role-filler pairs or attribute assignments.</p>
+<p>This operation supports structured retrieval by encoding relationships explicitly rather than relying only on proximity.</p>
+<p>VSAVM uses binding to represent slots and roles when creating schema prototypes and query programs.</p>
     <p>External link: <a href="https://en.wikipedia.org/wiki/Hyperdimensional_computing">https://en.wikipedia.org/wiki/Hyperdimensional_computing</a>.</p>
     <figure class="diagram">
-      <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
+      <svg viewBox="0 0 760 220" role="img" aria-label="Diagram">
 <defs>
-<linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e8f3ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
+</linearGradient>
+<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#0b6eff"/>
+<stop offset="1" stop-color="#16b879"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Role</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Bind</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Pair</text>
+<line x1="380" y1="60" x2="380" y2="160" stroke="#0b6eff" stroke-width="4"/>
+<line x1="240" y1="100" x2="520" y2="100" stroke="#16b879" stroke-width="4"/>
+<rect x="160" y="110" width="160" height="50" rx="18" ry="18" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<rect x="440" y="110" width="160" height="50" rx="18" ry="18" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="240" y="140" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Role</text>
+<text x="520" y="140" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Filler</text>
+<text x="380" y="70" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Binding</text>
 </svg>
-      <figcaption>Summary diagram for Binding.</figcaption>
+      <figcaption>Binding combines role and filler into a structured composite.</figcaption>
     </figure>
           </main>
           <footer class="footer">

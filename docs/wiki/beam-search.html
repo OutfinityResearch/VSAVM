@@ -22,28 +22,35 @@
           </header>
           <main class="main content">
             <h1>Beam search</h1>
-    <p>Beam search keeps a bounded set of candidate branches in the VM state space. It is used in query compilation and in bounded closure to balance exploration and cost.</p>
+    <p>Beam search maintains a limited set of candidate branches in a search process. It is a pragmatic compromise between exhaustive exploration and greedy choice.</p>
+<p>In VSAVM, beam search appears in query compilation and in bounded closure to keep reasoning tractable while still exploring multiple interpretations.</p>
+<p>The beam width becomes part of the budget contract, making the scope of exploration explicit and configurable.</p>
     <p>External link: <a href="https://en.wikipedia.org/wiki/Beam_search">https://en.wikipedia.org/wiki/Beam_search</a>.</p>
     <figure class="diagram">
-      <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
+      <svg viewBox="0 0 760 220" role="img" aria-label="Diagram">
 <defs>
-<linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e8f3ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
+</linearGradient>
+<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#0b6eff"/>
+<stop offset="1" stop-color="#16b879"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Candidates</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Beam</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Best</text>
+<circle cx="120" cy="110" r="24" fill="url(#sky)" stroke="#0b6eff" stroke-width="2"/>
+<text x="120" y="114" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Root</text>
+<line x1="140" y1="110" x2="290" y2="70" stroke="#16b879" stroke-width="3"/>
+<rect x="290" y="55" width="120" height="30" rx="14" ry="14" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="350" y="75" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Beam 1</text>
+<line x1="140" y1="110" x2="470" y2="110" stroke="#16b879" stroke-width="3"/>
+<rect x="470" y="95" width="120" height="30" rx="14" ry="14" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="530" y="115" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Beam 2</text>
+<line x1="140" y1="110" x2="610" y2="150" stroke="#16b879" stroke-width="3"/>
+<rect x="610" y="135" width="120" height="30" rx="14" ry="14" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="670" y="155" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Beam 3</text>
 </svg>
-      <figcaption>Summary diagram for Beam search.</figcaption>
+      <figcaption>Beam search balances exploration with bounded computation.</figcaption>
     </figure>
           </main>
           <footer class="footer">

@@ -22,29 +22,30 @@
           </header>
           <main class="main content">
             <h1>System vision</h1>
-    <p>VSAVM is designed as a language-like interface that hides an executable core. The key claim is that fluency is not enough; the system must act as if it is running a program that can be inspected, bounded, and corrected. This position turns prediction into a consequence of execution rather than a purely statistical continuation.</p>
-<p>A practical vision also requires a compatibility layer. The model looks like a modern LLM at the surface, yet it relies on an internal machine that treats each input as a structured event stream. This separation allows the interface to remain familiar while the reasoning machinery remains explicit and auditable.</p>
-<p>The vision concludes with a contract: answers are only as strong as the closure budget that was used. When a user asks for deeper analysis, the system commits to explore more of the state space instead of providing a confident but unsupported response.</p>
+    <p>VSAVM is designed as a language-like interface that hides an executable core. The central idea is that a system can remain conversational while grounding every response in a stateful computation that can be inspected, bounded, and corrected. This shifts the definition of understanding away from latent state and toward executable traces.</p>
+<p>The vision demands a compatibility layer between statistical prediction and symbolic execution. Inputs look like ordinary prompts, yet internally they are treated as structured events that drive program construction and execution. This preserves familiar UX while enabling rigorous internal guarantees.</p>
+<p>A practical system vision must define how certainty is earned. In VSAVM, stronger answers emerge only when the closure budget explores enough of the state space to rule out contradictions. When the budget is insufficient, the system must say so explicitly rather than projecting confidence.</p>
     <figure class="diagram">
-      <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
+      <svg viewBox="0 0 760 220" role="img" aria-label="Diagram">
 <defs>
-<linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#e7f2ff"/>
+<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e8f3ff"/>
 <stop offset="1" stop-color="#d6f5e8"/>
 </linearGradient>
+<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#0b6eff"/>
+<stop offset="1" stop-color="#16b879"/>
+</linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Event stream</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#16b879" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#16b879"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">VM state</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#16b879" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#16b879"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Outcome</text>
+<line x1="380" y1="60" x2="380" y2="160" stroke="#0b6eff" stroke-width="4"/>
+<line x1="240" y1="100" x2="520" y2="100" stroke="#16b879" stroke-width="4"/>
+<rect x="160" y="110" width="160" height="50" rx="18" ry="18" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<rect x="440" y="110" width="160" height="50" rx="18" ry="18" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="240" y="140" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Fluency</text>
+<text x="520" y="140" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Execution</text>
+<text x="380" y="70" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Consistency</text>
 </svg>
-      <figcaption>Concept diagram for System vision.</figcaption>
+      <figcaption>A system vision that balances fluency with execution and explicit consistency checks.</figcaption>
     </figure>
           </main>
           <footer class="footer">

@@ -22,28 +22,34 @@
           </header>
           <main class="main content">
             <h1>Canonicalization</h1>
-    <p>Canonicalization maps surface statements to a normalized internal form so that contradictions are detected even when wording differs. It is the basis for reliable conflict checks.</p>
+    <p>Canonicalization maps surface statements into a normalized internal representation. It is the basis for reliable contradiction detection across paraphrases.</p>
+<p>In VSAVM, canonical forms include typed slots and explicit negation, allowing the VM to check conflicts deterministically.</p>
+<p>Without canonicalization, bounded closure would be ineffective because equivalent claims would appear unrelated.</p>
     <p>External link: <a href="https://en.wikipedia.org/wiki/Normal_form">https://en.wikipedia.org/wiki/Normal_form</a>.</p>
     <figure class="diagram">
-      <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
+      <svg viewBox="0 0 760 200" role="img" aria-label="Diagram">
 <defs>
-<linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e8f3ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
+</linearGradient>
+<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#0b6eff"/>
+<stop offset="1" stop-color="#16b879"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Surface</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Canon</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Check</text>
+<rect x="40" y="50" rx="18" ry="18" width="190" height="90" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="135.0" y="95.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Surface</text>
+<line x1="230" y1="95.0" x2="270" y2="95.0" stroke="url(#deep)" stroke-width="4"/>
+<polygon points="262,88.0 262,102.0 278,95.0" fill="#16b879"/>
+<rect x="270" y="50" rx="18" ry="18" width="190" height="90" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="365.0" y="95.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Normalize</text>
+<line x1="460" y1="95.0" x2="500" y2="95.0" stroke="url(#deep)" stroke-width="4"/>
+<polygon points="492,88.0 492,102.0 508,95.0" fill="#16b879"/>
+<rect x="500" y="50" rx="18" ry="18" width="190" height="90" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="595.0" y="95.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Canonical</text>
 </svg>
-      <figcaption>Summary diagram for Canonicalization.</figcaption>
+      <figcaption>Canonicalization aligns diverse surface forms into a stable internal form.</figcaption>
     </figure>
           </main>
           <footer class="footer">

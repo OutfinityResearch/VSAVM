@@ -22,28 +22,32 @@
           </header>
           <main class="main content">
             <h1>Bounded closure</h1>
-    <p>Bounded closure is the limited transitive closure of rule consequences and executions. Budgets constrain depth, branching, and steps while consistency is checked within those limits.</p>
+    <p>Bounded closure is the limited exploration of rule consequences and execution paths. It makes reasoning explicit by constraining depth, branching, and step count.</p>
+<p>Within these limits, the system checks for contradictions and rejects conclusions that cannot be verified. This defines correctness as a function of budget.</p>
+<p>As budgets increase, the system explores more of the state graph and can strengthen or revise prior conclusions.</p>
     <p>External link: <a href="https://en.wikipedia.org/wiki/Transitive_closure">https://en.wikipedia.org/wiki/Transitive_closure</a>.</p>
     <figure class="diagram">
-      <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
+      <svg viewBox="0 0 760 220" role="img" aria-label="Diagram">
 <defs>
-<linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e8f3ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
+</linearGradient>
+<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#0b6eff"/>
+<stop offset="1" stop-color="#16b879"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Rules</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Bounded search</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Conflicts</text>
+<circle cx="380" cy="110" r="70" fill="none" stroke="#0b6eff" stroke-width="6"/>
+<path d="M450 45 L485 55 L455 80" fill="#16b879"/>
+<circle cx="380" cy="30" r="24" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="380" y="34" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Rules</text>
+<circle cx="520" cy="120" r="24" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="520" y="124" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Depth</text>
+<circle cx="240" cy="120" r="24" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="240" y="124" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Conflicts</text>
 </svg>
-      <figcaption>Summary diagram for Bounded closure.</figcaption>
+      <figcaption>Closure explores consequences within strict computational limits.</figcaption>
     </figure>
           </main>
           <footer class="footer">

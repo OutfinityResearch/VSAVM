@@ -22,28 +22,32 @@
           </header>
           <main class="main content">
             <h1>Virtual Machine (VM)</h1>
-    <p>In VSAVM, the VM is an executable core that runs discrete programs and maintains explicit state. It turns input into canonical facts, applies rules, and checks consistency through bounded closure.</p>
+    <p>In VSAVM, the VM is the executable core that turns language into stateful computation. It manages a canonical fact store, rule memory, and a binding environment, making reasoning a transparent sequence of steps.</p>
+<p>Unlike purely statistical models, the VM exposes its intermediate state and execution history. This enables consistency checks, bounded closure, and auditability without relying on hidden activations.</p>
+<p>The VM is intentionally compact and typed so that its behavior remains understandable and testable, even as its program library evolves through learning.</p>
     <p>External link: <a href="https://en.wikipedia.org/wiki/Virtual_machine">https://en.wikipedia.org/wiki/Virtual_machine</a>.</p>
     <figure class="diagram">
-      <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
+      <svg viewBox="0 0 760 220" role="img" aria-label="Diagram">
 <defs>
-<linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e8f3ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
+</linearGradient>
+<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#0b6eff"/>
+<stop offset="1" stop-color="#16b879"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Program</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">VM state</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Result</text>
+<rect x="60" y="35" rx="18" ry="18" width="640" height="45" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="380" y="63" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Program</text>
+<line x1="380" y1="80" x2="380" y2="100" stroke="#16b879" stroke-width="3"/>
+<rect x="60" y="100" rx="18" ry="18" width="640" height="45" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="380" y="128" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">State</text>
+<line x1="380" y1="145" x2="380" y2="165" stroke="#16b879" stroke-width="3"/>
+<rect x="60" y="165" rx="18" ry="18" width="640" height="45" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="380" y="193" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Execution log</text>
 </svg>
-      <figcaption>Summary diagram for Virtual Machine (VM).</figcaption>
+      <figcaption>The VM organizes program execution over a persistent state with auditable traces.</figcaption>
     </figure>
           </main>
           <footer class="footer">
