@@ -1,61 +1,81 @@
 <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Beam search | VSAVM</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="../assets/site.css">
-      </head>
-      <body>
-        <div class="site">
-          <header class="header">
-            <div class="brand">VSAVM</div>
-            <nav class="nav">
-              <a href="../index.html">Home</a>
-              <a href="../specs.html">Specs</a>
-              <a href="../theory/index.html">Theory</a>
-              <a href="../wiki/index.html">Wiki</a>
-            </nav>
-          </header>
-          <main class="main content">
-            <h1>Beam search</h1>
-    <p>Beam search maintains a limited set of candidate branches in a search process. It is a pragmatic compromise between exhaustive exploration and greedy choice.</p>
-<p>In VSAVM, beam search appears in query compilation and in bounded closure to keep reasoning tractable while still exploring multiple interpretations.</p>
-<p>The beam width becomes part of the budget contract, making the scope of exploration explicit and configurable.</p>
-    <p>External link: <a href="https://en.wikipedia.org/wiki/Beam_search">https://en.wikipedia.org/wiki/Beam_search</a>.</p>
-    <figure class="diagram">
-      <svg viewBox="0 0 760 220" role="img" aria-label="Diagram">
-<defs>
-<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#e8f3ff"/>
-<stop offset="1" stop-color="#d6f5e8"/>
-</linearGradient>
-<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#0b6eff"/>
-<stop offset="1" stop-color="#16b879"/>
-</linearGradient>
-</defs>
-<circle cx="120" cy="110" r="24" fill="url(#sky)" stroke="#0b6eff" stroke-width="2"/>
-<text x="120" y="114" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Root</text>
-<line x1="140" y1="110" x2="290" y2="70" stroke="#16b879" stroke-width="3"/>
-<rect x="290" y="55" width="120" height="30" rx="14" ry="14" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="350" y="75" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Beam 1</text>
-<line x1="140" y1="110" x2="470" y2="110" stroke="#16b879" stroke-width="3"/>
-<rect x="470" y="95" width="120" height="30" rx="14" ry="14" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="530" y="115" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Beam 2</text>
-<line x1="140" y1="110" x2="610" y2="150" stroke="#16b879" stroke-width="3"/>
-<rect x="610" y="135" width="120" height="30" rx="14" ry="14" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="670" y="155" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Beam 3</text>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Beam search | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Beam search</h1>
+<p>This wiki entry defines a term used across VSAVM and explains why it matters in the architecture.</p><p>The diagram has a transparent background and highlights the operational meaning of the term inside VSAVM.</p>
+<p>Related wiki pages: <a href="vm.html">VM</a>, <a href="event-stream.html">event stream</a>, <a href="vsa.html">VSA</a>, <a href="bounded-closure.html">bounded closure</a>, <a href="consistency-contract.html">consistency contract</a>.</p>
+<h2>Definition</h2>
+<p>Beam search keeps only a fixed number of best candidates at each step, providing a practical compromise between exhaustive search and greedy choice.</p>
+<h2>Role in VSAVM</h2>
+<p>VSAVM uses beam-like strategies for query compilation and for closure exploration. Beams make ambiguity explicit and allow the system to prune candidates that conflict under closure.</p>
+<h2>Mechanics and implications</h2>
+<p>Beam width impacts the strength of conclusions. A narrow beam can miss conflicting branches; a wider beam improves coverage but increases cost. VSAVM ties robustness to the budget and can downgrade to conditional outputs when coverage is limited.</p>
+<h2>Further reading</h2>
+<p>Beam search is widely used in sequence decoding and heuristic search. In VSAVM, beam scoring incorporates both predictive fit and consistency penalties.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 320" role="img" aria-label="Beam search diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="90" y="80" rx="18" ry="18" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="190.0" y="114.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Root</text>
+<rect x="330" y="55" rx="18" ry="18" width="240" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="450.0" y="86.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Branch 1</text>
+<rect x="330" y="130" rx="18" ry="18" width="240" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="450.0" y="161.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Branch 2</text>
+<rect x="330" y="205" rx="18" ry="18" width="240" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="450.0" y="236.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Branch 3</text>
+<rect x="610" y="130" rx="18" ry="18" width="240" height="65" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="730.0" y="166.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Keep top-K</text>
+<line x1="290" y1="110" x2="330" y2="82" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="320,75 320,89 340,82" fill="#16b879"/>
+<line x1="290" y1="110" x2="330" y2="157" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="320,150 320,164 340,157" fill="#16b879"/>
+<line x1="290" y1="110" x2="330" y2="232" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="320,225 320,239 340,232" fill="#16b879"/>
+<line x1="570" y1="157" x2="610" y2="162" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="600,155 600,169 620,162" fill="#16b879"/>
+<rect x="90" y="265" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="106" y="287" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="106" y="309" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Beam width is a budget parameter.</text>
+<text x="106" y="327" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Keeps multiple hypotheses alive.</text>
+<text x="106" y="345" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Balances cost and coverage.</text>
 </svg>
-      <figcaption>Beam search balances exploration with bounded computation.</figcaption>
-    </figure>
-          </main>
-          <footer class="footer">
-            VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
-          </footer>
-        </div>
-      </body>
-    </html>
+<figcaption>Beam search maintains multiple candidate branches while keeping computation bounded.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Beam_search">Beam search (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Heuristic">Heuristic (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Best-first_search">Best-first search (Wikipedia)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

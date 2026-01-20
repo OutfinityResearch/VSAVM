@@ -1,62 +1,73 @@
 <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Schema | VSAVM</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="../assets/site.css">
-      </head>
-      <body>
-        <div class="site">
-          <header class="header">
-            <div class="brand">VSAVM</div>
-            <nav class="nav">
-              <a href="../index.html">Home</a>
-              <a href="../specs.html">Specs</a>
-              <a href="../theory/index.html">Theory</a>
-              <a href="../wiki/index.html">Wiki</a>
-            </nav>
-          </header>
-          <main class="main content">
-            <h1>Schema</h1>
-    <p>A schema captures a recurring intent and provides a structured frame with typed slots. It is the bridge between surface language and executable programs.</p>
-<p>Schemas emerge from repeated patterns and are refined through execution feedback. This allows new phrasing to map to stable program structures.</p>
-<p>In VSAVM, schemas enable compact query compilation and reduce the search space for candidate programs.</p>
-    <p>External link: <a href="https://en.wikipedia.org/wiki/Schema_(psychology)">https://en.wikipedia.org/wiki/Schema_(psychology)</a>.</p>
-    <figure class="diagram">
-      <svg viewBox="0 0 760 220" role="img" aria-label="Diagram">
-<defs>
-<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#e8f3ff"/>
-<stop offset="1" stop-color="#d6f5e8"/>
-</linearGradient>
-<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#0b6eff"/>
-<stop offset="1" stop-color="#16b879"/>
-</linearGradient>
-</defs>
-<rect x="140" y="60" rx="16" ry="16" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="230" y="90" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Intent</text>
-<rect x="420" y="60" rx="16" ry="16" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="510" y="90" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Slots</text>
-<rect x="140" y="140" rx="16" ry="16" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="230" y="170" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Bindings</text>
-<rect x="420" y="140" rx="16" ry="16" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="510" y="170" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Result</text>
-<line x1="320" y1="85" x2="420" y2="85" stroke="#16b879" stroke-width="3"/>
-<line x1="320" y1="165" x2="420" y2="165" stroke="#16b879" stroke-width="3"/>
-<line x1="230" y1="110" x2="230" y2="140" stroke="#0b6eff" stroke-width="3"/>
-<line x1="510" y1="110" x2="510" y2="140" stroke="#0b6eff" stroke-width="3"/>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Schema | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Schema</h1>
+<p>This wiki entry defines a term used across VSAVM and explains why it matters in the architecture.</p><p>The diagram has a transparent background and highlights the operational meaning of the term inside VSAVM.</p>
+<p>Related wiki pages: <a href="vm.html">VM</a>, <a href="event-stream.html">event stream</a>, <a href="vsa.html">VSA</a>, <a href="bounded-closure.html">bounded closure</a>, <a href="consistency-contract.html">consistency contract</a>.</p>
+<h2>Definition</h2>
+<p>A schema is a structured representation of a recurring intent, often expressed as a frame with slots to be filled.</p>
+<h2>Role in VSAVM</h2>
+<p>Schemas are the bridge between language and execution. They constrain compilation and generation by defining what roles exist, what types are allowed, and how a surface span maps to program structure.</p>
+<h2>Mechanics and implications</h2>
+<p>Typed slots reduce branching and improve auditability. The system can log which span filled which slot and which assumptions were required. VSA can help retrieve candidate schemas, but final bindings must be validated by execution and closure checks.</p>
+<h2>Further reading</h2>
+<p>Schemas appear in cognitive science and linguistics; VSAVM uses them as an engineering abstraction that supports compilation and verification.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 320" role="img" aria-label="Schema diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="120" y="70" width="660" height="180" rx="26" ry="26" fill="none" stroke="#0b6eff" stroke-width="3"/>
+<text x="150" y="100" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">Schema frame</text>
+<rect x="160" y="125" rx="18" ry="18" width="240" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="280.0" y="156.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Intent</text>
+<rect x="420" y="125" rx="18" ry="18" width="320" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="580.0" y="156.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Typed slots</text>
+<rect x="160" y="195" rx="18" ry="18" width="240" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="280.0" y="226.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Bindings</text>
+<rect x="420" y="195" rx="18" ry="18" width="320" height="55" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="580.0" y="226.5" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Program skeleton</text>
+<rect x="120" y="265" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="136" y="287" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="136" y="309" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Frames structure repeated intents.</text>
+<text x="136" y="327" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Slots are filled discretely.</text>
+<text x="136" y="345" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Skeletons become executable programs.</text>
 </svg>
-      <figcaption>Schemas organize repeated intents into structured slots.</figcaption>
-    </figure>
-          </main>
-          <footer class="footer">
-            VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
-          </footer>
-        </div>
-      </body>
-    </html>
+<figcaption>Schemas map paraphrases into structured frames that compile into executable programs.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Schema_(psychology)">Schema (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Frame_semantics">Frame semantics (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Program_synthesis">Program synthesis (Wikipedia)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

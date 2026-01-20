@@ -1,59 +1,77 @@
 <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Event stream | VSAVM</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="../assets/site.css">
-      </head>
-      <body>
-        <div class="site">
-          <header class="header">
-            <div class="brand">VSAVM</div>
-            <nav class="nav">
-              <a href="../index.html">Home</a>
-              <a href="../specs.html">Specs</a>
-              <a href="../theory/index.html">Theory</a>
-              <a href="../wiki/index.html">Wiki</a>
-            </nav>
-          </header>
-          <main class="main content">
-            <h1>Event stream</h1>
-    <p>The event stream is the canonical representation for all inputs. Each event carries a discrete payload and structural context, making segmentation and scope explicit.</p>
-<p>This representation unifies text, audio, and visual inputs into a single processing pipeline. It also enables deterministic expansion from macro units to lexical tokens.</p>
-<p>By emphasizing structure, the event stream supports consistency checking and localized reasoning inside the VM.</p>
-    <p>External link: <a href="https://en.wikipedia.org/wiki/Event_stream_processing">https://en.wikipedia.org/wiki/Event_stream_processing</a>.</p>
-    <figure class="diagram">
-      <svg viewBox="0 0 760 200" role="img" aria-label="Diagram">
-<defs>
-<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#e8f3ff"/>
-<stop offset="1" stop-color="#d6f5e8"/>
-</linearGradient>
-<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#0b6eff"/>
-<stop offset="1" stop-color="#16b879"/>
-</linearGradient>
-</defs>
-<line x1="80" y1="110" x2="680" y2="110" stroke="#0b6eff" stroke-width="4"/>
-<circle cx="120" cy="110" r="12" fill="#16b879"/>
-<text x="120" y="85" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Token</text>
-<circle cx="320" cy="110" r="12" fill="#16b879"/>
-<text x="320" y="85" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Separator</text>
-<circle cx="520" cy="110" r="12" fill="#16b879"/>
-<text x="520" y="85" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Context</text>
-<circle cx="660" cy="110" r="12" fill="#16b879"/>
-<text x="660" y="85" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Span</text>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Event stream | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Event stream</h1>
+<p>This wiki entry defines a term used across VSAVM and explains why it matters in the architecture.</p><p>The diagram has a transparent background and highlights the operational meaning of the term inside VSAVM.</p>
+<p>Related wiki pages: <a href="vm.html">VM</a>, <a href="event-stream.html">event stream</a>, <a href="vsa.html">VSA</a>, <a href="bounded-closure.html">bounded closure</a>, <a href="consistency-contract.html">consistency contract</a>.</p>
+<h2>Definition</h2>
+<p>An event stream is an ordered sequence of typed, discrete events. In VSAVM, each event includes a payload and a structural context path that preserves scope and boundaries.</p>
+<h2>Role in VSAVM</h2>
+<p>The event stream unifies text and multimodal inputs so that the VM and bounded closure operate on a single representation. It is the foundation for schema discovery, program compilation, and scope-aware conflict detection.</p>
+<h2>Mechanics and implications</h2>
+<p>Structural separators are explicit events that delimit where a fact applies. By keeping structure in the representation, the system can maintain local theories and avoid global inconsistency while still enforcing correctness within scope.</p>
+<h2>Further reading</h2>
+<p>Event stream processing is a broad topic. VSAVM uses the term in a representational sense: explicit structure and discrete units that support deterministic parsing and auditing.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 320" role="img" aria-label="Event stream diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="90" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="210.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Typed events</text>
+<rect x="350" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="470.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Discrete payload</text>
+<rect x="610" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="730.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Context path</text>
+<line x1="330" y1="105" x2="350" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="340,98 340,112 360,105" fill="#16b879"/>
+<line x1="590" y1="105" x2="610" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="600,98 600,112 620,105" fill="#16b879"/>
+<rect x="210" y="170" rx="18" ry="18" width="540" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="480.0" y="209.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Separators define scope for closure</text>
+<line x1="480" y1="140" x2="480" y2="170" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
+<polygon points="470,163 470,177 490,170" fill="#16b879"/>
+<rect x="90" y="255" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="106" y="277" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="106" y="299" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">One substrate for all modalities.</text>
+<text x="106" y="317" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Context encodes scope.</text>
+<text x="106" y="335" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Scope enables contradiction checks.</text>
 </svg>
-      <figcaption>Events are ordered and scoped to preserve structure across modalities.</figcaption>
-    </figure>
-          </main>
-          <footer class="footer">
-            VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
-          </footer>
-        </div>
-      </body>
-    </html>
+<figcaption>The event stream is the canonical, scoped input substrate for VSAVM.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Event_stream_processing">Event stream processing (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Tokenization_(lexical_analysis)">Tokenization (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Scope_(computer_science)">Scope (computer science) (Wikipedia)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

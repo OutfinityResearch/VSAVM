@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Operational correctness via bounded closure | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Operational correctness via bounded closure</h1>
+<p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
+<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
+<h2>Overview</h2>
+<p>Correctness in VSAVM is not a vague aspiration; it is a contract. The system is allowed to emit a conclusion only if bounded closure does not reveal contradictions within the configured budget and scope. This makes the cost of correctness explicit and configurable.</p>
+<h2>Canonical facts and negation</h2>
+<p>Contradictions cannot be reliably detected at the text level. VSAVM maps assertions into canonical fact identifiers with typed slots and explicit polarity. Different surface forms can map to the same canonical identifier, making paraphrase-invariant conflict checks possible.</p>
+<h2>Bounded closure and exploration</h2>
+<p>Closure applies rules and macro programs to derive consequences. It is bounded by depth, branching, steps, or time, and therefore it is incomplete by design. The important property is honesty: the system ties claim strength to the budget and can downgrade to conditional results when exploration is insufficient.</p>
+<h2>Practical auditing</h2>
+<p>A correctness claim is only meaningful if it is auditable. VSAVM logs the closure budget, explored branches, applied rules, and detected conflicts. This allows the system to produce operational explanations that are traces of what was executed rather than post-hoc narratives.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 340" role="img" aria-label="Correctness diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="80" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="200.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Canonicalize</text>
+<rect x="340" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="460.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Close (bounded)</text>
+<rect x="600" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="720.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Detect conflicts</text>
+<line x1="320" y1="105" x2="340" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="330,98 330,112 350,105" fill="#16b879"/>
+<line x1="580" y1="105" x2="600" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="590,98 590,112 610,105" fill="#16b879"/>
+<rect x="180" y="170" rx="18" ry="18" width="540" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="450.0" y="209.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Conflict = same fact_id with opposite polarity in same scope</text>
+<line x1="480" y1="140" x2="480" y2="170" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
+<polygon points="470,163 470,177 490,170" fill="#16b879"/>
+<rect x="180" y="250" rx="16" ry="16" width="610" height="48" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="196" y="272" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Budgets define what was checked and therefore what may be stated.</text>
+<rect x="80" y="295" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="96" y="317" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="96" y="339" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Canonical IDs make contradictions comparable.</text>
+<text x="96" y="357" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Scope makes contradictions meaningful.</text>
+<text x="96" y="375" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Budgets define claim strength.</text>
+</svg>
+<figcaption>Correctness is operational: canonical facts plus bounded closure plus scope-aware conflict detection define what can be safely emitted.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Consistency">Consistency (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Transitive_closure">Transitive closure (Wikipedia)</a> <a href="https://plato.stanford.edu/entries/logic-nonmonotonic/">Non-monotonic logic (SEP)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

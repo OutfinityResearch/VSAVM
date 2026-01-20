@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Structural boundaries and scope | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Structural boundaries and scope</h1>
+<p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
+<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
+<h2>Overview</h2>
+<p>Correctness claims require scope. Real corpora contain incompatible sources, hypothetical statements, and quoted passages. If the system treats all statements as globally active, bounded closure either explodes in contradictions or becomes meaningless because conflicts are ignored.</p>
+<h2>Boundaries as signals</h2>
+<p>Structural boundaries include headings, paragraphs, lists, quotes, definitions, and procedural steps. In multimodal inputs, boundaries also include temporal segments and scene changes. VSAVM treats these separators as explicit events so the VM can localize inference without guessing.</p>
+<h2>Scope-aware correctness</h2>
+<p>A contradiction is defined canonically as the same fact identifier appearing with opposing polarity inside the same scope. Structural separators define that scope, and the VM carries scope through execution. This enables local theories that remain coherent even when global reconciliation is not possible under budget.</p>
+<h2>Practical outcomes</h2>
+<p>Scope enables conditional reasoning across sources. A claim can be robust within a scope while being conditional across scopes. This makes the system useful under real-world inconsistency without abandoning the non-contradiction promise.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 320" role="img" aria-label="Scope diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="90" y="55" width="720" height="210" rx="26" ry="26" fill="none" stroke="#7fb3e6" stroke-width="3"/>
+<text x="120" y="85" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">Document scope</text>
+<rect x="150" y="95" width="600" height="160" rx="24" ry="24" fill="none" stroke="#0b6eff" stroke-width="3"/>
+<text x="180" y="125" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">Section scope</text>
+<rect x="230" y="140" width="440" height="90" rx="20" ry="20" fill="none" stroke="#16b879" stroke-width="3"/>
+<text x="260" y="170" text-anchor="start" font-size="13" fill="#2f4a63" font-family="Space Grotesk">Local context (quote / procedure / paragraph)</text>
+<rect x="90" y="275" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="106" y="297" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="106" y="319" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Scope defines what can interact under closure.</text>
+<text x="106" y="337" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Conflicts are meaningful only in-scope.</text>
+<text x="106" y="355" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Local theories reduce global inconsistency.</text>
+</svg>
+<figcaption>Scope makes contradiction detection meaningful by restricting which facts may interact during closure.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Scope_(computer_science)">Scope (computer science) (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Context_(computing)">Context (computing) (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Consistency">Consistency (Wikipedia)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,62 +1,81 @@
 <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Multimodal | VSAVM</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="../assets/site.css">
-      </head>
-      <body>
-        <div class="site">
-          <header class="header">
-            <div class="brand">VSAVM</div>
-            <nav class="nav">
-              <a href="../index.html">Home</a>
-              <a href="../specs.html">Specs</a>
-              <a href="../theory/index.html">Theory</a>
-              <a href="../wiki/index.html">Wiki</a>
-            </nav>
-          </header>
-          <main class="main content">
-            <h1>Multimodal</h1>
-    <p>Multimodal processing converts text, audio, and images into a shared event stream. This avoids separate pipelines and allows unified execution and consistency checks.</p>
-<p>Each modality contributes discrete events and structural separators, which are then interpreted uniformly by the VM.</p>
-<p>This design emphasizes symbolic compatibility rather than modality-specific encoders, keeping the core reasoning machinery shared.</p>
-    <p>External link: <a href="https://en.wikipedia.org/wiki/Multimodal_learning">https://en.wikipedia.org/wiki/Multimodal_learning</a>.</p>
-    <figure class="diagram">
-      <svg viewBox="0 0 760 220" role="img" aria-label="Diagram">
-<defs>
-<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#e8f3ff"/>
-<stop offset="1" stop-color="#d6f5e8"/>
-</linearGradient>
-<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#0b6eff"/>
-<stop offset="1" stop-color="#16b879"/>
-</linearGradient>
-</defs>
-<rect x="140" y="60" rx="16" ry="16" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="230" y="90" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Text</text>
-<rect x="420" y="60" rx="16" ry="16" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="510" y="90" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Audio</text>
-<rect x="140" y="140" rx="16" ry="16" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="230" y="170" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Image</text>
-<rect x="420" y="140" rx="16" ry="16" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="510" y="170" text-anchor="middle" font-size="12" fill="#0b1a2b" font-family="Space Grotesk">Event stream</text>
-<line x1="320" y1="85" x2="420" y2="85" stroke="#16b879" stroke-width="3"/>
-<line x1="320" y1="165" x2="420" y2="165" stroke="#16b879" stroke-width="3"/>
-<line x1="230" y1="110" x2="230" y2="140" stroke="#0b6eff" stroke-width="3"/>
-<line x1="510" y1="110" x2="510" y2="140" stroke="#0b6eff" stroke-width="3"/>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Multimodal | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Multimodal</h1>
+<p>This wiki entry defines a term used across VSAVM and explains why it matters in the architecture.</p><p>The diagram has a transparent background and highlights the operational meaning of the term inside VSAVM.</p>
+<p>Related wiki pages: <a href="vm.html">VM</a>, <a href="event-stream.html">event stream</a>, <a href="vsa.html">VSA</a>, <a href="bounded-closure.html">bounded closure</a>, <a href="consistency-contract.html">consistency contract</a>.</p>
+<h2>Definition</h2>
+<p>Multimodal processing integrates multiple input or output modalities such as text, audio, and images.</p>
+<h2>Role in VSAVM</h2>
+<p>VSAVM is multimodal by representation: all modalities become event streams. This allows one VM and one correctness contract to operate uniformly across modalities.</p>
+<h2>Mechanics and implications</h2>
+<p>Audio becomes transcript events with timing; images and video become symbolic descriptors or discrete tokens. Structural separators define scope even in temporal streams. The VM remains modality-agnostic because it consumes discrete events and canonical facts.</p>
+<h2>Further reading</h2>
+<p>Multimodal learning literature is broad. VSAVM’s emphasis is on representation unification and execution-based checking, not on any specific encoder design.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 340" role="img" aria-label="Multimodal diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="90" y="70" rx="18" ry="18" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="190.0" y="104.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Text</text>
+<rect x="90" y="150" rx="18" ry="18" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="190.0" y="184.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Audio</text>
+<rect x="90" y="230" rx="18" ry="18" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="190.0" y="264.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Image/Video</text>
+<rect x="360" y="140" rx="18" ry="18" width="260" height="80" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="490.0" y="184.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Event stream</text>
+<rect x="660" y="140" rx="18" ry="18" width="180" height="80" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="750.0" y="184.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">VM</text>
+<line x1="290" y1="100" x2="360" y2="180" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="350,173 350,187 370,180" fill="#16b879"/>
+<line x1="290" y1="180" x2="360" y2="180" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="350,173 350,187 370,180" fill="#16b879"/>
+<line x1="290" y1="260" x2="360" y2="180" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="350,173 350,187 370,180" fill="#16b879"/>
+<line x1="620" y1="180" x2="660" y2="180" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="650,173 650,187 670,180" fill="#16b879"/>
+<rect x="360" y="275" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="376" y="297" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="376" y="319" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Inputs become discrete events.</text>
+<text x="376" y="337" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Structure carries scope.</text>
+<text x="376" y="355" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">One core handles all modalities.</text>
 </svg>
-      <figcaption>Multiple modalities converge into a single symbolic stream.</figcaption>
-    </figure>
-          </main>
-          <footer class="footer">
-            VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
-          </footer>
-        </div>
-      </body>
-    </html>
+<figcaption>Multiple modalities converge into a single event stream so the same closure rules apply.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Multimodal_learning">Multimodal learning (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Event_stream_processing">Event stream processing (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Computer_vision">Computer vision (Wikipedia)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

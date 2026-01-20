@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Consistency contract and boundary behavior | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Consistency contract and boundary behavior</h1>
+<p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
+<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
+<h2>Overview</h2>
+<p>The consistency contract defines what the system is allowed to emit and under what conditions. It formalizes budgets, closure behavior, and response modes. Without such a contract, the system cannot make honest claims about correctness.</p>
+<h2>Budgets and monotonicity</h2>
+<p>Budgets include depth, branching, steps, and optionally time. These parameters define exploration coverage and therefore the strength of a conclusion. Increasing budget should not merely increase confidence; it should reveal more consequences and potentially uncover conflicts, making the system more honest rather than more fluent.</p>
+<h2>Response modes</h2>
+<p>Strict mode emits only what remains consistent across explored branches. Conditional mode emits conclusions tied to explicit assumptions or branches. Indeterminate mode is returned when the system cannot justify a conclusion under the given budget. These modes are semantic commitments that prevent the system from pretending certainty.</p>
+<h2>Auditability</h2>
+<p>The contract implies logs and metadata: budget used, branches explored, rules applied, and conflicts detected. This allows operational explanations and makes the system testable. It also provides a practical mechanism to debug where and why reasoning fails.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 340" role="img" aria-label="Contract diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="80" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="200.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Budgets</text>
+<rect x="340" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="460.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Closure</text>
+<rect x="600" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="720.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Emission rules</text>
+<line x1="320" y1="105" x2="340" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="330,98 330,112 350,105" fill="#16b879"/>
+<line x1="580" y1="105" x2="600" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="590,98 590,112 610,105" fill="#16b879"/>
+<rect x="160" y="170" rx="18" ry="18" width="580" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="450.0" y="209.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Modes: strict, conditional, indeterminate</text>
+<line x1="470" y1="140" x2="470" y2="170" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
+<polygon points="460,163 460,177 480,170" fill="#16b879"/>
+<rect x="160" y="250" rx="16" ry="16" width="640" height="48" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="176" y="272" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">The system reports what was checked, not just what it predicts.</text>
+<rect x="80" y="295" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="96" y="317" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="96" y="339" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Budgets define exploration boundaries.</text>
+<text x="96" y="357" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Emission depends on closure outcome.</text>
+<text x="96" y="375" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Boundary behavior is explicit and repeatable.</text>
+</svg>
+<figcaption>The contract makes boundary behavior explicit by tying emission to budgeted closure and named response modes.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Consistency">Consistency (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Verification_and_validation">Verification and validation (Wikipedia)</a> <a href="https://plato.stanford.edu/entries/logic-nonmonotonic/">Non-monotonic logic (SEP)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

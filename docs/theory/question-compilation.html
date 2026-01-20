@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Question compilation pipeline | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Question compilation pipeline</h1>
+<p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
+<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
+<h2>Overview</h2>
+<p>A question is treated as a request to produce an executable query program. The pipeline is explicit to support audit and control: normalization creates a structured span, retrieval proposes candidate schemas, slot filling binds discrete values, and compilation emits a program in the VM instruction set.</p>
+<h2>Retrieval and slot filling</h2>
+<p>Retrieval uses VSA to propose nearby schemas and macro programs. Slot filling binds entities, roles, and references using discrete matching and coreference heuristics, augmented by associative retrieval. The result is an executable artifact rather than a textual template.</p>
+<h2>Managing ambiguity</h2>
+<p>Instead of forcing a single interpretation, VSAVM carries multiple candidate programs in a beam. Candidates are evaluated by explanatory fit and by early closure checks that detect contradictions. This makes uncertainty explicit and supports conditional outputs when necessary.</p>
+<h2>Engineering implications</h2>
+<p>Because compilation is explicit, it is testable. You can measure how often a schema is retrieved, how often slot filling is ambiguous, and how often a candidate fails under closure. These metrics can guide consolidation and improve robustness over time.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 340" role="img" aria-label="Question compilation diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="80" y="60" rx="18" ry="18" width="180" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="170.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Normalize</text>
+<rect x="280" y="60" rx="18" ry="18" width="180" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="370.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Retrieve</text>
+<rect x="480" y="60" rx="18" ry="18" width="180" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="570.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Fill slots</text>
+<rect x="680" y="60" rx="18" ry="18" width="180" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="770.0" y="99.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Program</text>
+<line x1="260" y1="95" x2="280" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="270,88 270,102 290,95" fill="#16b879"/>
+<line x1="460" y1="95" x2="480" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="470,88 470,102 490,95" fill="#16b879"/>
+<line x1="660" y1="95" x2="680" y2="95" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="670,88 670,102 690,95" fill="#16b879"/>
+<rect x="210" y="170" rx="18" ry="18" width="480" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="450.0" y="209.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Beam: evaluate fit and early consistency</text>
+<line x1="570" y1="130" x2="450" y2="170" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
+<polygon points="440,163 440,177 460,170" fill="#16b879"/>
+<rect x="80" y="260" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="96" y="282" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="96" y="304" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Retrieval narrows search surface (VSA).</text>
+<text x="96" y="322" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Slot filling stays discrete and auditable.</text>
+<text x="96" y="340" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Beam keeps ambiguity explicit under budget.</text>
+</svg>
+<figcaption>Questions are compiled into executable programs through explicit stages, with ambiguity managed by beam evaluation and consistency checks.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Program_synthesis">Program synthesis (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Beam_search">Beam search (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Information_retrieval">Information retrieval (Wikipedia)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

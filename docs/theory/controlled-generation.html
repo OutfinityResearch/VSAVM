@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Controlled generation with closure gating | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Controlled generation with closure gating</h1>
+<p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
+<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
+<h2>Overview</h2>
+<p>VSAVM does not treat generation as free-form continuation. Candidates are proposed by learned distributions and schema constraints, but they must be verified against the VM state. This prevents the surface generator from introducing unsupported claims that violate correctness.</p>
+<h2>Candidate sources</h2>
+<p>Candidates can come from a discrete language model over macro units, from the active schema, and from VSA retrieval of similar completions. The LM provides fluency, the schema provides structure, and VSA provides pattern-driven recall. The acceptance gate is what prevents any source from dominating truth.</p>
+<h2>Closure gating</h2>
+<p>Before accepting a candidate, the system simulates its effect and runs a local bounded closure to detect contradictions. If contradictions are detected, the candidate is rejected in strict mode. If exploration is incomplete, the system can emit a conditional result rather than an unconditional claim.</p>
+<h2>Budget as user-controlled effort</h2>
+<p>When a user asks the system to think more, the budget increases. This increases the depth or breadth of closure and therefore changes what is safe to claim. The system should surface that budget explicitly because it defines the strength of the response.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 340" role="img" aria-label="Controlled generation diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="80" y="70" rx="18" ry="18" width="260" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="210.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Propose phrases</text>
+<rect x="360" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="480.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Simulate</text>
+<rect x="620" y="70" rx="18" ry="18" width="200" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="720.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Accept</text>
+<line x1="340" y1="105" x2="360" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="350,98 350,112 370,105" fill="#16b879"/>
+<line x1="600" y1="105" x2="620" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="610,98 610,112 630,105" fill="#16b879"/>
+<rect x="210" y="170" rx="18" ry="18" width="480" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="450.0" y="209.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Gate: bounded closure rejects contradictions</text>
+<line x1="480" y1="140" x2="450" y2="170" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
+<polygon points="440,163 440,177 460,170" fill="#16b879"/>
+<rect x="210" y="250" rx="16" ry="16" width="580" height="48" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="226" y="272" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Increasing budget deepens closure and changes what can be claimed.</text>
+<rect x="80" y="295" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="96" y="317" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="96" y="339" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Generation is proposal + verification.</text>
+<text x="96" y="357" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Closure is a gate, not an afterthought.</text>
+<text x="96" y="375" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Budget controls robustness vs cost.</text>
+</svg>
+<figcaption>Generation is treated as proposal followed by verification: candidates must pass closure-based consistency checks before being emitted.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Beam_search">Beam search (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Transitive_closure">Transitive closure (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Verification_and_validation">Verification and validation (Wikipedia)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>

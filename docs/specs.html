@@ -22,28 +22,58 @@
           </header>
           <main class="main content">
             <h1>Specs</h1>
-<p>The Specs section hosts URS, FS, and NFS documents following a GAMP-inspired structure, along with DS documents for each design chapter. All files are in Markdown for straightforward versioning and review.</p>
-<p>An index file links to every specification. Each DS also has a matching theory page with an SVG diagram in the Theory section.</p>
-<div class="link-grid">
-  <a class="card" href="specs/URS.md"><div class="card-title">URS</div><div class="card-note">User requirements</div></a>
-  <a class="card" href="specs/FS.md"><div class="card-title">FS</div><div class="card-note">Functional specification</div></a>
-  <a class="card" href="specs/NFS.md"><div class="card-title">NFS</div><div class="card-note">Non-functional specification</div></a>
-  <a class="card" href="specs/INDEX.md"><div class="card-title">INDEX</div><div class="card-note">Index of all specs</div></a>
-  <a class="card" href="specs/DS001-high-level-vision.md"><div class="card-title">DS001 High-level vision</div><div class="card-note">Design specification for DS001.</div></a>
-  <a class="card" href="specs/DS002-input-representation.md"><div class="card-title">DS002 Input representation, modality agnostic</div><div class="card-note">Design specification for DS002.</div></a>
-  <a class="card" href="specs/DS003-structural-separators.md"><div class="card-title">DS003 Structural separators and correctness</div><div class="card-note">Design specification for DS003.</div></a>
-  <a class="card" href="specs/DS004-training-method.md"><div class="card-title">DS004 Training method and self-learned compiler</div><div class="card-note">Design specification for DS004.</div></a>
-  <a class="card" href="specs/DS005-rl-shaping.md"><div class="card-title">DS005 RL as shaping without breaking the statistical core</div><div class="card-note">Design specification for DS005.</div></a>
-  <a class="card" href="specs/DS006-question-encoding.md"><div class="card-title">DS006 Question encoding, self-learned and multimodal</div><div class="card-note">Design specification for DS006.</div></a>
-  <a class="card" href="specs/DS007-next-phrase-closure.md"><div class="card-title">DS007 Next-phrase completion and bounded closure</div><div class="card-note">Design specification for DS007.</div></a>
-  <a class="card" href="specs/DS008-output-decoding.md"><div class="card-title">DS008 Decoding back to natural language</div><div class="card-note">Design specification for DS008.</div></a>
-  <a class="card" href="specs/DS009-correctness-bounded-closure.md"><div class="card-title">DS009 Correctness through bounded closure</div><div class="card-note">Design specification for DS009.</div></a>
-  <a class="card" href="specs/DS010-vm-design-vsa.md"><div class="card-title">DS010 VM design and interaction with VSA</div><div class="card-note">Design specification for DS010.</div></a>
-  <a class="card" href="specs/DS011-correctness-contract.md"><div class="card-title">DS011 Correctness contract and boundary behavior</div><div class="card-note">Design specification for DS011.</div></a>
-  <a class="card" href="specs/DS012-geometric-interpretation.md"><div class="card-title">DS012 Geometric interpretation and conceptual spaces</div><div class="card-note">Design specification for DS012.</div></a>
-  <a class="card" href="specs/DS013-federated-learning.md"><div class="card-title">DS013 Federated learning potential</div><div class="card-note">Design specification for DS013.</div></a>
-  <a class="card" href="specs/DS014-trustworthy-ai.md"><div class="card-title">DS014 Trustworthy AI in VM plus VSA</div><div class="card-note">Design specification for DS014.</div></a>
-</div>
+<p>The Specs section contains URS, FS, and NFS documents (GAMP-inspired) and the DS design specifications. The canonical source format is Markdown, suitable for versioning and review.</p>
+<p>This page offers two ways to open specs: a client-side HTML viewer and direct Markdown links.</p>
+
+<section class="section">
+  <h2>HTML Viewer</h2>
+  <p>These links open a lightweight viewer that loads the Markdown file and renders it into readable HTML in the browser.</p>
+  <div class="link-grid">
+    <a class="card" href="specs-viewer.html?doc=specs/URS.md"><div class="card-title">URS</div><div class="card-note">User requirements (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/FS.md"><div class="card-title">FS</div><div class="card-note">Functional specification (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/NFS.md"><div class="card-title">NFS</div><div class="card-note">Non-functional specification (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/INDEX.md"><div class="card-title">INDEX</div><div class="card-note">Index of all specs (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS001-high-level-vision.md"><div class="card-title">DS001</div><div class="card-note">High-level vision (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS002-input-representation.md"><div class="card-title">DS002</div><div class="card-note">Input representation (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS003-structural-separators.md"><div class="card-title">DS003</div><div class="card-note">Structural separators and correctness (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS004-training-method.md"><div class="card-title">DS004</div><div class="card-note">Training method (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS005-rl-shaping.md"><div class="card-title">DS005</div><div class="card-note">RL shaping (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS006-question-encoding.md"><div class="card-title">DS006</div><div class="card-note">Question encoding (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS007-next-phrase-closure.md"><div class="card-title">DS007</div><div class="card-note">Next-phrase and closure (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS008-output-decoding.md"><div class="card-title">DS008</div><div class="card-note">Output decoding (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS009-correctness-bounded-closure.md"><div class="card-title">DS009</div><div class="card-note">Correctness via closure (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS010-vm-design-vsa.md"><div class="card-title">DS010</div><div class="card-note">VM design and VSA (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS011-correctness-contract.md"><div class="card-title">DS011</div><div class="card-note">Correctness contract (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS012-geometric-interpretation.md"><div class="card-title">DS012</div><div class="card-note">Geometric interpretation (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS013-federated-learning.md"><div class="card-title">DS013</div><div class="card-note">Federated learning (HTML viewer)</div></a>
+    <a class="card" href="specs-viewer.html?doc=specs/DS014-trustworthy-ai.md"><div class="card-title">DS014</div><div class="card-note">Trustworthy AI (HTML viewer)</div></a>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Markdown Links</h2>
+  <p>These links open the raw Markdown files directly.</p>
+  <div class="link-grid">
+    <a class="card" href="specs/URS.md"><div class="card-title">URS.md</div><div class="card-note">User requirements (Markdown)</div></a>
+    <a class="card" href="specs/FS.md"><div class="card-title">FS.md</div><div class="card-note">Functional specification (Markdown)</div></a>
+    <a class="card" href="specs/NFS.md"><div class="card-title">NFS.md</div><div class="card-note">Non-functional specification (Markdown)</div></a>
+    <a class="card" href="specs/INDEX.md"><div class="card-title">INDEX.md</div><div class="card-note">Index of all specs (Markdown)</div></a>
+    <a class="card" href="specs/DS001-high-level-vision.md"><div class="card-title">DS001-high-level-vision.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS002-input-representation.md"><div class="card-title">DS002-input-representation.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS003-structural-separators.md"><div class="card-title">DS003-structural-separators.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS004-training-method.md"><div class="card-title">DS004-training-method.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS005-rl-shaping.md"><div class="card-title">DS005-rl-shaping.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS006-question-encoding.md"><div class="card-title">DS006-question-encoding.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS007-next-phrase-closure.md"><div class="card-title">DS007-next-phrase-closure.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS008-output-decoding.md"><div class="card-title">DS008-output-decoding.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS009-correctness-bounded-closure.md"><div class="card-title">DS009-correctness-bounded-closure.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS010-vm-design-vsa.md"><div class="card-title">DS010-vm-design-vsa.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS011-correctness-contract.md"><div class="card-title">DS011-correctness-contract.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS012-geometric-interpretation.md"><div class="card-title">DS012-geometric-interpretation.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS013-federated-learning.md"><div class="card-title">DS013-federated-learning.md</div><div class="card-note">Design spec (Markdown)</div></a>
+    <a class="card" href="specs/DS014-trustworthy-ai.md"><div class="card-title">DS014-trustworthy-ai.md</div><div class="card-note">Design spec (Markdown)</div></a>
+  </div>
+</section>
           </main>
           <footer class="footer">
             VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.

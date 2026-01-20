@@ -1,60 +1,78 @@
 <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Macro program | VSAVM</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="../assets/site.css">
-      </head>
-      <body>
-        <div class="site">
-          <header class="header">
-            <div class="brand">VSAVM</div>
-            <nav class="nav">
-              <a href="../index.html">Home</a>
-              <a href="../specs.html">Specs</a>
-              <a href="../theory/index.html">Theory</a>
-              <a href="../wiki/index.html">Wiki</a>
-            </nav>
-          </header>
-          <main class="main content">
-            <h1>Macro program</h1>
-    <p>A macro program is a consolidated instruction sequence that repeatedly proves useful. It reduces search cost by turning a multi-step routine into a single reusable block.</p>
-<p>Macro programs are promoted when they consistently compress data under MDL and remain stable under consistency checks.</p>
-<p>This mechanism builds a growing library of reliable behaviors that the VM can execute efficiently.</p>
-    <p>External link: <a href="https://en.wikipedia.org/wiki/Program_synthesis">https://en.wikipedia.org/wiki/Program_synthesis</a>.</p>
-    <figure class="diagram">
-      <svg viewBox="0 0 760 200" role="img" aria-label="Diagram">
-<defs>
-<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#e8f3ff"/>
-<stop offset="1" stop-color="#d6f5e8"/>
-</linearGradient>
-<linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#0b6eff"/>
-<stop offset="1" stop-color="#16b879"/>
-</linearGradient>
-</defs>
-<rect x="40" y="50" rx="18" ry="18" width="190" height="90" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="135.0" y="95.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Step 1</text>
-<line x1="230" y1="95.0" x2="270" y2="95.0" stroke="url(#deep)" stroke-width="4"/>
-<polygon points="262,88.0 262,102.0 278,95.0" fill="#16b879"/>
-<rect x="270" y="50" rx="18" ry="18" width="190" height="90" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="365.0" y="95.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Step 2</text>
-<line x1="460" y1="95.0" x2="500" y2="95.0" stroke="url(#deep)" stroke-width="4"/>
-<polygon points="492,88.0 492,102.0 508,95.0" fill="#16b879"/>
-<rect x="500" y="50" rx="18" ry="18" width="190" height="90" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="595.0" y="95.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Step 3</text>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Macro program | VSAVM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <div class="site">
+      <header class="header">
+        <div class="brand">VSAVM</div>
+        <nav class="nav">
+          <a href="../index.html">Home</a>
+          <a href="../specs.html">Specs</a>
+          <a href="../theory/index.html">Theory</a>
+          <a href="../wiki/index.html">Wiki</a>
+        </nav>
+      </header>
+      <main class="main content">
+        <h1>Macro program</h1>
+<p>This wiki entry defines a term used across VSAVM and explains why it matters in the architecture.</p><p>The diagram has a transparent background and highlights the operational meaning of the term inside VSAVM.</p>
+<p>Related wiki pages: <a href="vm.html">VM</a>, <a href="event-stream.html">event stream</a>, <a href="vsa.html">VSA</a>, <a href="bounded-closure.html">bounded closure</a>, <a href="consistency-contract.html">consistency contract</a>.</p>
+<h2>Definition</h2>
+<p>A macro program is a consolidated instruction sequence treated as a reusable unit.</p>
+<h2>Role in VSAVM</h2>
+<p>Macro programs reduce the need for repeated program search. They represent stabilized reasoning moves that can be invoked efficiently and audited as single units.</p>
+<h2>Mechanics and implications</h2>
+<p>Promotion should be constrained by MDL-style compression and by closure-based health checks. A macro that predicts well but causes contradictions or branching blow-ups should be demoted or scoped.</p>
+<h2>Further reading</h2>
+<p>Macros and abstraction are common in programming; VSAVM uses macro programs as explicit reusable reasoning primitives rather than implicit latent features.</p>
+<figure class="diagram">
+<svg viewBox="0 0 900 320" role="img" aria-label="Macro program diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="120" y="80" rx="18" ry="18" width="190" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="215.0" y="114.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Step 1</text>
+<rect x="330" y="80" rx="18" ry="18" width="190" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="425.0" y="114.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Step 2</text>
+<rect x="540" y="80" rx="18" ry="18" width="190" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="635.0" y="114.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Step 3</text>
+<line x1="310" y1="110" x2="330" y2="110" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="320,103 320,117 340,110" fill="#16b879"/>
+<line x1="520" y1="110" x2="540" y2="110" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
+<polygon points="530,103 530,117 550,110" fill="#16b879"/>
+<rect x="300" y="185" rx="18" ry="18" width="300" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="450.0" y="224.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Macro program</text>
+<path d="M 215 140 C 260 170, 310 190, 350 205" fill="none" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
+<path d="M 425 140 C 430 165, 430 185, 450 205" fill="none" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
+<path d="M 635 140 C 590 170, 555 190, 550 205" fill="none" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
+<rect x="120" y="265" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
+<text x="136" y="287" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
+<text x="136" y="309" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Macros compress repeated routines.</text>
+<text x="136" y="327" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Promoted after stable success.</text>
+<text x="136" y="345" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Reduce search and cost.</text>
 </svg>
-      <figcaption>Macro programs consolidate common execution paths.</figcaption>
-    </figure>
-          </main>
-          <footer class="footer">
-            VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
-          </footer>
-        </div>
-      </body>
-    </html>
+<figcaption>Macro programs compress repeated multi-step routines into reusable executable blocks.</figcaption>
+</figure>
+<h2>References</h2>
+<p><a href="https://en.wikipedia.org/wiki/Abstraction_(computer_science)">Abstraction (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Program_synthesis">Program synthesis (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Minimum_description_length">Minimum description length (Wikipedia)</a></p>
+      </main>
+      <footer class="footer">
+        VSAVM is an Axiologic Research experiment within the Achilles project. This static documentation is written in clear academic English for engineers.
+      </footer>
+    </div>
+  </body>
+</html>
