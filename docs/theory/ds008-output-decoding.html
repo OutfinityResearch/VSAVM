@@ -3,7 +3,7 @@
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>DS008 Decoding back to natural language | VSAVM</title>
+        <title>Faithful surface realization | VSAVM</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,30 +21,30 @@
             </nav>
           </header>
           <main class="main content">
-            <h1>DS008 Decoding back to natural language</h1>
-    <p>Decoding is a surface realization of an internal result. The VM produces a verdict, a structured object, a distribution, or a plan. The realizer turns that into text or into events compatible with the input modality.</p>
-<p>For text, the realizer may use a discrete generator over macro phrases, yet it must remain faithful to the VM state and avoid introducing new facts. For multimodal outputs, the result can be an event stream such as relations, steps, or a structured summary.</p>
-<p>The principle remains the same: output is derived from VM state, not from unconstrained statistical improvisation.</p>
+            <h1>Faithful surface realization</h1>
+    <p>Decoding is treated as a surface realization of internal state rather than a new source of knowledge. The VM produces structured results, and the realizer converts them into language or modality-compatible events without introducing new claims.</p>
+<p>This separation is essential for trust. The realizer is allowed to choose phrasing, but not to invent content that has not been derived or validated in the VM.</p>
+<p>The same principle supports multimodal output, where the result may be a structured event stream, a set of relations, or a procedural plan derived from the execution trace.</p>
     <figure class="diagram">
       <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
 <defs>
 <linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<stop offset="0" stop-color="#e7f2ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">VM result</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Surface realizer</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Output stream</text>
+<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">VM output</text>
+<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="254,74.0 254,86.0 266,80.0" fill="#16b879"/>
+<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Realizer</text>
+<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="484,74.0 484,86.0 496,80.0" fill="#16b879"/>
+<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Modalities</text>
 </svg>
-      <figcaption>Concept diagram for DS008.</figcaption>
+      <figcaption>Concept diagram for Faithful surface realization.</figcaption>
     </figure>
           </main>
           <footer class="footer">

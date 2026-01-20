@@ -3,7 +3,7 @@
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>DS001 High-level vision | VSAVM</title>
+        <title>System vision | VSAVM</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,30 +21,30 @@
             </nav>
           </header>
           <main class="main content">
-            <h1>DS001 High-level vision</h1>
-    <p>VSAVM is an Axiologic Research experiment within the Achilles project. The system exposes an LLM-like interface, yet its core is an executable virtual machine. Next-phrase prediction remains the primary training objective, but it is conditioned on VM state obtained through execution. Correctness is defined operationally as avoiding contradictions both immediately and within a bounded transitive closure.</p>
-<p>Multimodality is handled through a unified event stream in which any input becomes symbolic events with structural separators. The NL to query compiler is not hardcoded; it emerges under compression pressure, while VSA accelerates schema discovery and retrieval. At runtime the input is segmented into events, candidate interpretations are executed in the VM, the query is compiled through retrieval and search, and the output is realized from the VM state.</p>
-<p>When a user asks the system to think more, the closure and exploration budget increases. The system preserves the consistency contract by either strengthening its conclusions or falling back to conditional results when contradictions cannot be ruled out.</p>
+            <h1>System vision</h1>
+    <p>VSAVM is designed as a language-like interface that hides an executable core. The key claim is that fluency is not enough; the system must act as if it is running a program that can be inspected, bounded, and corrected. This position turns prediction into a consequence of execution rather than a purely statistical continuation.</p>
+<p>A practical vision also requires a compatibility layer. The model looks like a modern LLM at the surface, yet it relies on an internal machine that treats each input as a structured event stream. This separation allows the interface to remain familiar while the reasoning machinery remains explicit and auditable.</p>
+<p>The vision concludes with a contract: answers are only as strong as the closure budget that was used. When a user asks for deeper analysis, the system commits to explore more of the state space instead of providing a confident but unsupported response.</p>
     <figure class="diagram">
       <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
 <defs>
 <linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<stop offset="0" stop-color="#e7f2ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Event stream</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">VM state</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Next phrase</text>
+<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Event stream</text>
+<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="254,74.0 254,86.0 266,80.0" fill="#16b879"/>
+<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">VM state</text>
+<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="484,74.0 484,86.0 496,80.0" fill="#16b879"/>
+<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Outcome</text>
 </svg>
-      <figcaption>Concept diagram for DS001.</figcaption>
+      <figcaption>Concept diagram for System vision.</figcaption>
     </figure>
           </main>
           <footer class="footer">

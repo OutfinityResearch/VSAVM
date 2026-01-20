@@ -3,7 +3,7 @@
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>DS003 Structural separators and correctness | VSAVM</title>
+        <title>Structural boundaries and scope | VSAVM</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,30 +21,30 @@
             </nav>
           </header>
           <main class="main content">
-            <h1>DS003 Structural separators and correctness</h1>
-    <p>Structural separators delimit executable units and units of meaning. A deterministic structural parser detects sentences, blocks, lists, titles, definitions, procedural steps, assertions, and questions. In multimodal inputs, separators include temporal segments, scene changes, and object groupings from pre-processing.</p>
-<p>Separators are not only for training; they are required for correctness. Transitive closure and contradiction detection are infeasible without context and scope. Separators define what belongs to the same paragraph or section and what belongs to a different chapter, enabling the system to maintain local theories without collapsing all knowledge into a single inconsistent base.</p>
-<p>This structural scoping is the minimal requirement for a practical non-contradiction promise when the corpus is imperfect or contains conflicting sources.</p>
+            <h1>Structural boundaries and scope</h1>
+    <p>Structural boundaries are treated as first-class signals. Sentences, sections, quotes, and procedural steps are separated so that execution has a clear notion of local context. Without this structure, reasoning collapses into a single global pool where contradictions become unmanageable.</p>
+<p>The VM relies on boundaries to decide which facts can interact. A statement inside a quoted block does not carry the same weight as a system instruction, and a hypothesis in one section should not immediately contaminate another. These distinctions are encoded directly in the event stream.</p>
+<p>By preserving scope, VSAVM can host multiple local theories in parallel. It can evaluate consistency within each region while deferring global reconciliation when sources disagree.</p>
     <figure class="diagram">
       <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
 <defs>
 <linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<stop offset="0" stop-color="#e7f2ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Separators</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Scope</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Consistency</text>
+<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Segmentation</text>
+<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="254,74.0 254,86.0 266,80.0" fill="#16b879"/>
+<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Scope</text>
+<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="484,74.0 484,86.0 496,80.0" fill="#16b879"/>
+<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Local theory</text>
 </svg>
-      <figcaption>Concept diagram for DS003.</figcaption>
+      <figcaption>Concept diagram for Structural boundaries and scope.</figcaption>
     </figure>
           </main>
           <footer class="footer">

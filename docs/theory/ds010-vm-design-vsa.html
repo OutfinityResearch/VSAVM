@@ -3,7 +3,7 @@
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>DS010 VM design and interaction with VSA | VSAVM</title>
+        <title>Executable core architecture | VSAVM</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,30 +21,30 @@
             </nav>
           </header>
           <main class="main content">
-            <h1>DS010 VM design and interaction with VSA</h1>
-    <p>The VM is a symbolic execution engine with explicit state. The minimal state includes a canonical fact store, a memory of rules and macro programs, a binding environment for temporary variables, a call stack, and an execution log. The VM runs in interpretation mode and in reasoning mode.</p>
-<p>The instruction set is small, typed, and universal. It includes term construction and canonicalization, ASSERT and DENY with immediate checks, MATCH for unification, APPLY_RULE for derivations, PUSH_CONTEXT and POP_CONTEXT for scope, and BRANCH and MERGE for exploration.</p>
-<p>VSA does not replace the VM language. It accelerates retrieval and normalization by proposing discrete candidates. The VM decides truth and consistency by execution and bounded closure.</p>
+            <h1>Executable core architecture</h1>
+    <p>The VM is the core of the system and must remain simple, explicit, and typed. It maintains a canonical fact store, a rule library, a binding environment, and an execution log that can be inspected for audit.</p>
+<p>The instruction set is intentionally compact, focusing on construction, unification, branching, and conflict checks. This keeps execution understandable and makes the system easier to reason about and test.</p>
+<p>VSA functions as a retrieval accelerator. It proposes candidates and shortlists, while the VM remains the arbiter of truth through execution and bounded closure.</p>
     <figure class="diagram">
       <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
 <defs>
 <linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<stop offset="0" stop-color="#e7f2ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Fact store</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Instruction set</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">VSA retrieval</text>
+<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">State</text>
+<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="254,74.0 254,86.0 266,80.0" fill="#16b879"/>
+<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Instructions</text>
+<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="484,74.0 484,86.0 496,80.0" fill="#16b879"/>
+<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Retrieval</text>
 </svg>
-      <figcaption>Concept diagram for DS010.</figcaption>
+      <figcaption>Concept diagram for Executable core architecture.</figcaption>
     </figure>
           </main>
           <footer class="footer">

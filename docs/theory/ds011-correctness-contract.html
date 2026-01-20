@@ -3,7 +3,7 @@
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>DS011 Correctness contract and boundary behavior | VSAVM</title>
+        <title>Consistency contract and boundary behavior | VSAVM</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,30 +21,30 @@
             </nav>
           </header>
           <main class="main content">
-            <h1>DS011 Correctness contract and boundary behavior</h1>
-    <p>The correctness contract specifies what the system may emit and under what conditions. Consistency is verified up to a configurable budget defined by depth, branching, step, and time limits. Budget monotonicity means a conclusion accepted at low budget does not become easier to accept at higher budget.</p>
-<p>Bounded closure runs in a propagation phase and a conflict checking phase. Strict mode cuts inconsistent branches, while exploratory mode can retain them for analysis without using them in final conclusions.</p>
-<p>When the budget is exhausted before robustness is confirmed, conclusions degrade in a controlled way. The system declares indeterminacy or emits results conditioned on explicit hypotheses. Selection among acceptable executions must be stable and auditable.</p>
+            <h1>Consistency contract and boundary behavior</h1>
+    <p>The consistency contract defines how the system behaves at the edge of its computational budget. It formalizes what it means for a conclusion to be robust, conditional, or indeterminate.</p>
+<p>Closure runs in two phases, propagation and verification, which separates derivation from conflict detection. Strict mode prunes inconsistent branches, while exploratory mode can keep them for analysis without letting them influence the final answer.</p>
+<p>When resources are exhausted, the system must degrade gracefully. It does not hallucinate; it either returns a conditional statement or explicitly says that the budget was insufficient for a definitive answer.</p>
     <figure class="diagram">
       <svg viewBox="0 0 720 180" role="img" aria-label="Diagram">
 <defs>
 <linearGradient id="fade" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#f9efe2"/>
-<stop offset="1" stop-color="#f0ddd0"/>
+<stop offset="0" stop-color="#e7f2ff"/>
+<stop offset="1" stop-color="#d6f5e8"/>
 </linearGradient>
 </defs>
-<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Budget</text>
-<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="254,74.0 254,86.0 266,80.0" fill="#2d7b6f"/>
-<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Closure phases</text>
-<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#2d7b6f" stroke-width="3"/>
-<polygon points="484,74.0 484,86.0 496,80.0" fill="#2d7b6f"/>
-<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#c8b8aa"/>
-<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#2a241d" font-family="Space Grotesk">Robust or conditional</text>
+<rect x="30" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="125.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Budget</text>
+<line x1="220" y1="80.0" x2="260" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="254,74.0 254,86.0 266,80.0" fill="#16b879"/>
+<rect x="260" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="355.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Modes</text>
+<line x1="450" y1="80.0" x2="490" y2="80.0" stroke="#16b879" stroke-width="3"/>
+<polygon points="484,74.0 484,86.0 496,80.0" fill="#16b879"/>
+<rect x="490" y="35" rx="16" ry="16" width="190" height="90" fill="url(#fade)" stroke="#7fb3e6"/>
+<text x="585.0" y="80.0" text-anchor="middle" font-size="14" fill="#0b1a2b" font-family="Space Grotesk">Outcome</text>
 </svg>
-      <figcaption>Concept diagram for DS011.</figcaption>
+      <figcaption>Concept diagram for Consistency contract and boundary behavior.</figcaption>
     </figure>
           </main>
           <footer class="footer">
