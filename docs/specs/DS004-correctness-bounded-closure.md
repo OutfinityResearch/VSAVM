@@ -31,7 +31,7 @@ Strict mode refuses to emit any conclusion that cannot be verified as consistent
 Conditional mode can emit conclusions that are marked with explicit conditions or uncertainty qualifiers that indicate the limitations of the verification process.
 Indeterminate mode returns no substantive conclusion and instead reports what was checked and why no safe claim could be produced under the requested budget and mode.
 
-The choice between strict and conditional modes depends on the application context and user preferences.
+The choice between strict and conditional modes depends on the application context and user preferences, while indeterminate mode is the fallback when no safe claim can be justified under the given budget and mode constraints.
 Applications that require high reliability might prefer strict mode even if it means receiving fewer definitive answers.
 Applications that can tolerate some uncertainty might prefer conditional mode to receive more complete responses with appropriate uncertainty markers.
 

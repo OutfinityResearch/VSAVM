@@ -1,7 +1,6 @@
 # DS001 Foundations and Architecture
 
-This document consolidates the core theoretical foundations of VSAVM into a single architectural specification: an LLM-like interface grounded in an executable virtual machine, a modality-agnostic event stream, structural scoping
-, and VSA as a similarity accelerator (not a truth mechanism).
+This document consolidates the core theoretical foundations of VSAVM into a single architectural specification: an LLM-like interface grounded in an executable virtual machine, a modality-agnostic event stream, structural scoping, and VSA as a similarity accelerator (not a truth mechanism).
 
 ## High-Level Vision
 
@@ -71,6 +70,20 @@ The type identifier specifies the nature of the information, such as text token,
 The discrete payload contains the actual data in a standardized format that the virtual machine can process directly.
 The structural context path provides hierarchical positioning information that preserves the original organization of the input.
 
+### Event schema (normative)
+
+The event stream must be serializable and replayable for audit.
+At minimum, each event carries:
+
+- `event_id`: stable identifier within the stream.
+- `type`: event type identifier (e.g., `text_token`, `visual_token`, `timestamp`, `separator`, `header`, `list_item`, `quote`, `table_cell`).
+- `payload`: discrete payload (token id, symbol id, small typed record, or encoder-provided discrete code).
+- `context_path`: structural path identifying scope (e.g., document → section → paragraph → sentence → span).
+- `source_ref`: optional provenance pointer (source id, offsets, timestamps) linking back to raw input.
+
+Separators are not metadata; they are first-class events.
+They define scope boundaries used by context creation, indexing, and correctness checks.
+
 Text processing demonstrates the most straightforward application of this framework.
 Individual words or subword tokens become events with type "text_token" and payloads containing the token identifier.
 Sentence boundaries generate separator events that mark syntactic units.
@@ -123,6 +136,19 @@ Separators define what belongs to the same paragraph or section and what belongs
 enabling the system to maintain local theories without collapsing all knowledge into a single inconsistent base.
 
 This structural scoping is the minimal requirement for a practical non-contradiction promise when the corpus is imperfect or contains conflicting sources.
+
+## Scope to Context Mapping (Normative)
+
+Structural scope must be carried into VM execution to make contradiction checks meaningful and to prevent incompatible sources from collapsing into a single inconsistent base.
+This section defines the contract between DS001 separators and DS002 context operations.
+
+- Each structural unit that can contain assertions (paragraph, list item, block quote, table row, etc.) defines a `ScopeId` derived deterministically from the `context_path`.
+- Entering a unit creates a VM reasoning context via `PUSH_CONTEXT(scope_id, policy=INHERIT_PARENT_READONLY)` or an equivalent mechanism.
+- Facts asserted inside a child context remain local by default; promotion to a parent context requires an explicit merge/commit that runs conflict checks under bounded closure (DS004).
+- Hypotheses and ambiguous parses use isolated contexts (`ISOLATE_CONTEXT`) so mutually incompatible interpretations do not corrupt each other.
+
+Query compilation (DS003) selects which scopes/contexts to read from and which temporary contexts to create for hypothesis evaluation.
+Strict-mode conclusions must be robust across the explored hypothesis contexts; conditional-mode conclusions must reference the specific assumptions/contexts that support them (DS004).
 
 ## Modality-Agnostic Input Representation Notes
 
@@ -188,6 +214,14 @@ A hypervector similarity does not constitute evidence for logical relationship; 
 Schema clustering represents one of the most important applications of VSA within the system.
 As the system encounters recurring patterns in queries and responses, it can group similar patterns together in the hypervector space even before it has enough examples to learn precise symbolic rules.
 This clustering accelerates the discovery of new schemas and helps the system generalize from limited examples.
+
+## Controlled Generation and Faithful Realization
+
+VSAVM treats generation as proposal plus verification.
+Next-phrase candidates may be proposed by learned distributions and schema constraints, but acceptance is gated by VM execution and closure checks (DS004) to prevent unsupported claims.
+
+Output is a surface realization of internal result objects rather than free-form continuation.
+The surface realizer may choose wording and structure, but it must not introduce factual claims that are absent from the VM-derived `claims` produced under the correctness contract.
 
 ## Geometric Interpretation and Conceptual Spaces
 
@@ -385,4 +419,3 @@ This approach can provide efficient exploration of large state spaces while main
 
 The hierarchical approach enables reasoning processes to quickly identify promising general directions for exploration while deferring detailed analysis until the most promising regions have been identified.
 This strategy can provide significant efficiency improvements for complex reasoning problems.
-

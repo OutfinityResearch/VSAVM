@@ -16,16 +16,18 @@ It does not review any legacy specs in `docs/specs/old_duplicates/`, nor URS/FS/
 
 The five DS documents form a coherent end-to-end story: a modality-agnostic event stream is parsed into scoped symbolic structures; candidate interpretations and query programs are executed in a VM; retrieval (VSA) accelerates search but does not decide truth; and correctness is enforced operationally via budget-bounded closure, with training designed to make compilation and macro-programs emerge under compression pressure.
 
-The primary gaps are not conceptual but specification-grade: several core interfaces are referenced repeatedly (fact schema, type system, scope/context mapping, budget accounting, determinism constraints) without being pinned down to implementable definitions. This is currently the main risk to logical consistency across components.
+Most cross-document interfaces are now pinned down in normative form (fact model/type system, schema/program representation, budget accounting and result reporting, and a scope→context mapping). This substantially reduces the risk of drift between compilation, execution, and closure.
+
+The remaining gaps are mostly “engineering sharp edges”: concrete canonicalization examples (especially around time and equivalence), explicit VM state snapshot semantics for branching/merge, and a fully explicit interface boundary for “VSA proposes, VM disposes”.
 
 ## Cross-Document Consistency Findings
 
-### 1) DS identifier mismatch (high severity for comprehensibility)
+### 1) DS identifiers and legacy specs (resolved)
 
-- `DS002`–`DS005` filenames and site links use `DS002`–`DS005`, but the top-level titles inside these files are `DS017`–`DS020`.
-- Recommendation: normalize the first heading in each file to `DS002`–`DS005` (optionally note "formerly DS017–DS020" once), so readers can reconcile the index, file names, and document headers.
+- `DS002`–`DS005` titles now match filenames and include an explicit note about prior DS017–DS020 numbering.
+- Legacy draft specs are separated under `docs/specs/old_duplicates/` to avoid confusion with the consolidated DS001–DS005 set.
 
-### 2) Canonical fact model + type system are assumed everywhere but not specified
+### 2) Canonical fact model + type system (addressed; still needs examples)
 
 All five DS docs rely on these concepts:
 
@@ -34,30 +36,24 @@ All five DS docs rely on these concepts:
 - explicit negation (DENY / polarity)
 - provenance (source attribution) and scope/context metadata
 
-But the shared schema is not defined in a single normative place. This creates drift risk between:
+DS002 now defines a normative “Canonical Fact Model and Type System” section that makes these assumptions implementable and referenceable across DS003/DS004.
+Remaining work is mainly example-driven: demonstrate canonicalization outcomes for common edge cases (aliases, units, and time) and specify defaults for time-overlap policy.
 
-- query compilation (what a schema can emit),
-- VM execution (what ASSERT/DENY/QUERY accept),
-- closure (what counts as a contradiction), and
-- tracing (what can be audited and replayed).
-
-### 3) Scope and context: structural separators vs VM contexts
+### 3) Scope and context: structural separators vs VM contexts (addressed; clarify merge semantics)
 
 - `DS001` emphasizes structural separators and scope boundaries in the event stream.
 - `DS002` introduces VM context mechanisms (`PUSH_CONTEXT`, `POP_CONTEXT`, `MERGE_CONTEXT`, `ISOLATE_CONTEXT`) as the isolation boundary for reasoning.
 
-What is missing is an authoritative mapping: "structural scope → VM context policy" (when to create a context, what inherits, what is isolated, and how/when to merge).
+DS001 now includes an explicit “Scope to Context Mapping (Normative)” section describing how structural scope becomes VM contexts and how promotion/merge is gated by closure checks.
+Remaining work: specify concrete merge semantics (what is promotable, conflict-handling policy options, and how promotion affects later queries).
 
-### 4) Budget semantics and determinism constraints need sharper definitions
+### 4) Budget semantics and determinism constraints (addressed at contract level; still needs cost model)
 
 - `DS004` requires reproducibility (fixed seeds, deterministic scheduling) and budget-bounded correctness claims.
 - `DS002` describes parallelism (exploratory branching, async CALL) and distributed execution as optimization directions.
 
-The docs are compatible, but only if the determinism contract is explicit:
-
-- what is allowed in strict mode vs exploratory mode,
-- what nondeterminism sources must be prohibited or pinned, and
-- how budgets compose across nested calls / parallel branches.
+DS004 now defines a normative budget model (parameters + composition rules) and a minimum result-reporting schema that includes strict/conditional/indeterminate modes.
+Remaining work: define an explicit cost model (how many “steps” common VM operations consume) and provide a small conformance checklist for strict-mode determinism.
 
 ### 5) "VSA proposes, VM disposes" is consistent but needs an interface boundary
 
@@ -73,38 +69,33 @@ These are the main missing "definition-of-done" items that block implementable c
 
 ### A) Canonical fact schema (must be shared across DS002/DS003/DS004)
 
-Define:
+Now defined in DS002 “Canonical Fact Model and Type System (Normative)”. Remaining details to lock down:
 
-- minimal required slots, optional slots, and typing rules
-- canonicalization procedure (including normalization for paraphrases vs true equivalence)
-- negation/polarity representation and its interaction with scope
-- provenance fields and trust weighting hooks (even if the policy is elsewhere)
+- canonicalization examples and equivalence boundaries (what counts as identity vs conditional similarity)
+- default time-overlap policy and its interaction with conflict checks
+- minimal predicate/slot taxonomy for the initial MVP (so schemas can be authored/tested)
 
 ### B) Bounded closure details (DS004 + interfaces into DS002)
 
-Define:
+DS004 now specifies the contract-level pieces (budgets, modes, reporting). Remaining:
 
-- exact VM state snapshot model for branching/search
-- what counts as a contradiction (direct, indirect, temporal, scoped)
-- how "strict" vs "conditional" outputs are represented and reported
-- budget accounting semantics (depth vs steps vs branching vs time) and composition rules
+- exact VM state snapshot model and merge semantics for branching/search
+- contradiction taxonomy tied tightly to DS002 fields (direct polarity, temporal overlap, scoped visibility)
+- a minimal set of closure test scenarios for regression
 
 ### C) Query schema format and program representation (DS003 + DS002)
 
-Define:
+DS003 now specifies a normative minimal schema/program model. Remaining:
 
-- schema data model (typed slots, preconditions, emitted program template)
-- program IR format (instructions, typing, resource annotations)
-- how ambiguity is represented (multiple hypotheses) and how it is pruned/merged
+- a stable on-disk wire format and versioning strategy for schema artifacts
+- promotion criteria tying schema telemetry to DS005 consolidation rules
 
 ### D) Consolidation criteria and rollback (DS002 + DS005)
 
-Define:
+DS005 now includes an instrumentable MDL score breakdown and a rollback requirement. Remaining:
 
-- MDL objective components concretely (what is "description length" operationally)
-- promotion triggers for schemas/macros
-- health checks for stability and regression
-- rollback/versioning strategy for bad consolidations
+- explicit thresholds (support, MDL delta, validation pass criteria)
+- a minimal health-check suite (consistency, determinism, performance regression)
 
 ## Per-Document Review
 
@@ -117,7 +108,7 @@ Define:
 
 **Gaps / improvements**
 
-- The event stream is described well conceptually but lacks a normative schema (fields, encoding, separator taxonomy).
+- Event stream and scope mapping are now specified normatively; consider adding a short worked example (a small input span → events → scopes) to make the representation immediately implementable.
 - The geometric/conceptual-space sections are valuable, but read more like theory notes than a design spec; consider moving heavy geometric exposition to `docs/theory/` and keeping DS001 more interface- and contract-centric.
 
 ### DS002 VM Design and Execution
@@ -141,7 +132,7 @@ Define:
 
 **Gaps / improvements**
 
-- The schema representation and program IR are not specified (inputs/outputs, slot typing, traceability hooks).
+- Schema/program representation is now specified at a minimum viable level; consider adding versioning rules and a small canonical schema example that exercises slot typing and ambiguity handling.
 - MDL scoring is described conceptually but would benefit from a concrete scoring breakdown that can be instrumented and tested.
 
 ### DS004 Correctness and Bounded Closure
@@ -153,8 +144,7 @@ Define:
 
 **Gaps / improvements**
 
-- "Contradiction" detection needs a formal definition tied to the canonical fact schema and scope model.
-- Budget monotonicity is stated; the reporting format for budget-scoped claims (and how claims are revised under higher budgets) should be made explicit.
+- The contract now includes a canonical conflict predicate and a minimum result-reporting schema; consider adding a compact example report showing strict vs conditional vs indeterminate outcomes on the same query under different budgets.
 
 ### DS005 Training, Learning, and Optimization
 
@@ -165,13 +155,12 @@ Define:
 
 **Gaps / improvements**
 
-- MDL objective and RL reward signals are not concretized into implementable metrics.
-- Scaling/distributed execution is described but would benefit from explicit constraints derived from DS004’s reproducibility requirements.
+- MDL is now expressed in an instrumentable form and consolidation includes rollback requirements; consider pinning down default thresholds for an MVP.
+- Scaling/distributed execution now references DS004 reproducibility constraints; consider adding a strict-mode “do not distribute unless deterministic” rule of thumb to the NFS/FS layer if needed.
 
 ## Recommended Next Edits (Prioritized)
 
-1. Fix DS header numbering inside `DS002`–`DS005` to match filenames and site links.
-2. Add a single canonical "Fact Model and Type System" spec (either as a new DS appendix or a shared section) and reference it from DS002/DS003/DS004.
-3. Add a "Scope → Context" mapping section: how separators instantiate contexts, and what merge/isolation policies apply.
-4. Specify budget accounting and result reporting formats for closure (including strict/conditional claim schemas).
-5. Define schema/program IR formats and consolidation health checks (promotion + rollback) to prevent drift and regressions.
+1. Add worked examples: event stream + scope derivation, canonicalization outcomes, and strict/conditional/indeterminate reports under different budgets.
+2. Specify VM state snapshot and branch merge semantics precisely (copy-on-write model, merge policy hooks, and trace requirements).
+3. Define an explicit VSA interface boundary (inputs/outputs, persistence, and promotion criteria) to enforce “VSA proposes, VM disposes”.
+4. Define a minimal strict-mode conformance checklist (determinism, budget accounting, trace reproducibility) suitable for regression testing.
