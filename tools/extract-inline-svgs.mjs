@@ -45,6 +45,16 @@ function extractAriaLabel(svg) {
 }
 
 /**
+ * Ensure SVG root tag declares the SVG namespace.
+ * @param {string} svg
+ * @returns {string}
+ */
+function ensureSvgXmlns(svg) {
+  if (/<svg\b[^>]*\sxmlns=/.test(svg)) return svg;
+  return svg.replace(/<svg\b/, '<svg xmlns="http://www.w3.org/2000/svg"');
+}
+
+/**
  * Sanitize an alt label.
  * @param {string} label
  * @returns {string}
@@ -94,7 +104,8 @@ async function main() {
         const svgName = `${fileBase}-diagram${index > 1 ? `-${index}` : ''}.svg`;
         const svgPath = join(SVG_DIR, svgName);
 
-        await writeFile(svgPath, svgBlock, 'utf8');
+        const svgContent = ensureSvgXmlns(svgBlock);
+        await writeFile(svgPath, svgContent, 'utf8');
         extractedCount++;
 
         const ariaLabel = extractAriaLabel(svgBlock);
