@@ -1,6 +1,7 @@
 # URS
 
-This table captures high-level user requirements for VSAVM. Each item is concise and intended for early-phase alignment rather than exhaustive design.
+This table captures high-level user requirements for VSAVM.
+Each item is concise and intended for early-phase alignment rather than exhaustive design.
 
 | ID | Requirement | Notes | Implemented in |
 | --- | --- | --- | --- |

@@ -24,12 +24,19 @@
         <h1>Structural boundaries and scope</h1>
 <p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
 <p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
+<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS001-foundations-and-architecture.md">DS001 Foundations and Architecture</a>.</p>
+
 <h2>Overview</h2>
 <p>Correctness claims require scope. Real corpora contain incompatible sources, hypothetical statements, and quoted passages. If the system treats all statements as globally active, bounded closure either explodes in contradictions or becomes meaningless because conflicts are ignored.</p>
+
 <h2>Boundaries as signals</h2>
 <p>Structural boundaries include headings, paragraphs, lists, quotes, definitions, and procedural steps. In multimodal inputs, boundaries also include temporal segments and scene changes. VSAVM treats these separators as explicit events so the VM can localize inference without guessing.</p>
+<p>Separators are not only for training; they are required for correctness. Transitive closure and contradiction detection are infeasible without context and scope. Separators define what belongs to the same paragraph or section and what belongs to a different chapter, enabling the system to maintain local theories without collapsing all knowledge into a single inconsistent base.</p>
+
 <h2>Scope-aware correctness</h2>
 <p>A contradiction is defined canonically as the same fact identifier appearing with opposing polarity inside the same scope. Structural separators define that scope, and the VM carries scope through execution. This enables local theories that remain coherent even when global reconciliation is not possible under budget.</p>
+<p>This structural scoping is the minimal requirement for a practical non-contradiction promise when the corpus is imperfect or contains conflicting sources.</p>
+
 <h2>Practical outcomes</h2>
 <p>Scope enables conditional reasoning across sources. A claim can be robust within a scope while being conditional across scopes. This makes the system useful under real-world inconsistency without abandoning the non-contradiction promise.</p>
 <figure class="diagram">

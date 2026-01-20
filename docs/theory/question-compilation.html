@@ -24,7 +24,7 @@
         <h1>Question compilation pipeline</h1>
 <p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
 <p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>, <a href="../wiki/query-compiler.html">query compiler</a>, <a href="../wiki/schema.html">schema</a>.</p>
-<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS018-query-compilation-search.md">DS018</a>.</p>
+<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS003-query-compilation-search.md">DS003</a>.</p>
 
 <h2>Overview</h2>
 <p>A question is treated as a request to produce an executable query program. The pipeline is explicit to support audit and control: normalization creates a structured span, retrieval proposes candidate schemas, slot filling binds discrete values, and compilation emits a program in the VM instruction set. This transformation operates through a learned pipeline rather than hand-coded rules.</p>
