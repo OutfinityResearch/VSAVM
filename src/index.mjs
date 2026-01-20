@@ -223,6 +223,163 @@ export class VSAVM {
   async learnRules(payloads) {
     return this.ruleLearner.learnRules(payloads);
   }
+
+  /**
+   * Compress a pattern using MDL-based compression
+   * Uses rule learning to find patterns and represent data compactly
+   * @param {Object} payload - Compression payload
+   * @param {string} payload.name - Pattern name
+   * @param {Array} payload.data - Data to compress
+   * @returns {Promise<Object>} Compression result
+   */
+  async compressPattern(payload) {
+    const { name, data } = payload;
+
+    if (!data || !Array.isArray(data)) {
+      return {
+        success: false,
+        error: 'Invalid data: must be an array',
+        compressedSize: null
+      };
+    }
+
+    const originalSize = JSON.stringify(data).length;
+    const compressionResults = [];
+
+    // Method 1: Try cyclic pattern detection (most common)
+    const cyclicResult = this.detectCyclicPattern(data);
+    if (cyclicResult) {
+      compressionResults.push(cyclicResult);
+    }
+
+    // Method 2: Try numeric rule learning (arithmetic/geometric progressions)
+    if (data.every(x => typeof x === 'number')) {
+      const learnResult = await this.ruleLearner.learnRule({
+        name: `compress_${name}`,
+        sequence: data
+      });
+
+      if (learnResult.success && learnResult.rule) {
+        const compressed = {
+          t: 'r', // type: rule
+          r: learnResult.rule,
+          n: data.length
+        };
+        compressionResults.push({
+          compressed,
+          compressedSize: JSON.stringify(compressed).length,
+          method: 'rule'
+        });
+      }
+    }
+
+    // Method 3: Run-length encoding
+    const rle = this.runLengthEncode(data);
+    const rleSize = JSON.stringify(rle).length;
+    if (rleSize < originalSize) {
+      compressionResults.push({
+        compressed: rle,
+        compressedSize: rleSize,
+        method: 'rle'
+      });
+    }
+
+    // Pick best compression method
+    if (compressionResults.length === 0) {
+      return {
+        success: false,
+        error: 'No pattern found for compression',
+        compressedSize: originalSize,
+        originalSize,
+        compressionRatio: 0
+      };
+    }
+
+    // Sort by size (smallest first)
+    compressionResults.sort((a, b) => a.compressedSize - b.compressedSize);
+    const best = compressionResults[0];
+
+    return {
+      success: true,
+      compressed: best.compressed,
+      compressedSize: best.compressedSize,
+      originalSize,
+      compressionRatio: 1 - (best.compressedSize / originalSize),
+      method: best.method
+    };
+  }
+
+  /**
+   * Detect cyclic (repeating) pattern
+   * @private
+   */
+  detectCyclicPattern(data) {
+    if (!data || data.length < 2) return null;
+
+    // Try various cycle lengths
+    for (let cycleLen = 1; cycleLen <= Math.floor(data.length / 2); cycleLen++) {
+      if (data.length % cycleLen !== 0) continue;
+
+      const cycle = data.slice(0, cycleLen);
+      let matches = true;
+
+      for (let i = cycleLen; i < data.length && matches; i++) {
+        if (!this.valuesEqual(data[i], cycle[i % cycleLen])) {
+          matches = false;
+        }
+      }
+
+      if (matches) {
+        const compressed = {
+          t: 'c', // type: cyclic
+          p: cycle, // pattern
+          n: data.length / cycleLen // repetitions
+        };
+        return {
+          compressed,
+          compressedSize: JSON.stringify(compressed).length,
+          method: 'cyclic'
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Simple run-length encoding
+   * @private
+   */
+  runLengthEncode(data) {
+    if (!data || data.length === 0) return { t: 'e', r: [] };
+
+    const runs = [];
+    let current = data[0];
+    let count = 1;
+
+    for (let i = 1; i < data.length; i++) {
+      if (this.valuesEqual(data[i], current)) {
+        count++;
+      } else {
+        runs.push([current, count]);
+        current = data[i];
+        count = 1;
+      }
+    }
+    runs.push([current, count]);
+
+    return { t: 'l', r: runs };
+  }
+
+  /**
+   * Compare values for equality
+   * @private
+   */
+  valuesEqual(a, b) {
+    if (typeof a !== typeof b) return false;
+    if (typeof a === 'object') return JSON.stringify(a) === JSON.stringify(b);
+    return a === b;
+  }
 }
 
 /**
