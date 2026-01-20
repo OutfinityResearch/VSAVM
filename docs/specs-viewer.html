@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Specs Viewer | VSAVM</title>
+    <title>Specification | VSAVM</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,15 +21,12 @@
         </nav>
       </header>
       <main class="main content">
-        <h1>Specs Viewer</h1>
-        <p>This page loads a Markdown specification from <code>docs/specs</code> and renders it into readable HTML on the client. It supports headings, tables, code blocks, lists, images, blockquotes, and basic emphasis.</p>
-        <p>If you open this site directly from the filesystem, your browser may block <code>fetch</code>. Serving <code>docs/</code> via a local static server avoids that restriction.</p>
         <div class="section md-viewer">
           <h2>On this page</h2>
           <div id="md-toc" class="md-toc"></div>
         </div>
         <div class="section md-viewer">
-          <p class="md-viewer-meta"><strong>Source:</strong> <a id="md-source-link" href="#">(not loaded)</a></p>
+          <p class="md-viewer-meta"><strong>Source:</strong> <a id="md-source-link" href="#"></a></p>
           <div id="md-render" class="md-render" aria-live="polite"></div>
         </div>
       </main>
@@ -48,15 +45,15 @@
       }
 
       function isAbsoluteUrl(url) {
-        return /^https?:\\/\\//i.test(url);
+        return /^https?:\/\//i.test(url);
       }
 
       function slugify(text) {
         return text
           .toLowerCase()
-          .replaceAll(/[^a-z0-9\\s-]/g, "")
+          .replaceAll(/[^a-z0-9\s-]/g, "")
           .trim()
-          .replaceAll(/\\s+/g, "-")
+          .replaceAll(/\s+/g, "-")
           .replaceAll(/-+/g, "-");
       }
 
@@ -68,6 +65,16 @@
       function baseDirForDoc(doc) {
         const idx = doc.lastIndexOf("/");
         return idx >= 0 ? doc.slice(0, idx + 1) : "";
+      }
+
+      function getBaseUrl() {
+        const loc = window.location;
+        if (loc.protocol === "file:") {
+          const path = loc.pathname;
+          const idx = path.lastIndexOf("/");
+          return idx >= 0 ? "file://" + path.slice(0, idx + 1) : "";
+        }
+        return loc.origin + loc.pathname.replace(/\/[^\/]*$/, "/");
       }
 
       function resolveRelativeUrl(baseDir, url) {
@@ -96,14 +103,14 @@
           return token;
         });
 
-        safe = safe.replaceAll(/!\\[([^\\]]*)\\]\\(([^\\)]+)\\)/g, (_, alt, url) => {
+        safe = safe.replaceAll(/!\[([^\]]*)\]\(([^\)]+)\)/g, (_, alt, url) => {
           const resolved = resolveRelativeUrl(baseDir, url.trim());
           const src = escapeHtml(resolved);
           const a = escapeHtml(alt.trim());
           return `<img src="${src}" alt="${a}">`;
         });
 
-        safe = safe.replaceAll(/\\[([^\\]]+)\\]\\(([^\\)]+)\\)/g, (_, label, url) => {
+        safe = safe.replaceAll(/\[([^\]]+)\]\(([^\)]+)\)/g, (_, label, url) => {
           const resolved = resolveRelativeUrl(baseDir, url.trim());
           const rewritten = viewerUrlFor(resolved);
           const safeLabel = escapeHtml(label);
@@ -112,12 +119,12 @@
         });
 
         safe = safe.replaceAll(/~~([^~]+)~~/g, "<del>$1</del>");
-        safe = safe.replaceAll(/\\*\\*([^*]+)\\*\\*/g, "<strong>$1</strong>");
+        safe = safe.replaceAll(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
         safe = safe.replaceAll(/__([^_]+)__/g, "<strong>$1</strong>");
-        safe = safe.replaceAll(/\\*([^*]+)\\*/g, "<em>$1</em>");
-        safe = safe.replaceAll(/(^|\\s)_([^_]+)_(?=\\s|$)/g, "$1<em>$2</em>");
+        safe = safe.replaceAll(/\*([^*]+)\*/g, "<em>$1</em>");
+        safe = safe.replaceAll(/(^|\s)_([^_]+)_(?=\s|$)/g, "$1<em>$2</em>");
 
-        safe = safe.replaceAll(/\u0000CODE(\\d+)\u0000/g, (_, idx) => placeholders[Number(idx)] || "");
+        safe = safe.replaceAll(/\u0000CODE(\d+)\u0000/g, (_, idx) => placeholders[Number(idx)] || "");
         return safe;
       }
 
@@ -143,7 +150,7 @@
       }
 
       function markdownToHtml(markdown, baseDir) {
-        const lines = markdown.replaceAll("\\r\\n", "\\n").split("\\n");
+        const lines = markdown.replaceAll("\r\n", "\n").split("\n");
         const out = [];
         const toc = [];
         let paragraph = [];
@@ -204,7 +211,7 @@
             if (code === null) {
               code = [];
             } else {
-              out.push(`<pre><code>${escapeHtml(code.join("\\n"))}</code></pre>`);
+              out.push(`<pre><code>${escapeHtml(code.join("\n"))}</code></pre>`);
               code = null;
             }
             continue;
@@ -226,7 +233,7 @@
             continue;
           }
 
-          if (/^(-{3,}|\\*{3,}|_{3,})$/.test(line)) {
+          if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) {
             flushList();
             flushOrderedList();
             flushQuote();
@@ -241,7 +248,7 @@
             flushOrderedList();
             flushParagraph();
             flushTable();
-            quoteBuffer.push(line.replace(/^>\\s?/, ""));
+            quoteBuffer.push(line.replace(/^>\s?/, ""));
             continue;
           } else if (quoteBuffer.length > 0) {
             flushQuote();
@@ -262,7 +269,7 @@
             }
           }
 
-          const headingMatch = line.match(/^(#{1,6})\\s+(.*)$/);
+          const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
           if (headingMatch) {
             flushList();
             flushOrderedList();
@@ -275,7 +282,7 @@
             continue;
           }
 
-          const bulletMatch = line.match(/^[-*+]\\s+(.*)$/);
+          const bulletMatch = line.match(/^[-*+]\s+(.*)$/);
           if (bulletMatch) {
             flushParagraph();
             flushTable();
@@ -286,7 +293,7 @@
             flushList();
           }
 
-          const orderedMatch = line.match(/^\\d+\\.\\s+(.*)$/);
+          const orderedMatch = line.match(/^\d+\.\s+(.*)$/);
           if (orderedMatch) {
             flushParagraph();
             flushTable();
@@ -297,7 +304,7 @@
             flushOrderedList();
           }
 
-          const imageOnly = line.match(/^!\\[([^\\]]*)\\]\\(([^\\)]+)\\)\\s*$/);
+          const imageOnly = line.match(/^!\[([^\]]*)\]\(([^\)]+)\)\s*$/);
           if (imageOnly) {
             flushList();
             flushOrderedList();
@@ -313,13 +320,13 @@
           paragraph.push(line);
         }
 
-        if (code !== null) out.push(`<pre><code>${escapeHtml(code.join("\\n"))}</code></pre>`);
+        if (code !== null) out.push(`<pre><code>${escapeHtml(code.join("\n"))}</code></pre>`);
         flushList();
         flushOrderedList();
         flushQuote();
         flushParagraph();
         flushTable();
-        return { html: out.join("\\n"), toc };
+        return { html: out.join("\n"), toc };
       }
 
       function getDocParam() {
@@ -332,6 +339,14 @@
         return path.startsWith("specs/") && path.endsWith(".md") && !path.includes("..");
       }
 
+      function extractTitle(html) {
+        const match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+        if (match) return match[1].trim();
+        const h2Match = html.match(/<h2[^>]*>([^<]+)<\/h2>/i);
+        if (h2Match) return h2Match[1].trim();
+        return null;
+      }
+
       async function loadAndRender() {
         const doc = normalizeDocPath(getDocParam());
         const baseDir = baseDirForDoc(doc);
@@ -340,7 +355,8 @@
         const link = document.getElementById("md-source-link");
         const tocEl = document.getElementById("md-toc");
 
-        link.textContent = doc;
+        const docName = doc.split("/").pop().replace(".md", "");
+        link.textContent = docName;
         link.setAttribute("href", doc);
 
         if (!isAllowedDoc(doc)) {
@@ -357,6 +373,12 @@
           const text = await response.text();
           const rendered = markdownToHtml(text, baseDir);
           render.innerHTML = rendered.html;
+
+          const docTitle = extractTitle(rendered.html);
+          if (docTitle) {
+            document.title = `${docTitle} | VSAVM`;
+          }
+
           if (rendered.toc.length === 0) {
             tocEl.innerHTML = "<p>No headings found.</p>";
           } else {
@@ -372,7 +394,7 @@
             if (target) target.scrollIntoView({ block: "start" });
           }
         } catch (err) {
-          render.innerHTML = `<p>Failed to load <code>${escapeHtml(doc)}</code>. Your browser may be blocking requests when opened from the filesystem.</p>`;
+          render.innerHTML = `<p>Failed to load <code>${escapeHtml(doc)}</code>. If viewing locally, serve with a static server (e.g., <code>npx serve docs</code>).</p>`;
         }
       }
 
