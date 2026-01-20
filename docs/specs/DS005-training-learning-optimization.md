@@ -1,4 +1,6 @@
-# DS020 Training, Learning, and Optimization
+# DS005 Training, Learning, and Optimization
+
+Note: This document was previously numbered DS020 in earlier drafts. The canonical number is DS005 to match the consolidated spec set in `docs/specs/`.
 
 ## Two-Loop Training Architecture
 
@@ -81,6 +83,31 @@ and the cognitive cost of understanding and maintaining them.
 The MDL criterion guides both the discovery of new patterns and the refinement of existing patterns.
 Patterns that provide significant compression benefits are promoted to permanent status in the system's knowledge base.
 Patterns that provide only marginal benefits are candidates for elimination or merger with other patterns.
+
+### Instrumentable MDL objective (engineering form)
+
+The MDL principle must be operationalized as an instrumentable score to support debugging and regression testing.
+At minimum, the system should track:
+
+- **Program description cost**: proportional to program length and novelty (instruction count, macro references, slot count, and type complexity).
+- **Residual cost**: remaining prediction loss after introducing the program/schema (e.g., next-phrase loss on the affected spans).
+- **Correctness penalties**: strong penalties for programs/schemas that introduce conflicts under bounded closure (DS004) or violate typing/canonicalization rules (DS002).
+- **Budget penalties**: penalties for strategies that systematically exhaust budgets without improving residual cost.
+
+This turns “compression pressure” into a measurable dashboard: when a schema is proposed or promoted, the system can explain the score components that justified the decision.
+
+### Consolidation health checks and rollback (normative)
+
+Promotion of schemas and macro-instructions must be conservative and reversible.
+At minimum, consolidation requires:
+
+- minimum support (enough independent occurrences across contexts and paraphrases)
+- validation that the candidate improves MDL score on held-out data (not only on training spans)
+- closure-based consistency checks on representative scenarios (reject candidates that reliably create conflicts under DS004)
+- stability checks on determinism and trace reproducibility in strict mode configurations
+
+Every promotion must create a versioned artifact and keep the previous version available for rollback.
+Rollback triggers include newly detected contradictions, degraded MDL score on validation data, or regressions in trace reproducibility.
 
 Pattern recognition and abstraction identify recurring structures in the training data that can be captured through general schemas or macro-instructions.
 The recognition process operates at multiple levels of abstraction, from surface linguistic patterns to deep logical structures.
@@ -227,6 +254,10 @@ This approach avoids the need to recheck the entire knowledge base after every m
 
 Distributed execution considerations address the challenges of scaling the VSAVM system across multiple computing nodes while maintaining consistency and coordination.
 Distributed execution can provide significant performance benefits for large-scale reasoning problems but requires careful design to handle the complexities of distributed consistency and coordination.
+
+Distributed execution must not weaken the DS004 reproducibility contract.
+In strict mode, either execution is kept single-node and deterministic, or the distributed protocol must be fully deterministic (stable partitioning, deterministic message ordering, fixed seeds, and replayable logs).
+Opportunistic parallelism is permitted in exploratory modes only when the system reports that the explored frontier may vary run-to-run.
 
 Partitioning strategies divide the knowledge base and reasoning workload across multiple nodes in ways that minimize communication overhead while maintaining load balance.
 The partitioning approach must consider both the logical structure of the knowledge base and the computational requirements of different reasoning tasks.
