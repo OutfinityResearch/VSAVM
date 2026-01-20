@@ -1,0 +1,324 @@
+{
+  "timestamp": "2026-01-20T17:09:20.914Z",
+  "config": {
+    "thresholds": {
+      "rule_accuracy": 0.9,
+      "compression_ratio": 0.5,
+      "reasoning_consistency": 0.95,
+      "query_response_ms": 100,
+      "memory_usage_mb": 256
+    },
+    "timeouts": {
+      "rule_learning": 30000,
+      "compression": 20000,
+      "reasoning": 30000,
+      "query_response": 10000
+    },
+    "params": {
+      "sequence_length": 20,
+      "num_sequences": 10,
+      "pattern_repetitions": 50,
+      "rule_chain_depth": 5,
+      "max_facts": 100,
+      "query_count": 20
+    },
+    "vsavm": {
+      "strategies": {
+        "vsa": "mock",
+        "storage": "memory"
+      },
+      "vsa": {
+        "dimensions": 1000,
+        "similarityThreshold": 0.35
+      },
+      "vm": {
+        "defaultBudget": {
+          "maxDepth": 10,
+          "maxSteps": 1000,
+          "maxBranches": 5,
+          "maxTimeMs": 5000
+        }
+      }
+    }
+  },
+  "categories": {
+    "rule-learning": {
+      "category": "rule-learning",
+      "metrics": {
+        "accuracy": 1,
+        "rules_learned": 6,
+        "total_cases": 6,
+        "memory_usage_mb": 0.107421875
+      },
+      "details": {
+        "passed": [
+          {
+            "name": "simple_arithmetic",
+            "type": "arithmetic",
+            "accuracy": 1
+          },
+          {
+            "name": "negative_arithmetic",
+            "type": "arithmetic",
+            "accuracy": 1
+          },
+          {
+            "name": "geometric_double",
+            "type": "geometric",
+            "accuracy": 0.7
+          },
+          {
+            "name": "modular_7",
+            "type": "modular",
+            "accuracy": 0.7
+          },
+          {
+            "name": "fibonacci",
+            "type": "fibonacci",
+            "accuracy": 0.7
+          },
+          {
+            "name": "squares",
+            "type": "polynomial",
+            "accuracy": 0.7
+          }
+        ],
+        "failed": []
+      },
+      "duration_ms": 27,
+      "passed": true
+    },
+    "reasoning": {
+      "error": "Cannot read properties of undefined (reading 'conflicts')",
+      "passed": false,
+      "duration_ms": 3
+    },
+    "query-response": {
+      "category": "query-response",
+      "metrics": {
+        "avg_response_ms": 0.021455600000000175,
+        "max_response_ms": 0.06264799999999582,
+        "min_response_ms": 0.010547000000002527,
+        "queries_under_threshold": 20,
+        "total_queries": 20
+      },
+      "details": {
+        "queries": [
+          {
+            "query_id": 0,
+            "predicate": "test:person",
+            "response_ms": 0.041974999999993656,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 1,
+            "predicate": "test:location",
+            "response_ms": 0.02661000000000513,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 2,
+            "predicate": "test:event",
+            "response_ms": 0.012361999999995987,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 3,
+            "predicate": "test:property",
+            "response_ms": 0.016761999999999944,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 4,
+            "predicate": "test:relation",
+            "response_ms": 0.028705999999999676,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 5,
+            "predicate": "test:person",
+            "response_ms": 0.016901999999987538,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 6,
+            "predicate": "test:location",
+            "response_ms": 0.01690200000000175,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 7,
+            "predicate": "test:event",
+            "response_ms": 0.010547000000002527,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 8,
+            "predicate": "test:property",
+            "response_ms": 0.014667000000002872,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 9,
+            "predicate": "test:relation",
+            "response_ms": 0.01529500000000894,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 10,
+            "predicate": "test:person",
+            "response_ms": 0.011034999999992579,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 11,
+            "predicate": "test:location",
+            "response_ms": 0.015225999999998407,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 12,
+            "predicate": "test:event",
+            "response_ms": 0.011523999999994317,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 13,
+            "predicate": "test:property",
+            "response_ms": 0.05915600000000154,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 14,
+            "predicate": "test:relation",
+            "response_ms": 0.014667000000002872,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 15,
+            "predicate": "test:person",
+            "response_ms": 0.01061600000001306,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 16,
+            "predicate": "test:location",
+            "response_ms": 0.014107999999993126,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 17,
+            "predicate": "test:event",
+            "response_ms": 0.06264799999999582,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 18,
+            "predicate": "test:property",
+            "response_ms": 0.01431800000000294,
+            "result_count": 20,
+            "under_threshold": true
+          },
+          {
+            "query_id": 19,
+            "predicate": "test:relation",
+            "response_ms": 0.015086000000010813,
+            "result_count": 20,
+            "under_threshold": true
+          }
+        ]
+      },
+      "duration_ms": 23,
+      "passed": true
+    },
+    "compression": {
+      "category": "compression",
+      "metrics": {
+        "avg_compression_ratio": 0.776,
+        "entropy_correlation": -0.5032282641988441,
+        "patterns_compressed": 5,
+        "total_patterns": 5
+      },
+      "details": {
+        "patterns": [
+          {
+            "name": "highly_repetitive",
+            "description": "Simple repeating pattern",
+            "original_size": 601,
+            "compressed_size": 125,
+            "compression_ratio": 0.792,
+            "entropy": 1.584962500721156,
+            "expected_ratio": 0.9,
+            "meets_expectation": true
+          },
+          {
+            "name": "alternating",
+            "description": "Two-value alternation",
+            "original_size": 801,
+            "compressed_size": 167,
+            "compression_ratio": 0.792,
+            "entropy": 1,
+            "expected_ratio": 0.8,
+            "meets_expectation": true
+          },
+          {
+            "name": "cyclic_5",
+            "description": "5-element cycle",
+            "original_size": 201,
+            "compressed_size": 48,
+            "compression_ratio": 0.76,
+            "entropy": 2.321928094887362,
+            "expected_ratio": 0.85,
+            "meets_expectation": true
+          },
+          {
+            "name": "nested_3x3",
+            "description": "Nested tree structure",
+            "original_size": 1078,
+            "compressed_size": 216,
+            "compression_ratio": 0.8,
+            "entropy": 0,
+            "expected_ratio": 0.7,
+            "meets_expectation": true
+          },
+          {
+            "name": "random_like",
+            "description": "Pseudo-random (incompressible)",
+            "original_size": 230,
+            "compressed_size": 61,
+            "compression_ratio": 0.7360000000000001,
+            "entropy": 1.264693296881179,
+            "expected_ratio": 0.1,
+            "meets_expectation": true
+          }
+        ]
+      },
+      "duration_ms": 85,
+      "passed": true
+    }
+  },
+  "summary": {
+    "total_categories": 4,
+    "passed_categories": 3,
+    "failed_categories": 1,
+    "total_duration_ms": 141
+  }
+}

@@ -4,7 +4,7 @@
  */
 
 import { factsConflict } from '../../core/types/facts.mjs';
-import { timeOverlaps } from '../../core/types/terms.mjs';
+import { timeOverlaps, isAtom, isStruct, termsEqual } from '../../core/types/terms.mjs';
 import { scopeContains, symbolIdToString } from '../../core/types/identifiers.mjs';
 
 /**
@@ -183,6 +183,25 @@ export class FactStore {
     
     if (pattern.scopeId && !scopeContains(pattern.scopeId, fact.scopeId)) {
       return false;
+    }
+
+    // Match arguments (if provided)
+    if (pattern.arguments) {
+      const entries = pattern.arguments instanceof Map
+        ? [...pattern.arguments.entries()]
+        : Object.entries(pattern.arguments);
+
+      for (const [slot, value] of entries) {
+        if (!fact.arguments.has(slot)) return false;
+        const factValue = fact.arguments.get(slot);
+
+        const looksLikeTerm = (v) => isAtom(v) || isStruct(v);
+        if (looksLikeTerm(factValue) || looksLikeTerm(value)) {
+          if (!termsEqual(factValue, value)) return false;
+        } else if (JSON.stringify(factValue) !== JSON.stringify(value)) {
+          return false;
+        }
+      }
     }
     
     return true;

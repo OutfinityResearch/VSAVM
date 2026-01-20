@@ -76,7 +76,7 @@ describe('Facts', () => {
     assert.ok(fact.factId);
     assert.strictEqual(fact.polarity, Polarity.ASSERT);
     assert.ok(fact.arguments instanceof Map);
-    assert.strictEqual(fact.arguments.get('subject').value, 'Alice');
+    assert.strictEqual(fact.arguments.get('subject').value, 'alice');
   });
 
   test('Same content produces same factId', () => {

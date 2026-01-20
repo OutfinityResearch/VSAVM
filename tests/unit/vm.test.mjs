@@ -144,7 +144,7 @@ describe('ContextStack', () => {
     
     // Parent only sees f1
     assert.ok(stack.getFact('f1'));
-    assert.strictEqual(stack.getFact('f2'), null);
+    assert.strictEqual(stack.getFact('f2'), undefined);
   });
 
   test('isolated context blocks parent visibility', () => {
@@ -153,7 +153,7 @@ describe('ContextStack', () => {
     stack.addFact({ factId: 'f1' });
     stack.pushIsolated('isolated');
     
-    assert.strictEqual(stack.getFact('f1'), null); // Not visible in isolated
+    assert.strictEqual(stack.getFact('f1'), undefined); // Not visible in isolated
   });
 });
 
@@ -266,6 +266,40 @@ describe('VMService', () => {
     const count = await store.count();
     assert.strictEqual(count, 1);
     
+    await store.close();
+  });
+
+  test('built-in COUNT/FILTER/MAP/REDUCE', async () => {
+    const store = new MemoryStore();
+    await store.initialize();
+
+    const vm = new VMService(store);
+    const state = vm.createState();
+
+    await vm.executeOne(
+      { op: 'MAP', args: { list: [{ a: 1 }, { a: 2 }, { a: 3 }], path: 'a' }, out: 'vals' },
+      state
+    );
+    assert.deepStrictEqual(state.bindings.get('vals'), [1, 2, 3]);
+
+    await vm.executeOne(
+      { op: 'FILTER', args: { list: '$vals', condition: '$item > 1' }, out: 'filtered' },
+      state
+    );
+    assert.deepStrictEqual(state.bindings.get('filtered'), [2, 3]);
+
+    await vm.executeOne(
+      { op: 'COUNT', args: { list: '$filtered' }, out: 'count' },
+      state
+    );
+    assert.strictEqual(state.bindings.get('count'), 2);
+
+    await vm.executeOne(
+      { op: 'REDUCE', args: { list: '$filtered', op: 'sum' }, out: 'sum' },
+      state
+    );
+    assert.strictEqual(state.bindings.get('sum'), 5);
+
     await store.close();
   });
 

@@ -45,13 +45,13 @@ export class Context {
   /**
    * Get a fact by ID
    * @param {string} factId
-   * @returns {Object|null}
+   * @returns {Object|null|undefined} Fact, null if denied, undefined if not found/visible
    */
   getFact(factId) {
     if (this.deniedFacts.has(factId)) return null;
     if (this.localFacts.has(factId)) return this.localFacts.get(factId);
     if (this.parent && !this.isolated) return this.parent.getFact(factId);
-    return null;
+    return undefined;
   }
 
   /**
@@ -228,7 +228,7 @@ export class ContextStack {
   /**
    * Get a fact from current context
    * @param {string} factId
-   * @returns {Object|null}
+   * @returns {Object|null|undefined}
    */
   getFact(factId) {
     return this.current.getFact(factId);

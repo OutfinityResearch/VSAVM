@@ -82,15 +82,18 @@ export function call(vmState, args) {
  */
 export function returnOp(vmState, args) {
   vmState.budget.consumeSteps('RETURN');
-  vmState.budget.popDepth();
   
   const { value } = args;
   
   // Resolve return value before popping scope
   const returnValue = value ? resolveValue(vmState, value) : undefined;
   
-  // Pop binding scope
-  vmState.bindings.popScope();
+  // Only pop scope/depth when returning from a CALL
+  // A top-level RETURN terminates execution without altering the root scope
+  if (vmState.callStack && vmState.callStack.length > 0) {
+    vmState.budget.popDepth();
+    vmState.bindings.popScope();
+  }
   
   return { value: returnValue };
 }

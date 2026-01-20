@@ -14,7 +14,7 @@ import {
   scopeIdToString, 
   scopeContains 
 } from '../../core/types/identifiers.mjs';
-import { timeOverlaps } from '../../core/types/terms.mjs';
+import { timeOverlaps, isAtom, isStruct, termsEqual } from '../../core/types/terms.mjs';
 
 /**
  * In-memory fact storage
@@ -250,10 +250,13 @@ export class MemoryStore extends StorageStrategy {
     // Match arguments
     if (pattern.arguments) {
       for (const [slot, value] of Object.entries(pattern.arguments)) {
+        if (!fact.arguments.has(slot)) return false;
         const factValue = fact.arguments.get(slot);
-        if (!factValue) return false;
-        // Simple string comparison for now
-        if (JSON.stringify(factValue) !== JSON.stringify(value)) {
+
+        const looksLikeTerm = (v) => isAtom(v) || isStruct(v);
+        if (looksLikeTerm(factValue) || looksLikeTerm(value)) {
+          if (!termsEqual(factValue, value)) return false;
+        } else if (JSON.stringify(factValue) !== JSON.stringify(value)) {
           return false;
         }
       }
