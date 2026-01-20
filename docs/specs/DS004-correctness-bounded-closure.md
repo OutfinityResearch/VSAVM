@@ -1,4 +1,6 @@
-# DS019 Correctness and Bounded Closure
+# DS004 Correctness and Bounded Closure
+
+Note: This document was previously numbered DS019 in earlier drafts. The canonical number is DS004 to match the consolidated spec set in `docs/specs/`.
 
 ## Correctness Contract Definition
 
@@ -21,13 +23,13 @@ The budget specification creates a transparent contract with users about the lev
 When the system reports a conclusion, it also reports the budget parameters that were used in verifying that conclusion.
 Users can request higher levels of verification by increasing the budget parameters, potentially discovering contradictions that were not apparent at lower budget levels.
 
-Budget monotonicity means that verification claims are monotonic with respect to their stated horizon: if a conclusion is verified as consistent up to a particular budget
-, that bounded claim remains true when the budget is later increased (assuming the knowledge base is unchanged).
+Budget monotonicity means that verification claims are monotonic with respect to their stated horizon: if a conclusion is verified as consistent up to a particular budget, that bounded claim remains true when the budget is later increased (assuming the knowledge base is unchanged).
 Higher budgets can still uncover contradictions beyond the previously explored frontier; when that happens, the system updates the conclusion's status for the new budget rather than retroactively changing what was verified under the earlier budget.
 
-Strict mode and conditional response modes provide different approaches to handling situations where contradictions cannot be ruled out within the available budget.
+Strict, conditional, and indeterminate response modes provide different approaches to handling situations where contradictions cannot be ruled out within the available budget.
 Strict mode refuses to emit any conclusion that cannot be verified as consistent within the budget limits.
 Conditional mode can emit conclusions that are marked with explicit conditions or uncertainty qualifiers that indicate the limitations of the verification process.
+Indeterminate mode returns no substantive conclusion and instead reports what was checked and why no safe claim could be produced under the requested budget and mode.
 
 The choice between strict and conditional modes depends on the application context and user preferences.
 Applications that require high reliability might prefer strict mode even if it means receiving fewer definitive answers.
@@ -49,6 +51,45 @@ When higher levels of verification cannot be completed within the budget, the sy
 
 Graceful degradation maintains the usefulness of the system even when computational resources are severely limited.
 The system can provide increasingly qualified answers as budget constraints become more restrictive, always maintaining transparency about the level of verification that was actually achieved.
+
+## Budget Model and Result Reporting (Normative)
+
+This section makes the correctness contract implementable by defining how budgets are accounted and how verified results are represented.
+
+### Budget parameters
+
+At minimum, a reasoning request carries a budget object:
+
+- `max_depth`: maximum inference depth (rule-application chain length).
+- `max_steps`: maximum number of inference steps (rule applications + key checks).
+- `max_branches`: maximum number of active branches explored under nondeterminism.
+- `max_time_ms`: optional wall-clock limit for the closure/checking phase.
+
+Budgets must be accounted monotonically and deterministically in strict mode: the same input state and budget must lead to the same explored frontier and the same report.
+
+### Budget composition rules
+
+Budgets compose across nested execution:
+
+- Each VM instruction that performs inference or matching consumes a well-defined number of steps.
+- Branch creation consumes branch budget and inherits remaining step/depth budgets.
+- Nested calls receive an explicit sub-budget carved from the remaining parent budget; consumption reduces the parent budget.
+
+Parallelism is an implementation detail: strict mode requires deterministic scheduling (stable iteration order and fixed seeds), while exploratory mode may use opportunistic scheduling but must report that nondeterminism.
+
+### Result reporting schema
+
+The system must return a structured result object even when rendering natural language.
+At minimum, the result includes:
+
+- `mode`: `STRICT`, `CONDITIONAL`, or `INDETERMINATE`.
+- `budget_used`: the budget parameters and actual consumption.
+- `claims`: list of emitted claims (empty in indeterminate mode).
+- `assumptions`: explicit identifiers for conditional claims.
+- `conflicts`: detected conflicts relevant to the query (with `fact_id`, scope, and trace pointers).
+- `trace_refs`: references to execution log segments that justify each claim.
+
+This schema is the mechanism that keeps “correctness” end-to-end: the surface realizer may choose phrasing, but it must not emit claims that are absent from `claims`.
 
 ## Bounded Closure Algorithm
 
@@ -111,6 +152,9 @@ Even branches that currently appear less promising might become valuable as the 
 
 Consistency checking operates continuously throughout the reasoning process to ensure that new facts and conclusions do not introduce contradictions into the knowledge base.
 This checking process must handle both direct contradictions between individual facts and indirect contradictions that arise through complex chains of inference.
+
+Canonical conflict predicate defines what counts as a direct contradiction.
+Using the DS002 fact model, two fact instances conflict if they share the same `fact_id`, have opposing polarity, overlap in time under the configured overlap policy, and are jointly visible in the same effective scope/context for the current reasoning episode.
 
 Canonical fact comparison provides the foundation for detecting direct contradictions between facts.
 The canonical representation ensures that logically equivalent facts are represented identically,

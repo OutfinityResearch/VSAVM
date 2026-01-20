@@ -1,4 +1,6 @@
-# DS017 Virtual Machine Design and Execution
+# DS002 Virtual Machine Design and Execution
+
+Note: This document was previously numbered DS017 in earlier drafts. The canonical number is DS002 to match the consolidated spec set in `docs/specs/`.
 
 ## VM State and Memory Model
 
@@ -66,6 +68,71 @@ The log structure supports both sequential access for complete trace reconstruct
 Temporal indices enable reconstruction of the system state at any point in time.
 Operation type indices support analysis of which types of reasoning were most frequently used.
 Fact indices enable tracking of how specific facts were derived and which conclusions depend on them.
+
+## Canonical Fact Model and Type System (Normative)
+
+This section defines the shared internal representation for facts and terms used by the VM, query compiler, and bounded closure.
+It is normative: DS003 and DS004 rely on these definitions for canonicalization, contradiction checks, and audit traces.
+
+### Identifiers
+
+VSAVM uses stable internal identifiers to make equality and conflict checks independent of surface form.
+
+- `SymbolId`: canonical identifier for a predicate, role, or enum value (typically an interned string with a stable hash).
+- `EntityId`: canonical identifier for an entity (can be learned; must be stable once introduced).
+- `FactId`: canonical identifier for an atemporal fact key (stable hash of canonical predicate + arguments + qualifiers excluding provenance).
+- `ScopeId`: canonical identifier for structural scope (derived from event stream context paths; see DS001).
+- `SourceId`: canonical identifier for provenance sources (document, speaker, sensor stream, dataset, etc.).
+
+### Terms
+
+A term is a typed value that can be used as an argument or qualifier in a fact.
+The minimal term forms are:
+
+- **Atom**: a primitive typed value (`EntityId`, `SymbolId`, string, number, boolean, time reference, modality reference).
+- **Struct**: a typed record with named slots (used for n-ary relations, complex values, and normalized qualifiers).
+
+The term representation must be deterministic under canonicalization: identical semantic content yields identical term encodings.
+
+### Facts
+
+Facts are stored as **instances** of canonical fact keys.
+The canonical key defines equality; instances add polarity, scope, time, confidence, and provenance.
+
+Minimal fact instance fields:
+
+- `fact_id` (`FactId`): canonical key identifier (see above).
+- `polarity`: `ASSERT` or `DENY` (explicit negation is stored, not implied by absence).
+- `scope_id` (`ScopeId`): the structural scope where the assertion holds.
+- `time`: optional time interval or event reference; when present it constrains conflict checks and rule applicability.
+- `confidence`: optional scalar or bucketed confidence (used for conditional outputs and conflict resolution policies).
+- `provenance`: one or more links to the originating evidence (e.g., `{source_id, event_span, extractor_id}`).
+- `qualifiers`: optional normalized key/value map for additional constraints (e.g., modality, quantifiers, units).
+
+### Canonicalization (what is and is not canonicalized)
+
+Canonicalization is the process of mapping diverse surface forms into a single internal normal form suitable for equality, indexing, and conflict detection.
+Canonicalization must be deterministic for a given input, schema set, and seed.
+
+Canonicalization **must**:
+
+- normalize obvious surface variance (case, punctuation, stable token normalization, deterministic slot ordering)
+- normalize typed values (numbers, units, time formats) into a canonical representation
+- enforce type constraints for all slots and qualifiers
+
+Canonicalization **must not**:
+
+- treat approximate similarity as equality (VSA can propose candidates, but equality requires validated mapping)
+- collapse genuinely distinct entities/facts without explicit evidence or an auditable equivalence mechanism
+
+When the system cannot decide between multiple plausible canonicalizations, it must keep multiple hypotheses (separate bindings and/or contexts) rather than committing silently.
+
+### Contradictions (direct conflict predicate)
+
+Direct contradictions are defined canonically:
+
+Two fact instances conflict if they have the same `fact_id`, opposing polarity, overlapping time (under the configured time-overlap policy), and are present in the same effective scope/context for the current reasoning mode.
+DS004 specifies how this conflict predicate is used under bounded closure and how results are reported in strict/conditional/indeterminate modes.
 
 ## Instruction Set Architecture
 

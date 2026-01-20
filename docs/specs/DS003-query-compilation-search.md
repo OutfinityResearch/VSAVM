@@ -1,4 +1,6 @@
-# DS018 Query Compilation and Program Search
+# DS003 Query Compilation and Program Search
+
+Note: This document was previously numbered DS018 in earlier drafts. The canonical number is DS003 to match the consolidated spec set in `docs/specs/`.
 
 ## Natural Language to Query Compilation
 
@@ -66,6 +68,69 @@ Common subexpressions can be identified and computed once rather than repeatedly
 Redundant operations can be eliminated when their results are not used in the final computation.
 The order of operations can be rearranged to improve cache locality and reduce memory access overhead.
 
+## Schema and Program Representation (Normative)
+
+This section defines the minimal internal data models that make compilation auditable and interoperable with the VM and bounded closure.
+It is normative for DS003 and referenced by DS002/DS004.
+
+### Query schema model
+
+A query schema is a learned mapping from a structured query span to an executable strategy.
+Schemas must be storable, retrievable (via VSA), and replayable for audit.
+
+Minimal schema fields:
+
+- `schema_id`: stable identifier.
+- `name`: human-readable label (optional).
+- `trigger`: retrieval key and structural constraints (e.g., hypervector key + required separators/features).
+- `slots`: typed slots with required/optional flags and binding constraints.
+- `program_template`: a VM program skeleton with slot references.
+- `output_contract`: expected result shape (verdict/object/trace) and emission rules.
+- `telemetry`: counters for retrieval frequency, ambiguity rate, and closure failures.
+
+Example (illustrative, not a wire format commitment):
+
+```json
+{
+  "schema_id": "schema:contradiction_check:v1",
+  "trigger": { "vsa_key": "hv:...", "requires": ["QUESTION_MARKER"] },
+  "slots": [
+    { "name": "claim", "type": "FACT_PATTERN", "required": true }
+  ],
+  "program_template": [
+    { "op": "CANONICALIZE", "in": ["$claim"], "out": ["t0"] },
+    { "op": "QUERY", "in": ["t0"], "out": ["matches"] },
+    { "op": "CLOSURE", "in": ["budget:current"], "out": ["closure_trace"] }
+  ],
+  "output_contract": { "kind": "VERDICT", "mode": "STRICT_OR_CONDITIONAL" }
+}
+```
+
+### Program IR model
+
+Programs are executable artifacts for the VM (DS002).
+The compiler must emit a typed, replayable instruction list and attach enough metadata for tracing and budget accounting (DS004).
+
+Minimal program fields:
+
+- `program_id`: stable identifier for caching and audit.
+- `instructions`: ordered list of VM instruction objects (`op` + typed operands).
+- `resources`: optional budget annotations (estimated steps, expected branchiness).
+- `trace_policy`: which intermediate artifacts must be logged for explanation.
+
+### Hypotheses and ambiguity
+
+Compilation is hypothesis-driven.
+The system must keep multiple candidate programs when the query is ambiguous, and it must surface that ambiguity into DS004’s strict/conditional/indeterminate modes.
+
+Each candidate program carries:
+
+- `hypothesis_id`
+- `bindings` (slot assignments)
+- `assumptions` (explicit, referencable handles)
+- `score` (MDL-style score + penalties; see below)
+- `early_checks` (e.g., type checks, direct conflict checks)
+
 ## Program Search and Selection
 
 The program search process explores the space of possible reasoning strategies to identify approaches that are both logically sound and computationally efficient.
@@ -83,13 +148,13 @@ Program structure exploration considers both the high-level organization of reas
 At the high-level, the system might explore different approaches to decomposing complex queries into simpler sub-problems.
 At the low-level, the system might explore different ways of implementing specific reasoning operations or different orders for applying logical rules.
 
-The search process maintains a population of candidate programs that are evaluated and refined through iterative improvement.
-New candidates are generated through mutation and recombination of existing candidates.
-Mutation operations make small changes to individual programs, such as modifying parameter values or substituting similar operations.
-Recombination operations combine successful components from different programs to create new hybrid approaches.
+The search process maintains a beam of candidate programs that are evaluated and refined through iterative improvement.
+New candidates are generated through typed program rewrites and controlled composition of successful sub-programs.
+Rewrite operations make small changes to individual programs, such as modifying parameter values, swapping equivalent instruction sequences, or reordering commutative operations.
+Composition operations combine successful components from different candidates to create new hybrid approaches while preserving type correctness and traceability.
 
-Population management ensures that the search process maintains diversity while focusing computational resources on the most promising candidates.
-The system uses fitness-based selection to identify candidates that deserve continued development while also maintaining some less fit candidates that might lead to breakthrough improvements through further modification.
+Beam management ensures that the search process maintains diversity while focusing computational resources on the most promising candidates.
+The system uses score-based selection (MDL-style score plus correctness and budget penalties) while reserving capacity for diverse candidates that may become valuable after additional rewrites.
 
 MDL-based scoring provides the primary evaluation criterion for comparing different candidate programs.
 The Minimum Description Length principle favors programs that achieve good performance while remaining relatively simple and general.
@@ -97,8 +162,8 @@ This scoring approach helps prevent overfitting to specific examples while encou
 
 The MDL score combines several components that capture different aspects of program quality.
 The complexity component measures the length and intricacy of the program structure, penalizing unnecessarily complicated approaches.
-The accuracy component measures how well the program produces correct results on test cases.
-The generality component measures how well the program performs on examples that differ from its training cases.
+The accuracy component measures how well the program satisfies available correctness signals (closure consistency, constraint satisfaction, and—during training—held-out evaluation examples).
+The generality component measures how well the program remains applicable under paraphrase variation and nearby contexts rather than overfitting to a single surface form.
 
 Scoring also incorporates computational efficiency considerations that become important when programs must operate under strict time and memory constraints.
 Programs that achieve similar logical results but require significantly different computational resources receive different scores that reflect these practical considerations.
@@ -117,7 +182,7 @@ The beam width determines how many candidates are retained for further developme
 Wider beams enable more thorough exploration but require more computational resources.
 Narrower beams focus resources on the most promising candidates but might miss innovative approaches that require more development to demonstrate their potential.
 
-The pruning process uses sophisticated selection criteria that go beyond simple fitness scores to consider the diversity and potential of the candidate population.
+The pruning process uses sophisticated selection criteria that go beyond simple scores to consider the diversity and potential of the candidate set.
 The system maintains candidates that represent different approaches to the reasoning problem, even if some approaches currently perform worse than others.
 This diversity maintenance helps prevent premature convergence on suboptimal solutions.
 
