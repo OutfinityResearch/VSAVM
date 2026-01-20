@@ -1,4 +1,4 @@
-# DS010 Federated Learning and Distributed Knowledge
+# DS024 Federated Learning and Distributed Knowledge
 
 ## Federated Architecture Principles
 

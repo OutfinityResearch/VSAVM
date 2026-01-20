@@ -1,4 +1,4 @@
-# DS009 Geometric Interpretation and Conceptual Spaces
+# DS023 Geometric Interpretation and Conceptual Spaces
 
 ## VM State Space Geometry
 

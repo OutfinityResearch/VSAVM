@@ -1,4 +1,4 @@
-# DS011 Trustworthy AI and Explainability
+# DS025 Trustworthy AI and Explainability
 
 ## Operational Trust Framework
 
@@ -22,7 +22,7 @@ Bounded guarantees specify exactly what level of verification has been performed
 
 The guarantee specification includes information about the search depth, branching factor, and consistency checking thoroughness used in reaching each conclusion. Users can request higher levels of verification by increasing the computational budget, potentially discovering issues that were not apparent at lower verification levels.
 
-Guarantee monotonicity ensures that conclusions that are verified at lower computational budgets remain valid when higher budgets are used, provided that no new information has been added to the system. This property prevents the unsettling situation where additional verification effort leads to the retraction of previously accepted conclusions.
+Guarantee monotonicity means that verification claims are monotonic with respect to their stated horizon: if a conclusion is verified as consistent up to a particular budget, that bounded claim remains true when the budget is later increased (assuming the knowledge base is unchanged). Higher budgets can still surface issues beyond the previously explored frontier; when that happens, the system updates the conclusion's status for the new budget rather than retroactively changing what was verified under the earlier budget.
 
 ## Explanation Generation Architecture
 

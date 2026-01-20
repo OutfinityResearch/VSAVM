@@ -1,4 +1,4 @@
-# DS004 Correctness and Bounded Closure
+# DS019 Correctness and Bounded Closure
 
 ## Correctness Contract Definition
 
@@ -12,7 +12,7 @@ Budget-bounded consistency guarantees specify exactly what level of consistency 
 
 The budget specification creates a transparent contract with users about the level of verification that has been performed. When the system reports a conclusion, it also reports the budget parameters that were used in verifying that conclusion. Users can request higher levels of verification by increasing the budget parameters, potentially discovering contradictions that were not apparent at lower budget levels.
 
-Budget monotonicity ensures that conclusions accepted at lower budget levels remain acceptable at higher budget levels, provided that no new information has been added to the knowledge base. This property prevents the unsettling situation where increased verification effort leads to the retraction of previously accepted conclusions. The monotonicity property is maintained through careful design of the search and verification algorithms.
+Budget monotonicity means that verification claims are monotonic with respect to their stated horizon: if a conclusion is verified as consistent up to a particular budget, that bounded claim remains true when the budget is later increased (assuming the knowledge base is unchanged). Higher budgets can still uncover contradictions beyond the previously explored frontier; when that happens, the system updates the conclusion's status for the new budget rather than retroactively changing what was verified under the earlier budget.
 
 Strict mode and conditional response modes provide different approaches to handling situations where contradictions cannot be ruled out within the available budget. Strict mode refuses to emit any conclusion that cannot be verified as consistent within the budget limits. Conditional mode can emit conclusions that are marked with explicit conditions or uncertainty qualifiers that indicate the limitations of the verification process.
 

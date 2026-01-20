@@ -1,4 +1,4 @@
-# DS002 Virtual Machine Design and Execution
+# DS017 Virtual Machine Design and Execution
 
 ## VM State and Memory Model
 
@@ -36,7 +36,7 @@ Term construction instructions create the basic building blocks for all symbolic
 
 These construction operations maintain strict type discipline to prevent the creation of malformed terms. Each term type specifies the required slots and their acceptable value types. The instruction execution engine validates all slot assignments before creating new terms, rejecting any attempts to create logically inconsistent structures.
 
-Fact manipulation instructions provide the core operations for managing the knowledge base. The ASSERT instruction adds a new fact to the canonical store after performing consistency checks. The DENY instruction removes a fact or marks it as negated, depending on the current execution mode. The QUERY instruction searches for facts matching a specified pattern, returning bindings for any variables in the pattern.
+Fact manipulation instructions provide the core operations for managing the knowledge base. The ASSERT instruction adds a new fact to the canonical store after performing consistency checks. The DENY instruction records explicit negation within the current reasoning context. The QUERY instruction searches for facts matching a specified pattern, returning bindings for any variables in the pattern.
 
 The ASSERT instruction performs several validation steps before adding facts to the store. It first checks whether the fact already exists in canonical form, avoiding duplicate storage. It then verifies that the new fact does not directly contradict any existing facts within the current context. Finally, it updates all relevant indices to ensure that the new fact can be efficiently retrieved during future operations.
 

@@ -1,4 +1,4 @@
-# DS007 Next-Phrase Generation and VM State Integration
+# DS021 Next-Phrase Generation and VM State Integration
 
 ## Phrase-Level Generation Architecture
 

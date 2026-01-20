@@ -42,7 +42,7 @@ def html_page(title: str, content: str, prefix: str = "") -> str:
         <div class="brand">VSAVM</div>
         <nav class="nav">
           <a href="{prefix}index.html">Home</a>
-          <a href="{prefix}specs.html">Specs</a>
+              <a href="{prefix}specs/">Specs</a>
           <a href="{prefix}theory/index.html">Theory</a>
           <a href="{prefix}wiki/index.html">Wiki</a>
         </nav>

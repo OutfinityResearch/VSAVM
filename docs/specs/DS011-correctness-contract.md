@@ -1,6 +1,6 @@
 # DS011 Correctness contract and boundary behavior
 
-The correctness contract specifies what the system may emit and under what conditions. Consistency is verified up to a configurable budget defined by depth, branching, step, and time limits. Budget monotonicity means a conclusion accepted at low budget does not become easier to accept at higher budget.
+The correctness contract specifies what the system may emit and under what conditions. Consistency is verified up to a configurable budget defined by depth, branching, step, and time limits. Budget monotonicity means verification is monotonic with respect to its stated horizon: a conclusion verified as consistent up to a given budget remains verified for that same budget if the budget is later increased (assuming the knowledge base is unchanged).
 
 Bounded closure runs in a propagation phase and a conflict checking phase. Strict mode cuts inconsistent branches, while exploratory mode can retain them for analysis without using them in final conclusions.
 
