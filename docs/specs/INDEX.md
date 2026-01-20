@@ -1,5 +1,28 @@
-# Specs index
+# VSAVM Specifications Index
 
-Primary documents are [URS](URS.md), [FS](FS.md), [NFS](NFS.md).
+## Primary Requirements Documents
+- [URS](URS.md) - User Requirements Specification
+- [FS](FS.md) - Functional Specification  
+- [NFS](NFS.md) - Non-Functional Specification
 
-Design specifications are [DS001 High-level vision](DS001-high-level-vision.md), [DS002 Input representation, modality agnostic](DS002-input-representation.md), [DS003 Structural separators and correctness](DS003-structural-separators.md), [DS004 Training method and self-learned compiler](DS004-training-method.md), [DS005 RL as shaping without breaking the statistical core](DS005-rl-shaping.md), [DS006 Question encoding, self-learned and multimodal](DS006-question-encoding.md), [DS007 Next-phrase completion and bounded closure](DS007-next-phrase-closure.md), [DS008 Decoding back to natural language](DS008-output-decoding.md), [DS009 Correctness through bounded closure](DS009-correctness-bounded-closure.md), [DS010 VM design and interaction with VSA](DS010-vm-design-vsa.md), [DS011 Correctness contract and boundary behavior](DS011-correctness-contract.md), [DS012 Geometric interpretation and conceptual spaces](DS012-geometric-interpretation.md), [DS013 Federated learning potential](DS013-federated-learning.md), [DS014 Trustworthy AI in VM plus VSA](DS014-trustworthy-ai.md).
+## Core Design Specifications
+
+The VSAVM system is specified through five comprehensive design documents that provide complete technical coverage of the system architecture and implementation requirements:
+
+- [DS001 System Architecture and Core Concepts](DS001-system-architecture.md) - LLM-like interface with VM core, unified event stream representation, VSA integration and acceleration, training architecture overview
+
+- [DS002 Virtual Machine Design and Execution](DS002-vm-design-execution.md) - VM state and memory model, instruction set architecture, execution modes and semantics, macro-instruction system
+
+- [DS003 Query Compilation and Program Search](DS003-query-compilation-search.md) - Natural language to query compilation, program search and selection, schema learning and consolidation, multimodal query processing
+
+- [DS004 Correctness and Bounded Closure](DS004-correctness-bounded-closure.md) - Correctness contract definition, bounded closure algorithm, consistency checking and conflict resolution, execution tracing and auditability
+
+- [DS005 Training, Learning, and Optimization](DS005-training-learning-optimization.md) - Two-loop training architecture, compression-driven learning, reinforcement learning integration, performance optimization and scaling
+
+## Analysis and Legacy Documents
+
+- [ANALYSIS](ANALYSIS.md) - Comprehensive analysis of specification gaps and restructuring recommendations
+
+### Legacy Specifications (Superseded)
+The following documents have been superseded by the comprehensive DS001-DS005 specifications above:
+- DS001-high-level-vision.md, DS002-input-representation.md, DS003-structural-separators.md, DS004-training-method.md, DS005-rl-shaping.md, DS006-question-encoding.md, DS007-next-phrase-closure.md, DS008-output-decoding.md, DS009-correctness-bounded-closure.md, DS010-vm-design-vsa.md, DS011-correctness-contract.md, DS012-geometric-interpretation.md, DS013-federated-learning.md, DS014-trustworthy-ai.md
