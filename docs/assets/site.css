@@ -379,7 +379,8 @@ a:hover {
   box-shadow: 0 18px 36px rgba(6, 32, 64, 0.12);
 }
 
-.diagram svg {
+.diagram svg,
+.diagram img {
   width: 100%;
   height: auto;
   display: block;

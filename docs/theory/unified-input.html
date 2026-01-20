@@ -59,38 +59,7 @@
 <h2>Implementation considerations</h2>
 <p>Representation fails when boundaries are ambiguous or when compression cannot expand deterministically. VSAVM therefore prioritizes deterministic segmentation and deterministic expansion. This makes later stages predictable and keeps the correctness contract enforceable.</p>
 <figure class="diagram">
-<svg viewBox="0 0 800 260" role="img" aria-label="Unified input representation diagram">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#e8f3ff"/>
-      <stop offset="1" stop-color="#d6f5e8"/>
-    </linearGradient>
-    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0b6eff"/>
-      <stop offset="1" stop-color="#16b879"/>
-    </linearGradient>
-  </defs>
-  <rect x="200" y="30" rx="12" ry="12" width="400" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="400" y="60" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Event stream (type + payload + context)</text>
-  <line x1="400" y1="80" x2="400" y2="100" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <line x1="250" y1="100" x2="550" y2="100" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <line x1="250" y1="100" x2="250" y2="130" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <polygon points="245,120 255,120 250,130" fill="#16b879"/>
-  <line x1="550" y1="100" x2="550" y2="130" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <polygon points="545,120 555,120 550,130" fill="#16b879"/>
-  <rect x="100" y="130" rx="12" ry="12" width="300" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="250" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Lexical layer (reversible tokens)</text>
-  <rect x="400" y="130" rx="12" ry="12" width="300" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="550" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Phrase layer (macro units)</text>
-  <line x1="250" y1="180" x2="250" y2="200" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <polygon points="245,190 255,190 250,200" fill="#16b879"/>
-  <line x1="550" y1="180" x2="550" y2="200" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <polygon points="545,190 555,190 550,200" fill="#16b879"/>
-  <rect x="100" y="200" rx="12" ry="12" width="300" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="250" y="225" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Deterministic expansion</text>
-  <rect x="400" y="200" rx="12" ry="12" width="300" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="550" y="225" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Stable units for retrieval</text>
-</svg>
+<img class="diagram-svg" src="../assets/svg/unified-input-diagram.svg" alt="unified-input diagram">
 <figcaption>A single symbolic substrate supports multimodal inputs while preserving structure, scope, and reversible compression.</figcaption>
 </figure>
 <h2>References</h2>

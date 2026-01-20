@@ -4,7 +4,7 @@
  * Implements bounded closure computation
  */
 
-import { Budget, createBudget } from '../../vm/budget.mjs';
+import { Budget } from '../../vm/budget.mjs';
 import { factsConflict } from '../../core/types/facts.mjs';
 import { timeOverlaps } from '../../core/types/terms.mjs';
 import { scopeContains } from '../../core/types/identifiers.mjs';
@@ -134,7 +134,7 @@ export class ForwardChainer {
   chain(initialFacts, rules, budget) {
     const budgetObj = budget instanceof Budget 
       ? budget 
-      : createBudget(budget);
+      : new Budget(budget);
 
     // Initialize
     const factStore = new Map();  // factId → fact
@@ -155,12 +155,12 @@ export class ForwardChainer {
     const sortedRules = [...rules].sort((a, b) => b.priority - a.priority);
 
     // Main loop
-    while (!agenda.isEmpty() && budgetObj.hasRemaining()) {
+    while (!agenda.isEmpty() && !budgetObj.isExhausted()) {
       const currentFact = agenda.pop();
       iterations++;
 
       try {
-        budgetObj.consumeStep(1);
+        budgetObj.consumeSteps('MATCH', 0);
       } catch (e) {
         // Budget exhausted
         break;
@@ -171,7 +171,8 @@ export class ForwardChainer {
 
       for (const { rule, bindings } of applicable) {
         // Check if we have budget for this rule
-        if (budgetObj.remainingSteps() < rule.estimatedCost) {
+        const remainingSteps = budgetObj.limits.maxSteps - budgetObj.used.steps;
+        if (remainingSteps < rule.estimatedCost) {
           continue;
         }
 
@@ -179,7 +180,7 @@ export class ForwardChainer {
         const newFacts = this._applyRule(rule, bindings, factStore);
         
         try {
-          budgetObj.consumeStep(rule.estimatedCost);
+          budgetObj.consumeSteps('APPLY_RULE', rule.estimatedCost - 5);
         } catch (e) {
           break;
         }
@@ -235,7 +236,7 @@ export class ForwardChainer {
       derived,
       conflicts,
       trace,
-      budgetExhausted: !budgetObj.hasRemaining(),
+      budgetExhausted: budgetObj.isExhausted(),
       iterations,
       rulesApplied
     });

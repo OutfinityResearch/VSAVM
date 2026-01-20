@@ -1,0 +1,32 @@
+<svg viewBox="0 0 800 280" role="img" aria-label="Correctness diagram">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f3ff"/>
+      <stop offset="1" stop-color="#d6f5e8"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b6eff"/>
+      <stop offset="1" stop-color="#16b879"/>
+    </linearGradient>
+  </defs>
+  <rect x="50" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="140" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Canonicalize</text>
+<rect x="270" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="360" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Close (bounded)</text>
+<rect x="490" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="580" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Detect conflicts</text>
+<line x1="230" y1="70" x2="270" y2="70" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+<polygon points="260,65 260,75 270,70" fill="#16b879"/>
+<line x1="450" y1="70" x2="490" y2="70" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
+<polygon points="480,65 480,75 490,70" fill="#16b879"/>
+<rect x="150" y="130" rx="12" ry="12" width="480" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="390" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Conflict = same fact_id + opposing polarity + same scope</text>
+<line x1="580" y1="100" x2="390" y2="130" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
+<polygon points="395,120 405,125 390,130" fill="#0b6eff"/>
+<rect x="150" y="210" rx="12" ry="12" width="220" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="260" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Context scoping</text>
+<rect x="410" y="210" rx="12" ry="12" width="220" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
+<text x="520" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Execution tracing</text>
+<line x1="390" y1="180" x2="260" y2="210" stroke="#0b6eff" stroke-width="2" stroke-dasharray="5,5"/>
+<line x1="390" y1="180" x2="520" y2="210" stroke="#0b6eff" stroke-width="2" stroke-dasharray="5,5"/>
+</svg>

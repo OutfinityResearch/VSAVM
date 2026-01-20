@@ -33,37 +33,7 @@
 <h2>Further reading</h2>
 <p>Fact stores are related to knowledge bases; VSAVM’s emphasis is on canonical IDs and scope-aware closure rather than on open-world accumulation.</p>
 <figure class="diagram">
-<svg viewBox="0 0 900 340" role="img" aria-label="Fact store diagram">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#e8f3ff"/>
-      <stop offset="1" stop-color="#d6f5e8"/>
-    </linearGradient>
-    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0b6eff"/>
-      <stop offset="1" stop-color="#16b879"/>
-    </linearGradient>
-  </defs>
-  <rect x="90" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="210.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">fact_id</text>
-<rect x="350" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="470.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">polarity</text>
-<rect x="610" y="70" rx="18" ry="18" width="240" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="730.0" y="109.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">scope</text>
-<line x1="330" y1="105" x2="350" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="340,98 340,112 360,105" fill="#16b879"/>
-<line x1="590" y1="105" x2="610" y2="105" stroke="url(#deep)" stroke-width="4" stroke-linecap="round"/>
-<polygon points="600,98 600,112 620,105" fill="#16b879"/>
-<rect x="180" y="170" rx="18" ry="18" width="540" height="70" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-<text x="450.0" y="209.0" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Conflict if same fact_id has opposing polarity in same scope</text>
-<line x1="480" y1="140" x2="480" y2="170" stroke="#0b6eff" stroke-width="4" stroke-linecap="round"/>
-<polygon points="470,163 470,177 490,170" fill="#16b879"/>
-<rect x="90" y="255" width="360" height="78" rx="16" ry="16" fill="none" stroke="#7fb3e6" stroke-width="2"/>
-<text x="106" y="277" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Legend</text>
-<text x="106" y="299" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Canonicalization enables comparison.</text>
-<text x="106" y="317" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Scope prevents global collapse.</text>
-<text x="106" y="335" text-anchor="start" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Used by closure and audit.</text>
-</svg>
+<img class="diagram-svg" src="../assets/svg/fact-store-diagram.svg" alt="fact-store diagram">
 <figcaption>The fact store holds canonical claims with explicit polarity and scope to make contradiction checks computable.</figcaption>
 </figure>
 <h2>References</h2>

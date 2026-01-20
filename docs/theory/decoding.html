@@ -71,41 +71,7 @@
 <h2>Audit and user trust</h2>
 <p>Faithful realization supports audit. When the user asks why a claim was made, the system can point to the underlying fact identifiers and trace steps. When it cannot justify a claim, it must degrade to conditional or indeterminate outputs rather than inventing.</p>
 <figure class="diagram">
-<svg viewBox="0 0 800 280" role="img" aria-label="Decoding diagram">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#e8f3ff"/>
-      <stop offset="1" stop-color="#d6f5e8"/>
-    </linearGradient>
-    <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0b6eff"/>
-      <stop offset="1" stop-color="#16b879"/>
-    </linearGradient>
-  </defs>
-  <rect x="50" y="40" rx="12" ry="12" width="200" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="150" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">VM result (object + trace)</text>
-  <line x1="250" y1="70" x2="290" y2="70" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <polygon points="280,65 280,75 290,70" fill="#16b879"/>
-  <rect x="290" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="380" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Content planning</text>
-  <line x1="470" y1="70" x2="510" y2="70" stroke="url(#deep)" stroke-width="3" stroke-linecap="round"/>
-  <polygon points="500,65 500,75 510,70" fill="#16b879"/>
-  <rect x="510" y="40" rx="12" ry="12" width="180" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="600" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Surface realization</text>
-  <rect x="150" y="130" rx="12" ry="12" width="480" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="390" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Fidelity constraint: no new facts</text>
-  <line x1="390" y1="100" x2="390" y2="130" stroke="#0b6eff" stroke-width="3" stroke-linecap="round"/>
-  <polygon points="385,120 395,120 390,130" fill="#0b6eff"/>
-  <rect x="100" y="210" rx="12" ry="12" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="190" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Multimodal output</text>
-  <rect x="310" y="210" rx="12" ry="12" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="400" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Quality validation</text>
-  <rect x="520" y="210" rx="12" ry="12" width="180" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="2"/>
-  <text x="610" y="240" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Final Output</text>
-  <line x1="390" y1="180" x2="190" y2="210" stroke="#0b6eff" stroke-width="2" stroke-dasharray="5,5"/>
-  <line x1="390" y1="180" x2="400" y2="210" stroke="#0b6eff" stroke-width="2" stroke-dasharray="5,5"/>
-  <line x1="390" y1="180" x2="610" y2="210" stroke="#0b6eff" stroke-width="2" stroke-dasharray="5,5"/>
-</svg>
+<img class="diagram-svg" src="../assets/svg/decoding-diagram.svg" alt="decoding diagram">
 <figcaption>Decoding is a constrained realization: it can choose phrasing, but it must not invent facts beyond the VM state and trace. Fidelity mechanisms ensure end-to-end correctness.</figcaption>
 </figure>
 <h2>References</h2>
