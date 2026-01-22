@@ -21,6 +21,23 @@ DS011 is additive: it does not change core semantics. It operationalizes the "ou
 - No direct inference of "truth" from statistical decoding alone.
 - No replacement of the inner loop's pattern mining.
 
+## Implementation Status (This Repository)
+
+This DS describes the target generative decoding architecture. The repository currently implements a pragmatic subset to keep the core dependency-light and to support reproducible comparisons.
+
+Implemented:
+
+- `MacroUnitModel` (`src/training/outer-loop/macro-unit-model.mjs`): byte-level macro-unit discovery + continuation, streaming training (`trainStream`), bounded n-gram orders, pruning/sampling, and reversible encode/decode.
+- `VMStateConditioner` (`src/generation/vm-state-conditioner.mjs`): deterministic structural conditioning signature.
+- `ClaimGate` (`src/generation/constraints/claim-gate.mjs`): optional proposal validation against VM state claims/facts.
+- `eval_tinyLLM/`: training + evaluation harness with dataset/model artifact caching and timestamped HTML+JSON comparison reports.
+
+Not yet integrated end-to-end (design intent remains, wiring is incomplete):
+
+- Using DS005’s `PatternMiner` / `SchemaProposer` / `Consolidator` as the macro-unit discovery backend for DS011 (the current `MacroUnitModel` performs its own bounded subsequence mining and MDL promotion).
+- VSA-accelerated macro-unit retrieval during continuation (current `MacroUnitModel` is n-gram/trie based).
+- Making VM-conditioned continuation the default response path for query answering (the default path remains execution + bounded closure + deterministic rendering).
+
 ## Terminology
 
 - **Token**: Minimal discrete unit from the event stream (byte, text token, visual token, etc.).
@@ -42,11 +59,11 @@ The generative path integrates with DS005's two-loop architecture:
 
 ### Inner Loop (DS005, executed during training)
 
-1. **Pattern Mining**: Discover recurring byte/token sequences using `PatternMiner`.
-2. **Macro-Unit Proposal**: Propose new macro-units via `SchemaProposer`.
-3. **MDL Consolidation**: Promote macro-units that improve compression via `Consolidator`.
+The repository contains DS005 inner-loop components (rule/schema learning via `PatternMiner`, `SchemaProposer`, `Consolidator`).
+In the current codebase, DS011 macro-unit discovery is implemented inside `MacroUnitModel` rather than being driven by those DS005 components.
+Future work can unify these paths so that inner-loop consolidation feeds the outer-loop macro-unit vocabulary.
 
-The outer loop consumes macro-units discovered by the inner loop. Generation is proposal + validation, not free-form continuation.
+Generation remains proposal + validation, not free-form continuation.
 
 ## Macro-Unit Discovery (Normative)
 
@@ -101,7 +118,8 @@ and `mine_frequent_subsequences` operates on bounded buffers rather than the ful
 class MacroUnitModel {
   /**
    * Train on token sequences, discovering and consolidating macro-units.
-   * Uses PatternMiner, SchemaProposer, Consolidator from DS005.
+   * In this repository, macro-unit mining and MDL promotion are performed
+   * inside MacroUnitModel (bounded subsequence counts + pruning/sampling).
    */
   async train(tokenSequences, vmStateSignatures) {}
 
@@ -426,61 +444,45 @@ These metrics are evaluation-only; they must not hardcode domains.
 
 ## Connection to eval_tinyLLM
 
-The eval_tinyLLM suite must be updated to use this pipeline:
+`eval_tinyLLM/` is the current reproducible harness for training and comparing:
 
-### train-vsavm.mjs Changes
+- a small TensorFlow byte-level Transformer baseline
+- VSAVM’s DS011 `MacroUnitModel` (macro-unit + byte continuation)
 
-```javascript
-// OLD: Only ingested events
-await ingestDataset(vm, inputPath, options);
-await saveFacts(vm, factsOut);
+The harness is intentionally scoped to language-model metrics (perplexity/throughput/reference match/compression/repetition) and does not attempt to validate semantic correctness claims (that remains the VM + bounded closure responsibility).
 
-// NEW: Full training pipeline
-await ingestDataset(vm, inputPath, options);           // Phase 1
-const separators = await detectSeparators(events);     // Phase 2 (DS010)
-const patterns = await minePatterns(tokens);           // Phase 3 (DS005)
-const macroUnits = await proposeMacroUnits(patterns);  // Phase 4 (DS005)
-await consolidateMacroUnits(macroUnits);               // Phase 5 (DS005)
-await trainPredictionModel(tokens, vmStates);          // Phase 6 (DS011)
-await saveFacts(vm, factsOut);
-await saveMacroUnits(macroUnitsOut);
-await saveModel(modelOut);
+### Artifacts and results (current layout)
+
+- Prepared datasets: `eval_tinyLLM/cache/datasets/<datasetId>/...` (+ `latest.json` pointer)
+- Trained models:
+  - `eval_tinyLLM/cache/models/vsavm/<datasetId>/<modelId>/...`
+  - `eval_tinyLLM/cache/models/tf/<datasetId>/<modelId>/...`
+- Timestamped comparison reports:
+  - `eval_tinyLLM/results/<timestamp>_results.html`
+  - `eval_tinyLLM/results/<timestamp>_results.json`
+
+### VSAVM training (current pipeline)
+
+`eval_tinyLLM/tools/train-vsavm.mjs` performs:
+
+1. (Optional) ingest the training dataset into VSAVM to materialize facts (`--skip-ingest` disables this for large runs).
+2. Stream token sequences (bytes) from `train.txt`.
+3. Train `MacroUnitModel.trainStream(...)` with bounded counts, pruning, and optional sampling.
+4. Export a compact model snapshot and write `meta.json` (duration, params, compression/perplexity samples) under the selected `datasetId` + `modelId`.
+
+### VSAVM generation in the harness
+
+The harness loads a trained macro-unit model via `eval_tinyLLM/lib/vsavm-driver.mjs` and calls:
+
+```js
+await model.generate(promptBytes, { maxTokens, budgetMs, temperature });
 ```
 
-### vsavm-driver.mjs Changes
+By default, the harness does not pass a VM state object to generation, so VM conditioning and claim gating are not exercised. Those mechanisms exist in `MacroUnitModel` and can be wired into a future harness variant once a stable VM-conditioned benchmark is defined.
 
-```javascript
-// OLD: Only query answering
-export async function answerWithVSAVM(vm, text, options) {
-  const result = await vm.answerQuery(text, options);
-  return { text: vm.renderResult(result.closure).text };
-}
+### Comparison reports
 
-// NEW: Add generation capability
-export async function generateWithVSAVM(vm, prompt, options) {
-  const result = await vm.generate(prompt, {
-    maxTokens: options.maxTokens ?? 100,
-    mode: options.mode ?? 'CONDITIONAL'
-  });
-  return {
-    text: decodeTokens(result.tokens),
-    macroUnits: result.macroUnits,
-    compressionRatio: result.compressionRatio
-  };
-}
-```
-
-### compare.mjs Changes
-
-Compare generation quality, not query answering:
-
-```javascript
-// Metrics to compare:
-// 1. Compression ratio (VSAVM should excel here)
-// 2. Perplexity (TF baseline comparison)
-// 3. Few-shot learning curve (VSAVM should learn faster)
-// 4. Model size vs quality tradeoff
-```
+`eval_tinyLLM/tools/compare.mjs` runs both engines under identical budgets and writes a timestamped HTML+JSON report. The report is meant to be checked into `results/` (not `cache/`) so multiple runs can coexist without overwriting.
 
 ## Implementation Notes (Non-Normative)
 

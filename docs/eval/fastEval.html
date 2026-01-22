@@ -281,6 +281,11 @@ node evals/run.mjs --verbose
                     <li><strong>node evals/run.mjs --json</strong> - Emit JSON-only results</li>
                 </ul>
             </div>
+
+            <div class="highlight">
+                <h3>Complementary benchmark: eval_tinyLLM</h3>
+                <p>FastEval focuses on deterministic VM capabilities. For budgeted byte-level continuation comparisons (VSAVM macro-units vs a small TensorFlow baseline), use <strong>eval_tinyLLM</strong>. Reports are written to <code>eval_tinyLLM/results/</code> as timestamped HTML+JSON files.</p>
+            </div>
         </section>
 
         <section class="section">

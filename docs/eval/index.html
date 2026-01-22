@@ -211,7 +211,7 @@
     <header>
         <div class="container">
             <h1>VSAVM Evaluation Framework</h1>
-            <p>Rapid assessment of core AI capabilities through synthetic data and targeted metrics</p>
+            <p>Rapid assessment of VM correctness plus budgeted continuation comparisons</p>
         </div>
     </header>
 
@@ -220,6 +220,7 @@
             <ul>
                 <li><a href="#overview" class="active">Overview</a></li>
                 <li><a href="#fasteval">FastEval</a></li>
+                <li><a href="#tinyllm">eval_tinyLLM</a></li>
                 <li><a href="#metrics">Metrics</a></li>
                 <li><a href="#benchmarks">Benchmarks</a></li>
                 <li><a href="#results">Results</a></li>
@@ -230,7 +231,7 @@
     <main class="container">
         <section id="overview" class="section">
             <h2>Evaluation System Overview</h2>
-            <p>The VSAVM evaluation framework provides rapid and convincing evidence that the system exhibits expected properties without requiring large-scale training. It focuses on demonstrating core capabilities through synthetic data and targeted metrics.</p>
+            <p>The VSAVM evaluation framework provides two complementary tracks: (1) deterministic, synthetic capability checks for the VM core (FastEval) and (2) a reproducible continuation benchmark comparing VSAVM macro-units against a small TensorFlow baseline (eval_tinyLLM).</p>
 
             <div class="highlight">
                 <h3>Key Objectives</h3>
@@ -257,6 +258,10 @@
                 <div class="card">
                     <h4>❓ Query Response</h4>
                     <p>System answers questions with <100ms response time for basic factual queries</p>
+                </div>
+                <div class="card">
+                    <h4>🧪 Continuation Comparison</h4>
+                    <p>Budgeted byte-level continuation metrics (VSAVM macro-units vs TensorFlow baseline)</p>
                 </div>
             </div>
         </section>
@@ -317,6 +322,39 @@ node evals/run.mjs --category query-response
 # Emit JSON-only output
 node evals/run.mjs --json
             </div>
+        </section>
+
+        <section id="tinyllm" class="section">
+            <h2>eval_tinyLLM - Budgeted continuation comparison</h2>
+            <p><code>eval_tinyLLM</code> is a reproducible training + comparison sandbox. It measures byte-level continuation quality under strict time/token budgets and compares VSAVM’s DS011 <code>MacroUnitModel</code> against a small TensorFlow baseline on the same prepared dataset.</p>
+
+            <h3>What it is (and what it is not)</h3>
+            <ul style="margin: 1rem 0; padding-left: 2rem;">
+                <li><strong>Measures:</strong> perplexity, throughput, repetition, distinct n-grams, reference match, and VSAVM macro-unit compression.</li>
+                <li><strong>Does not measure:</strong> VM/closure correctness of factual claims (that remains the VM + DS004 bounded closure responsibility).</li>
+                <li><strong>Artifact discipline:</strong> datasets and trained models are cached under <code>eval_tinyLLM/cache/</code> keyed by <code>datasetId</code> and <code>modelId</code>, so multiple dataset sizes and training variants can coexist without overwriting.</li>
+            </ul>
+
+            <h3>Running eval_tinyLLM</h3>
+            <div class="code-block">
+# Prepare dataset split (writes eval_tinyLLM/cache/datasets/&lt;datasetId&gt;/...)
+node eval_tinyLLM/tools/fetch-and-prepare.mjs --max-bytes 50000000
+
+# Train VSAVM macro-unit model (DS011)
+node eval_tinyLLM/tools/train-vsavm.mjs --max-bytes 50000000 --skip-ingest --tag large
+
+# Train TensorFlow baseline
+node eval_tinyLLM/tools/train-tf.mjs --max-bytes 50000000 --epochs 2 --steps 2000 --tag large
+
+# Compare under identical budgets and write a timestamped report
+node eval_tinyLLM/tools/compare.mjs --max-bytes 50000000 --reference
+            </div>
+
+            <h3>Outputs</h3>
+            <ul style="margin: 1rem 0; padding-left: 2rem;">
+                <li><strong>Reports:</strong> written to <code>eval_tinyLLM/results/&lt;timestamp&gt;_results.html</code> and <code>.json</code>.</li>
+                <li><strong>Artifacts:</strong> cached under <code>eval_tinyLLM/cache/models/{vsavm,tf}/&lt;datasetId&gt;/&lt;modelId&gt;/</code>.</li>
+            </ul>
         </section>
 
         <section id="metrics" class="section">
@@ -380,7 +418,7 @@ node evals/run.mjs --json
                     </tr>
                     <tr>
                         <td>Schema Efficiency</td>
-                        <td>Reusability of learned schemas across domains</td>
+                        <td>Reusability of learned schemas across contexts</td>
                         <td>>70%</td>
                         <td>Schema learning studies</td>
                     </tr>
@@ -488,11 +526,11 @@ node evals/run.mjs --json
 
         <section id="results" class="section">
             <h2>Results and Analysis</h2>
-            <p>This section will be populated with evaluation results as the implementation progresses.</p>
+            <p>FastEval prints results to stdout (and can emit JSON). <code>eval_tinyLLM</code> writes timestamped HTML+JSON comparison reports under <code>eval_tinyLLM/results/</code>.</p>
 
             <div class="highlight">
                 <h3>Implementation Status</h3>
-                <p>The evaluation framework is currently under development. Initial test implementations are available for rule learning, compression, and reasoning capabilities.</p>
+                <p>FastEval and eval_tinyLLM are both usable today. FastEval focuses on deterministic VM properties; eval_tinyLLM focuses on continuation-quality metrics under identical budgets.</p>
             </div>
 
             <h3>Planned Results Visualization</h3>

@@ -1,4 +1,3 @@
-import { mkdir } from 'node:fs/promises';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
