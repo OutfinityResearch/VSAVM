@@ -7,9 +7,19 @@
   "scripts": {
     "fast-eval": "node evals/run.mjs",
     "test": "node --test tests/unit/*.test.mjs",
-    "start": "node src/index.mjs"
+    "start": "node src/index.mjs",
+    "trainTinyLLM": "node eval_tinyLLM/tools/train-vsavm.mjs && node eval_tinyLLM/tools/train-tf.mjs && node eval_tinyLLM/tools/eval-vsavm.mjs && node eval_tinyLLM/tools/eval-tf.mjs",
+    "trainTinyLLM:quick": "node eval_tinyLLM/tools/train-vsavm.mjs && node eval_tinyLLM/tools/train-tf.mjs --quick && node eval_tinyLLM/tools/eval-vsavm.mjs && node eval_tinyLLM/tools/eval-tf.mjs",
+    "trainTinyLLM:force": "node eval_tinyLLM/tools/train-vsavm.mjs --force && node eval_tinyLLM/tools/train-tf.mjs --force && node eval_tinyLLM/tools/eval-vsavm.mjs && node eval_tinyLLM/tools/eval-tf.mjs",
+    "downloadTinyLLM": "node eval_tinyLLM/tools/download-hf.mjs --dataset roneneldan/TinyStories --split train",
+    "prepareTinyLLM": "node eval_tinyLLM/tools/prepare-data.mjs",
+    "fetchTinyLLM": "node eval_tinyLLM/tools/fetch-and-prepare.mjs --dataset roneneldan/TinyStories --split train",
+    "compareTinyLLM": "node eval_tinyLLM/tools/compare.mjs"
   },
   "keywords": ["vsa", "vm", "symbolic", "reasoning"],
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^4.16.0"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"

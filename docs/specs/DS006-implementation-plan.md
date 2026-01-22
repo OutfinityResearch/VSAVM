@@ -14,181 +14,166 @@ This document defines the implementation architecture for VSAVM. It specifies th
 
 ```
 src/
-├── core/                    # Core abstractions and shared types
-│   ├── types/               # Fundamental type definitions
-│   │   ├── terms.ts         # Term, Atom, Struct types
-│   │   ├── facts.ts         # FactId, FactInstance, Polarity
-│   │   ├── identifiers.ts   # SymbolId, EntityId, ScopeId, SourceId
-│   │   ├── events.ts        # Event, EventStream types
-│   │   └── results.ts       # Result, Verdict, TraceRef types
-│   ├── interfaces/          # Strategy interfaces (contracts)
-│   │   ├── vsa-strategy.ts          # VSA representation strategy
-│   │   ├── canonicalizer-strategy.ts # Canonicalization strategy
-│   │   ├── storage-strategy.ts      # Fact storage backend
-│   │   ├── search-strategy.ts       # Program search strategy
-│   │   ├── scoring-strategy.ts      # MDL scoring strategy
-│   │   └── conflict-resolver-strategy.ts # Conflict resolution
-│   ├── config/              # Configuration loading and validation
-│   │   ├── config-schema.ts # Configuration type definitions
-│   │   ├── config-loader.ts # Load from file/env
-│   │   └── strategy-registry.ts # Strategy name → implementation mapping
-│   └── errors.ts            # Error types and codes
+├── api/                     # HTTP-like request/response layer
+│   ├── protocol/
+│   │   ├── request.mjs
+│   │   └── response.mjs
+│   ├── admin-handler.mjs
+│   ├── query-handler.mjs
+│   └── index.mjs
 │
-├── event-stream/            # DS001: Event stream processing
-│   ├── parser/              # Input parsing to events
-│   │   ├── text-parser.ts   # Text → token events
-│   │   ├── separator-detector.ts # Structural separator detection
-│   │   └── multimodal-adapter.ts # Placeholder for audio/visual
-│   ├── scope/               # Scope derivation from context paths
-│   │   ├── scope-builder.ts # context_path → ScopeId
-│   │   └── scope-tree.ts    # Hierarchical scope management
-│   └── stream.ts            # EventStream class and iteration
+├── canonicalization/        # Term canonicalization (DS002)
+│   ├── normalizers/
+│   │   ├── text-normalizer.mjs
+│   │   ├── number-normalizer.mjs
+│   │   ├── time-normalizer.mjs
+│   │   └── entity-resolver.mjs
+│   ├── strategies/
+│   │   ├── strict-canonical.mjs
+│   │   └── identity-canonical.mjs
+│   ├── canonical-service.mjs
+│   └── index.mjs
 │
-├── vsa/                     # DS001: Vector Symbolic Architecture
-│   ├── strategies/          # Pluggable VSA implementations
-│   │   ├── binary-sparse.ts # Binary sparse hypervectors
-│   │   ├── bipolar-dense.ts # Dense bipolar (+1/-1) vectors
-│   │   ├── holographic.ts   # HRR-style holographic vectors
-│   │   └── mock-vsa.ts      # Deterministic mock for testing
-│   ├── operations/          # VSA operations
-│   │   ├── bundle.ts        # Bundling (superposition)
-│   │   ├── bind.ts          # Binding (role assignment)
-│   │   ├── similarity.ts    # Cosine/Hamming similarity
-│   │   └── hash.ts          # Deterministic hypervector generation
-│   ├── index/               # VSA-based retrieval
-│   │   ├── schema-index.ts  # Schema hypervector index
-│   │   ├── fact-index.ts    # Fact hypervector index
-│   │   └── ann-search.ts    # Approximate nearest neighbor
-│   └── vsa-service.ts       # Facade: VSA proposes candidates
+├── closure/                 # Bounded closure (DS004)
+│   ├── algorithms/
+│   │   ├── forward-chain.mjs
+│   │   ├── conflict-detect.mjs
+│   │   └── branch-manager.mjs
+│   ├── modes/
+│   │   ├── strict-mode.mjs
+│   │   ├── conditional-mode.mjs
+│   │   └── indeterminate-mode.mjs
+│   ├── result-builder.mjs
+│   └── closure-service.mjs
 │
-├── vm/                      # DS002: Virtual Machine
-│   ├── state/               # VM state management
-│   │   ├── fact-store.ts    # Canonical fact storage (uses storage strategy)
-│   │   ├── rule-memory.ts   # Rule and macro-program storage
-│   │   ├── binding-env.ts   # Variable binding stack
-│   │   ├── execution-log.ts # Operation trace logging
-│   │   ├── context-stack.ts # Reasoning context management
-│   │   └── snapshot.ts      # State snapshot for branching/rollback
-│   ├── instructions/        # Instruction implementations
-│   │   ├── term-ops.ts      # MAKE_TERM, CANONICALIZE, BIND_SLOTS
-│   │   ├── fact-ops.ts      # ASSERT, DENY, QUERY
-│   │   ├── logic-ops.ts     # MATCH, APPLY_RULE, CLOSURE
-│   │   ├── control-ops.ts   # BRANCH, CALL, RETURN
-│   │   └── context-ops.ts   # PUSH_CONTEXT, POP_CONTEXT, MERGE, ISOLATE
-│   ├── executor.ts          # Instruction dispatch and execution loop
-│   ├── budget.ts            # Budget tracking and enforcement
-│   └── vm-service.ts        # Facade: VM validates and executes
+├── compiler/                # Query compilation (DS003)
+│   ├── pipeline/
+│   │   ├── normalizer.mjs
+│   │   └── slot-filler.mjs
+│   ├── programs/
+│   │   ├── program-ir.mjs
+│   │   └── hypothesis.mjs
+│   ├── schemas/
+│   │   ├── schema-model.mjs
+│   │   └── schema-store.mjs
+│   └── compiler-service.mjs
 │
-├── canonicalization/        # DS002: Fact canonicalization
-│   ├── strategies/          # Pluggable canonicalization
-│   │   ├── strict-canonical.ts   # Strict normalization rules
-│   │   ├── fuzzy-canonical.ts    # Similarity-assisted (uses VSA)
-│   │   └── identity-canonical.ts # Pass-through (for testing)
-│   ├── normalizers/         # Component normalizers
-│   │   ├── text-normalizer.ts    # Case, punctuation, whitespace
-│   │   ├── number-normalizer.ts  # Numeric values, units
-│   │   ├── time-normalizer.ts    # Temporal expressions
-│   │   └── entity-resolver.ts    # Entity mention → EntityId
-│   └── canonical-service.ts # Facade: term → canonical form
+├── core/                    # Shared types, interfaces, config
+│   ├── config/
+│   │   ├── config-schema.mjs
+│   │   ├── config-loader.mjs
+│   │   └── strategy-registry.mjs
+│   ├── interfaces/
+│   │   ├── vsa-strategy.mjs
+│   │   ├── canonicalizer-strategy.mjs
+│   │   ├── storage-strategy.mjs
+│   │   ├── search-strategy.mjs
+│   │   ├── scoring-strategy.mjs
+│   │   └── conflict-resolver-strategy.mjs
+│   ├── types/
+│   │   ├── terms.mjs
+│   │   ├── facts.mjs
+│   │   ├── identifiers.mjs
+│   │   ├── events.mjs
+│   │   └── results.mjs
+│   ├── errors.mjs
+│   ├── error-handling.mjs
+│   ├── hash.mjs
+│   └── index.mjs
 │
-├── compiler/                # DS003: Query compilation
-│   ├── pipeline/            # Compilation stages
-│   │   ├── normalizer.ts    # Query text → normalized span
-│   │   ├── entity-extractor.ts # Entity identification
-│   │   ├── schema-retriever.ts # VSA-based schema retrieval
-│   │   ├── slot-filler.ts   # Slot binding from query
-│   │   └── program-emitter.ts # Schema → VM program
-│   ├── schemas/             # Schema representation
-│   │   ├── schema-model.ts  # Schema data structure
-│   │   ├── schema-store.ts  # Schema library management
-│   │   └── schema-validator.ts # Schema well-formedness checks
-│   ├── programs/            # Program representation
-│   │   ├── program-ir.ts    # Instruction list IR
-│   │   ├── program-optimizer.ts # CSE, dead code elimination
-│   │   └── hypothesis.ts    # Candidate program with score
-│   └── compiler-service.ts  # Facade: query → candidate programs
+├── event-stream/            # Event ingestion + structural scope (DS001/DS010)
+│   ├── parser/
+│   │   ├── text-parser.mjs
+│   │   ├── multimodal-adapter.mjs
+│   │   └── index.mjs
+│   ├── scope/
+│   │   ├── scope-builder.mjs
+│   │   └── scope-tree.mjs
+│   ├── ingest.mjs
+│   ├── separator-detector.mjs
+│   ├── vsa-separator-detector.mjs
+│   ├── boundary-optimizer.mjs
+│   └── index.mjs
 │
-├── search/                  # DS003: Program search
-│   ├── strategies/          # Pluggable search strategies
-│   │   ├── beam-search.ts   # Standard beam search
-│   │   ├── mcts-search.ts   # Monte Carlo tree search
-│   │   └── greedy-search.ts # Greedy best-first (fast)
-│   ├── scoring/             # MDL scoring
-│   │   ├── mdl-scorer.ts    # MDL score calculation
-│   │   ├── complexity-cost.ts # Program description cost
-│   │   ├── residual-cost.ts # Prediction loss component
-│   │   └── penalty-cost.ts  # Correctness/budget penalties
-│   ├── beam.ts              # Beam management (diversity, pruning)
-│   └── search-service.ts    # Facade: candidates → ranked programs
+├── generation/              # Deterministic rendering + constraints
+│   ├── constraints/
+│   │   ├── claim-gate.mjs
+│   │   └── mode-adapter.mjs
+│   ├── realizer/
+│   │   ├── claim-renderer.mjs
+│   │   ├── uncertainty-marker.mjs
+│   │   └── trace-explainer.mjs
+│   ├── vm-state-conditioner.mjs
+│   ├── generation-service.mjs
+│   └── index.mjs
 │
-├── closure/                 # DS004: Bounded closure
-│   ├── algorithms/          # Closure computation
-│   │   ├── forward-chain.ts # Forward chaining rule application
-│   │   ├── conflict-detect.ts # Direct/indirect conflict detection
-│   │   ├── branch-manager.ts # Branch creation and pruning
-│   │   └── budget-allocator.ts # Dynamic budget distribution
-│   ├── conflict/            # Conflict handling
-│   │   ├── conflict-types.ts # Direct, indirect, temporal conflicts
-│   │   └── resolver-strategies/ # Pluggable resolvers
-│   │       ├── source-priority.ts   # Prefer reliable sources
-│   │       ├── temporal-priority.ts # Prefer recent facts
-│   │       └── probabilistic.ts     # Maintain uncertainty
-│   ├── modes/               # Response mode handling
-│   │   ├── strict-mode.ts   # No emit on uncertainty
-│   │   ├── conditional-mode.ts # Emit with qualifiers
-│   │   └── indeterminate-mode.ts # Report what was checked
-│   ├── result-builder.ts    # Build result object with claims/trace
-│   └── closure-service.ts   # Facade: program → verified result
+├── search/                  # Program search + scoring (DS003)
+│   ├── strategies/
+│   │   ├── beam-search.mjs
+│   │   └── greedy-search.mjs
+│   ├── scoring/
+│   │   ├── mdl-scorer.mjs
+│   │   ├── complexity-cost.mjs
+│   │   ├── residual-cost.mjs
+│   │   └── penalty-cost.mjs
+│   ├── beam.mjs
+│   └── search-service.mjs
 │
-├── training/                # DS005: Training and learning
-│   ├── outer-loop/          # Next-phrase prediction
-│   │   ├── phrase-predictor.ts # Phrase-level language model
-│   │   ├── vm-conditioner.ts # VM state → conditioning vector
-│   │   └── loss-calculator.ts # Prediction loss
-│   ├── inner-loop/          # Program search and consolidation
-│   │   ├── pattern-miner.ts # Recurring pattern discovery
-│   │   ├── schema-proposer.ts # Propose new schemas
-│   │   └── consolidator.ts  # Promote schemas/macros
-│   ├── rl/                  # Reinforcement learning
-│   │   ├── reward-shaper.ts # Hypothesis selection rewards
-│   │   ├── penalty-shaper.ts # Consistency penalties
-│   │   └── bandit-selector.ts # Multi-armed bandit strategy selection
-│   ├── mdl/                 # MDL-based learning
-│   │   ├── compression-tracker.ts # Track compression benefit
-│   │   └── consolidation-criteria.ts # Promotion thresholds
-│   └── training-service.ts  # Facade: training loop orchestration
+├── storage/                 # Storage backends (DS006/DS012)
+│   ├── strategies/
+│   │   ├── memory-store.mjs
+│   │   ├── file-store.mjs
+│   │   ├── sqlite-store.mjs
+│   │   ├── leveldb-store.mjs
+│   │   └── postgres-store.mjs
+│   └── index.mjs
 │
-├── storage/                 # Storage backends
-│   ├── strategies/          # Pluggable storage
-│   │   ├── memory-store.ts  # In-memory (for testing/small)
-│   │   ├── sqlite-store.ts  # SQLite backend
-│   │   ├── leveldb-store.ts # LevelDB backend
-│   │   └── postgres-store.ts # PostgreSQL backend
-│   ├── indices/             # Index implementations
-│   │   ├── primary-index.ts # fact_id → FactInstance
-│   │   ├── predicate-index.ts # predicate → fact_ids
-│   │   ├── temporal-index.ts # time range queries
-│   │   └── scope-index.ts   # scope_id → fact_ids
-│   └── storage-service.ts   # Facade: unified storage access
+├── training/                # Training loops (DS005/DS011)
+│   ├── compression/
+│   │   └── pattern-compressor.mjs
+│   ├── inner-loop/
+│   │   ├── pattern-miner.mjs
+│   │   ├── schema-proposer.mjs
+│   │   └── consolidator.mjs
+│   ├── outer-loop/
+│   │   ├── macro-unit-model.mjs
+│   │   └── phrase-predictor.mjs
+│   ├── rule-learner.mjs
+│   ├── training-service.mjs
+│   └── index.mjs
 │
-├── generation/              # DS001: Controlled generation
-│   ├── realizer/            # Surface realization
-│   │   ├── claim-renderer.ts # claims → natural language
-│   │   ├── trace-explainer.ts # trace → explanation text
-│   │   └── uncertainty-marker.ts # Add qualifiers for conditional
-│   ├── constraints/         # Generation constraints
-│   │   ├── claim-gate.ts    # Only emit what's in claims
-│   │   └── mode-adapter.ts  # Adapt output to response mode
-│   └── generation-service.ts # Facade: result → response text
+├── vm/                      # Virtual machine core (DS002)
+│   ├── instructions/
+│   │   ├── builtin-ops.mjs
+│   │   ├── term-ops.mjs
+│   │   ├── fact-ops.mjs
+│   │   ├── logic-ops.mjs
+│   │   ├── inference-ops.mjs
+│   │   ├── control-ops.mjs
+│   │   ├── context-ops.mjs
+│   │   └── index.mjs
+│   ├── state/
+│   │   ├── fact-store.mjs
+│   │   ├── rule-store.mjs
+│   │   ├── binding-env.mjs
+│   │   ├── context-stack.mjs
+│   │   ├── execution-log.mjs
+│   │   └── index.mjs
+│   ├── budget.mjs
+│   ├── executor.mjs
+│   ├── expr.mjs
+│   ├── vm-service.mjs
+│   └── index.mjs
 │
-├── api/                     # External API layer
-│   ├── query-handler.ts     # Handle user queries
-│   ├── admin-handler.ts     # Admin operations (config, stats)
-│   └── protocol/            # Wire protocol definitions
-│       ├── request.ts       # Request types
-│       └── response.ts      # Response types
+├── vsa/                     # VSA retrieval service
+│   ├── strategies/
+│   │   ├── binary-sparse.mjs
+│   │   └── mock-vsa.mjs
+│   ├── serialization.mjs
+│   ├── vsa-service.mjs
+│   └── index.mjs
 │
-└── index.ts                 # Main entry point and DI container
+└── index.mjs                # Top-level exports and strategy registration
 ```
 
 ## Strategy Interfaces
@@ -196,7 +181,7 @@ src/
 ### VSA Strategy
 
 ```typescript
-// src/core/interfaces/vsa-strategy.ts
+// src/core/interfaces/vsa-strategy.mjs
 
 export interface HyperVector {
   readonly dimensions: number;
@@ -230,7 +215,7 @@ export interface VSAStrategy {
 ### Canonicalizer Strategy
 
 ```typescript
-// src/core/interfaces/canonicalizer-strategy.ts
+// src/core/interfaces/canonicalizer-strategy.mjs
 
 import { Term, CanonicalTerm } from '../types/terms';
 
@@ -251,7 +236,7 @@ export interface CanonicalizerStrategy {
 ### Storage Strategy
 
 ```typescript
-// src/core/interfaces/storage-strategy.ts
+// src/core/interfaces/storage-strategy.mjs
 
 import { FactId, FactInstance, ScopeId } from '../types/facts';
 import { QueryPattern, QueryResult } from '../types/results';
@@ -286,7 +271,7 @@ export interface StorageStrategy {
 ### Search Strategy
 
 ```typescript
-// src/core/interfaces/search-strategy.ts
+// src/core/interfaces/search-strategy.mjs
 
 import { Hypothesis } from '../../compiler/programs/hypothesis';
 import { Budget } from '../../vm/budget';
@@ -326,7 +311,7 @@ export interface SearchStats {
 ### Scoring Strategy
 
 ```typescript
-// src/core/interfaces/scoring-strategy.ts
+// src/core/interfaces/scoring-strategy.mjs
 
 import { Program } from '../../compiler/programs/program-ir';
 import { ClosureResult } from '../../closure/closure-service';
@@ -358,7 +343,7 @@ export interface ScoringResult {
 ### Conflict Resolver Strategy
 
 ```typescript
-// src/core/interfaces/conflict-resolver-strategy.ts
+// src/core/interfaces/conflict-resolver-strategy.mjs
 
 import { FactInstance, Conflict } from '../types/facts';
 
@@ -383,7 +368,7 @@ export interface ConflictResolution {
 ## Configuration Schema
 
 ```typescript
-// src/core/config/config-schema.ts
+// src/core/config/config-schema.mjs
 
 export interface VSAVMConfig {
   // Strategy selections
@@ -442,135 +427,25 @@ export interface BudgetConfig {
 
 ```
 tests/
-├── unit/                    # Unit tests (isolated, mocked dependencies)
-│   ├── core/
-│   │   ├── types/
-│   │   │   ├── terms.test.ts
-│   │   │   ├── facts.test.ts
-│   │   │   └── events.test.ts
-│   │   └── config/
-│   │       └── config-loader.test.ts
-│   │
-│   ├── event-stream/
-│   │   ├── text-parser.test.ts
-│   │   ├── separator-detector.test.ts
-│   │   └── scope-builder.test.ts
-│   │
-│   ├── vsa/
-│   │   ├── strategies/
-│   │   │   ├── binary-sparse.test.ts
-│   │   │   ├── bipolar-dense.test.ts
-│   │   │   └── holographic.test.ts
-│   │   ├── operations/
-│   │   │   ├── bundle.test.ts
-│   │   │   ├── bind.test.ts
-│   │   │   └── similarity.test.ts
-│   │   └── index/
-│   │       └── ann-search.test.ts
-│   │
-│   ├── vm/
-│   │   ├── state/
-│   │   │   ├── fact-store.test.ts
-│   │   │   ├── binding-env.test.ts
-│   │   │   ├── context-stack.test.ts
-│   │   │   └── snapshot.test.ts
-│   │   ├── instructions/
-│   │   │   ├── term-ops.test.ts
-│   │   │   ├── fact-ops.test.ts
-│   │   │   ├── logic-ops.test.ts
-│   │   │   └── context-ops.test.ts
-│   │   ├── executor.test.ts
-│   │   └── budget.test.ts
-│   │
-│   ├── canonicalization/
-│   │   ├── strategies/
-│   │   │   └── strict-canonical.test.ts
-│   │   └── normalizers/
-│   │       ├── text-normalizer.test.ts
-│   │       ├── number-normalizer.test.ts
-│   │       └── time-normalizer.test.ts
-│   │
-│   ├── compiler/
-│   │   ├── pipeline/
-│   │   │   ├── normalizer.test.ts
-│   │   │   ├── entity-extractor.test.ts
-│   │   │   ├── schema-retriever.test.ts
-│   │   │   └── slot-filler.test.ts
-│   │   ├── schemas/
-│   │   │   └── schema-validator.test.ts
-│   │   └── programs/
-│   │       └── program-optimizer.test.ts
-│   │
-│   ├── search/
-│   │   ├── strategies/
-│   │   │   ├── beam-search.test.ts
-│   │   │   └── greedy-search.test.ts
-│   │   ├── scoring/
-│   │   │   └── mdl-scorer.test.ts
-│   │   └── beam.test.ts
-│   │
-│   ├── closure/
-│   │   ├── algorithms/
-│   │   │   ├── forward-chain.test.ts
-│   │   │   ├── conflict-detect.test.ts
-│   │   │   └── branch-manager.test.ts
-│   │   ├── conflict/
-│   │   │   └── resolver-strategies.test.ts
-│   │   └── modes/
-│   │       ├── strict-mode.test.ts
-│   │       └── conditional-mode.test.ts
-│   │
-│   ├── storage/
-│   │   ├── strategies/
-│   │   │   ├── memory-store.test.ts
-│   │   │   └── sqlite-store.test.ts
-│   │   └── indices/
-│   │       └── predicate-index.test.ts
-│   │
-│   └── generation/
-│       └── realizer/
-│           └── claim-renderer.test.ts
-│
-├── integration/             # Integration tests (real dependencies)
-│   ├── event-to-fact.test.ts      # Event stream → canonical facts
-│   ├── query-pipeline.test.ts     # Query → compiled program
-│   ├── vm-execution.test.ts       # Program → VM execution
-│   ├── closure-check.test.ts      # Execution → closure verification
-│   ├── end-to-end.test.ts         # Full query → response
-│   └── storage-backends.test.ts   # Storage strategy conformance
-│
-├── conformance/             # DS004 conformance tests
-│   ├── strict-mode/
-│   │   ├── determinism.test.ts    # Same input → same output
-│   │   ├── budget-accounting.test.ts # Budget consumption correctness
-│   │   └── trace-reproducibility.test.ts
-│   ├── correctness/
-│   │   ├── direct-conflict.test.ts # Same fact_id + opposite polarity
-│   │   ├── temporal-conflict.test.ts # Time overlap conflicts
-│   │   └── scope-isolation.test.ts # Context isolation
-│   └── reporting/
-│       └── result-schema.test.ts  # Result object completeness
-│
-├── regression/              # Regression test scenarios
-│   ├── scenarios/           # JSON/YAML scenario definitions
-│   │   ├── basic-query.yaml
-│   │   ├── contradiction-detection.yaml
-│   │   ├── schema-retrieval.yaml
-│   │   └── budget-exhaustion.yaml
-│   └── runner.test.ts       # Scenario test runner
-│
-├── fixtures/                # Shared test data
-│   ├── facts/               # Sample fact instances
-│   ├── schemas/             # Sample query schemas
-│   ├── programs/            # Sample VM programs
-│   └── events/              # Sample event streams
-│
-└── helpers/                 # Test utilities
-    ├── mock-vsa.ts          # Deterministic VSA mock
-    ├── mock-storage.ts      # In-memory storage mock
-    ├── fact-factory.ts      # Generate test facts
-    ├── program-factory.ts   # Generate test programs
-    └── assertion-helpers.ts # Custom assertions
+├── helpers/
+│   ├── test-helpers.mjs
+│   └── index.mjs
+└── unit/
+    ├── canonicalization.test.mjs
+    ├── closure.test.mjs
+    ├── compiler.test.mjs
+    ├── core.test.mjs
+    ├── entity-resolver.test.mjs
+    ├── events.test.mjs
+    ├── facts-binary.test.mjs
+    ├── file-store.test.mjs
+    ├── generation.test.mjs
+    ├── ingest.test.mjs
+    ├── pipeline.test.mjs
+    ├── search.test.mjs
+    ├── training.test.mjs
+    ├── vm.test.mjs
+    └── vsa-serialization.test.mjs
 ```
 
 ## Strategy Registration

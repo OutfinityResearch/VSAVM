@@ -3,6 +3,8 @@
  * Per DS007: Event, EventType, EventPayload
  */
 
+import { crc32, crc32Bytes } from '../hash.mjs';
+
 /**
  * Event types enum
  */
@@ -59,6 +61,86 @@ export function createEvent(eventId, type, payload, contextPath, sourceRef = und
   };
   if (sourceRef) event.sourceRef = sourceRef;
   return event;
+}
+
+/**
+ * Normalize a context path into a string array.
+ * @param {string[]|string} path
+ * @returns {string[]}
+ */
+export function normalizeContextPath(path) {
+  if (!path) return [];
+  if (Array.isArray(path)) return path.map(p => String(p));
+  return [String(path)];
+}
+
+/**
+ * Normalize an event object for serialization.
+ * @param {Object} event
+ * @returns {Object}
+ */
+export function normalizeEvent(event) {
+  if (!event || typeof event !== 'object') {
+    return createEvent(0, EventType.METADATA, { value: null }, []);
+  }
+
+  return createEvent(
+    event.eventId ?? 0,
+    event.type ?? EventType.METADATA,
+    event.payload ?? null,
+    normalizeContextPath(event.contextPath ?? event.context_path ?? [])
+  );
+}
+
+function stableStringify(value) {
+  if (value === null || value === undefined) return 'null';
+  if (typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(',')}]`;
+  }
+  const keys = Object.keys(value).sort();
+  const entries = keys.map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`);
+  return `{${entries.join(',')}}`;
+}
+
+/**
+ * Serialize an event to deterministic JSON.
+ * @param {Object} event
+ * @returns {string}
+ */
+export function serializeEvent(event) {
+  const normalized = normalizeEvent(event);
+  return stableStringify(normalized);
+}
+
+/**
+ * Deserialize a serialized event.
+ * @param {string} json
+ * @returns {Object}
+ */
+export function deserializeEvent(json) {
+  return normalizeEvent(JSON.parse(json));
+}
+
+/**
+ * Serialize an event stream to deterministic JSON.
+ * @param {Object[]|EventStream} events
+ * @returns {string}
+ */
+export function serializeEventStream(events) {
+  const list = Array.isArray(events) ? events : (events?.events ?? []);
+  return `[${list.map(serializeEvent).join(',')}]`;
+}
+
+/**
+ * Deserialize an event stream from JSON.
+ * @param {string} json
+ * @returns {Object[]}
+ */
+export function deserializeEventStream(json) {
+  const parsed = JSON.parse(json);
+  if (!Array.isArray(parsed)) return [];
+  return parsed.map(normalizeEvent);
 }
 
 /**
@@ -233,4 +315,228 @@ export class EventStream {
       return true;
     });
   }
+
+  /**
+   * Serialize stream to deterministic JSON string.
+   * @returns {string}
+   */
+  serialize() {
+    return serializeEventStream(this.events);
+  }
+
+  /**
+   * Serialize stream to binary format.
+   * @returns {Uint8Array}
+   */
+  serializeBinary() {
+    return serializeEventStreamBinary(this.events, { metadata: this.metadata });
+  }
+}
+
+const EVENT_TYPE_CODES = {
+  [EventType.METADATA]: 0,
+  [EventType.TEXT_TOKEN]: 1,
+  [EventType.VISUAL_TOKEN]: 2,
+  [EventType.AUDIO_TOKEN]: 3,
+  [EventType.TIMESTAMP]: 4,
+  [EventType.SEPARATOR]: 5,
+  [EventType.HEADER]: 6,
+  [EventType.LIST_ITEM]: 7,
+  [EventType.QUOTE]: 8,
+  [EventType.TABLE_CELL]: 9,
+  [EventType.FORMULA]: 10,
+  [EventType.CODE_BLOCK]: 11
+};
+
+const EVENT_TYPE_FROM_CODE = Object.fromEntries(
+  Object.entries(EVENT_TYPE_CODES).map(([key, value]) => [value, key])
+);
+
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
+
+function encodeString(value) {
+  return textEncoder.encode(String(value ?? ''));
+}
+
+function decodeString(bytes) {
+  return textDecoder.decode(bytes);
+}
+
+function concatBytes(chunks) {
+  const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return out;
+}
+
+function uint16LE(value) {
+  return new Uint8Array([value & 0xff, (value >>> 8) & 0xff]);
+}
+
+function uint32LE(value) {
+  return new Uint8Array([
+    value & 0xff,
+    (value >>> 8) & 0xff,
+    (value >>> 16) & 0xff,
+    (value >>> 24) & 0xff
+  ]);
+}
+
+/**
+ * Serialize event stream to binary format (DS007).
+ * @param {Object[]|EventStream} events
+ * @param {Object} [options]
+ * @param {Object} [options.metadata]
+ * @returns {Uint8Array}
+ */
+export function serializeEventStreamBinary(events, options = {}) {
+  const list = Array.isArray(events) ? events : (events?.events ?? []);
+  const metadata = options.metadata ?? events?.metadata ?? {};
+  const metadataBytes = encodeString(stableStringify(metadata));
+
+  const chunks = [];
+  chunks.push(encodeString('EVTS'));
+  chunks.push(uint16LE(1));
+  chunks.push(uint32LE(list.length));
+
+  for (const rawEvent of list) {
+    const event = normalizeEvent(rawEvent);
+    const typeCode = EVENT_TYPE_CODES[event.type] ?? EVENT_TYPE_CODES[EventType.METADATA];
+    const context = normalizeContextPath(event.contextPath);
+
+    const payloadBytes = encodeString(stableStringify(event.payload ?? null));
+    if (payloadBytes.length > 0xffff) {
+      throw new Error('Event payload too large for binary format');
+    }
+
+    chunks.push(uint32LE(event.eventId >>> 0));
+    chunks.push(Uint8Array.of(typeCode));
+    if (context.length > 0xff) {
+      throw new Error('Context path depth exceeds 255');
+    }
+    chunks.push(Uint8Array.of(context.length));
+
+    for (const segment of context) {
+      const segmentBytes = encodeString(segment);
+      if (segmentBytes.length > 0xff) {
+        throw new Error('Context path segment exceeds 255 bytes');
+      }
+      chunks.push(Uint8Array.of(segmentBytes.length));
+      chunks.push(segmentBytes);
+    }
+
+    chunks.push(uint16LE(payloadBytes.length));
+    chunks.push(payloadBytes);
+
+    if (event.sourceRef) {
+      const sourceBytes = encodeString(stableStringify(event.sourceRef));
+      if (sourceBytes.length > 0xffff) {
+        throw new Error('SourceRef too large for binary format');
+      }
+      chunks.push(Uint8Array.of(1));
+      chunks.push(uint16LE(sourceBytes.length));
+      chunks.push(sourceBytes);
+    } else {
+      chunks.push(Uint8Array.of(0));
+    }
+  }
+
+  chunks.push(uint32LE(metadataBytes.length));
+  chunks.push(metadataBytes);
+
+  const body = concatBytes(chunks);
+  const crc = crc32Bytes(body);
+  return concatBytes([body, crc]);
+}
+
+/**
+ * Deserialize event stream from binary format (DS007).
+ * @param {Uint8Array} bytes
+ * @returns {{events: Object[], metadata: Object}}
+ */
+export function deserializeEventStreamBinary(bytes) {
+  const buffer = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  if (buffer.length < 14) {
+    throw new Error('Invalid event stream binary length');
+  }
+
+  const payload = buffer.slice(0, buffer.length - 4);
+  const crcExpected = new DataView(buffer.buffer, buffer.byteOffset + buffer.length - 4, 4).getUint32(0, true);
+  const crcActual = crc32(payload);
+  if (crcExpected !== crcActual) {
+    throw new Error('Event stream CRC32 mismatch');
+  }
+
+  const view = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
+  let offset = 0;
+  const magic = decodeString(payload.slice(offset, offset + 4));
+  offset += 4;
+  if (magic !== 'EVTS') {
+    throw new Error('Invalid event stream magic');
+  }
+
+  const version = view.getUint16(offset, true);
+  offset += 2;
+  if (version !== 1) {
+    throw new Error(`Unsupported event stream version ${version}`);
+  }
+
+  const count = view.getUint32(offset, true);
+  offset += 4;
+  const events = [];
+
+  for (let i = 0; i < count; i++) {
+    const eventId = view.getUint32(offset, true);
+    offset += 4;
+    const typeCode = payload[offset];
+    offset += 1;
+    const contextDepth = payload[offset];
+    offset += 1;
+    const contextPath = [];
+
+    for (let d = 0; d < contextDepth; d++) {
+      const segLen = payload[offset];
+      offset += 1;
+      const segBytes = payload.slice(offset, offset + segLen);
+      offset += segLen;
+      contextPath.push(decodeString(segBytes));
+    }
+
+    const payloadLen = view.getUint16(offset, true);
+    offset += 2;
+    const payloadBytes = payload.slice(offset, offset + payloadLen);
+    offset += payloadLen;
+    const eventPayload = JSON.parse(decodeString(payloadBytes));
+
+    const hasSource = payload[offset] === 1;
+    offset += 1;
+    let sourceRef = undefined;
+    if (hasSource) {
+      const sourceLen = view.getUint16(offset, true);
+      offset += 2;
+      const sourceBytes = payload.slice(offset, offset + sourceLen);
+      offset += sourceLen;
+      sourceRef = JSON.parse(decodeString(sourceBytes));
+    }
+
+    events.push(createEvent(
+      eventId,
+      EVENT_TYPE_FROM_CODE[typeCode] ?? EventType.METADATA,
+      eventPayload,
+      contextPath,
+      sourceRef
+    ));
+  }
+
+  const metadataLen = view.getUint32(offset, true);
+  offset += 4;
+  const metadataBytes = payload.slice(offset, offset + metadataLen);
+  const metadata = metadataLen > 0 ? JSON.parse(decodeString(metadataBytes)) : {};
+
+  return { events, metadata };
 }

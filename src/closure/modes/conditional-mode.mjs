@@ -49,6 +49,9 @@ export class ConditionalModeHandler {
    */
   process(closureResult, executionResult, budget) {
     const budgetUsage = this._extractBudgetUsage(budget);
+    const executionMs = budget?.deterministicTime
+      ? 0
+      : Date.now() - (budget.startTime ?? Date.now());
 
     // Collect conflicts
     const conflicts = [
@@ -74,7 +77,7 @@ export class ConditionalModeHandler {
         assumptions,
         conflicts: this._formatConflicts(conflicts),
         traceRefs: this._extractTraceRefs(closureResult, executionResult),
-        executionMs: Date.now() - (budget.startTime ?? Date.now())
+        executionMs
       });
     }
 
@@ -85,7 +88,7 @@ export class ConditionalModeHandler {
       assumptions,
       conflicts: this._formatConflicts(conflicts),
       traceRefs: this._extractTraceRefs(closureResult, executionResult),
-      executionMs: Date.now() - (budget.startTime ?? Date.now())
+      executionMs
     });
   }
 

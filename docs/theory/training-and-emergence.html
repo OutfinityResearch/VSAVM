@@ -23,65 +23,57 @@
       <main class="main content">
         <h1>Training and emergent compilation</h1>
 <p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
-<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>, <a href="../wiki/mdl.html">MDL</a>, <a href="../wiki/rl.html">RL</a>.</p>
-<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS005-training-learning-optimization.md">DS005</a>.</p>
+<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/context-scope.html">context scope</a>, <a href="../wiki/mdl.html">MDL</a>, <a href="../wiki/rl.html">RL</a>, <a href="../wiki/llm.html">LLM</a>, <a href="../wiki/macro-token.html">macro-unit</a>.</p>
+<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS005-training-learning-optimization.md">DS005</a>, <a href="../specs-viewer.html?doc=specs/DS010-emergent-separator-discovery.md">DS010</a>, <a href="../specs-viewer.html?doc=specs/DS011-generative-decoding.md">DS011</a>, <a href="../specs-viewer.html?doc=specs/DS012-disk-backed-storage.md">DS012</a>.</p>
 
 <h2>Overview</h2>
-<p>VSAVM treats compilation as a learned capability. Next-phrase prediction provides a broad surface prior, but repeated patterns create pressure to represent intent as executable programs that compress the data. This creates a path from language modeling to program induction without hardcoded templates.</p>
+<p>VSAVM treats “compilation” as a learned capability driven by compression pressure. Repeated patterns create incentives to represent intent as reusable executable programs (inner loop, DS005) and as reusable surface continuations (outer loop, DS011). Crucially, scope boundaries must emerge from structure (DS010 / NFS11), so learning does not rely on hardcoded topical partitions.</p>
 
-<h2>Two-loop training architecture</h2>
-<p>The training process operates through a sophisticated dual-loop architecture:</p>
+<h2>The two loops (what exists today)</h2>
 <ul>
-  <li><strong>Outer loop (next-phrase prediction)</strong>: Extends traditional language modeling with conditioning on virtual machine state. Predictions incorporate active facts, applicable rules, and ongoing reasoning processes. Phrase-level prediction (not token-level) creates more meaningful semantic units that map directly to symbolic operations, reducing computational overhead.</li>
-  <li><strong>Inner loop (program search and consolidation)</strong>: Continuously proposes and tests candidate programs that might explain observed patterns. Operates in parallel with language modeling, focusing on underlying logical structure. Uses beam search with primitive operations, transformation rules, and existing program adaptation.</li>
-  <li><strong>Loop synchronization</strong>: The language modeling loop provides feedback about which reasoning leads to more predictable text. The program search loop identifies linguistic patterns associated with successful strategies. Shared representations enable information flow between loops while preventing interference.</li>
+  <li><strong>Inner loop (DS005)</strong>: pattern mining, schema proposal, consolidation, and rule learning. The repository contains the inner-loop building blocks (PatternMiner / SchemaProposer / Consolidator) and a coordinator (<code>TrainingService</code>).</li>
+  <li><strong>Outer loop (DS011)</strong>: a macro-unit language model trained to continue byte sequences under budgets, optionally conditioned on VM state. The current concrete implementation is <code>MacroUnitModel</code> (<code>src/training/outer-loop/macro-unit-model.mjs</code>).</li>
 </ul>
+<p>The loops are compatible by design: inner-loop consolidation can produce more reusable units and programs; outer-loop continuation benefits from stable reversible macro-units. Not every integration point is wired into every harness yet, so the practical pipeline is documented below.</p>
 
-<h2>What emerges and why</h2>
-<p>Repeated question forms and reasoning moves become schemas and macro programs because they reduce description length. VSA accelerates the emergence by clustering paraphrases and providing fast retrieval of nearby patterns. The VM provides the semantics by executing candidates and maintaining explicit state.</p>
-<p>Training data preparation segments the corpus into logical units (arguments, explanations, Q&A pairs) that support both language modeling and program induction. Different content types receive different treatment: factual content for knowledge representation, argumentative content for logical reasoning, procedural content for step-by-step problem solving.</p>
+<h2>Practical training pipeline (eval_tinyLLM)</h2>
+<p><code>eval_tinyLLM</code> is the “ground truth” harness for today’s reproducible training and comparisons. It trains a small TensorFlow byte-level Transformer and VSAVM’s macro-unit model on the same prepared dataset and writes timestamped reports.</p>
 
-<h2>Compression-driven learning</h2>
-<p>The learning process operates under MDL (Minimum Description Length) guidance:</p>
+<h3>Step-by-step: from raw text to a comparison report</h3>
+<ol>
+  <li><strong>Fetch data</strong>: download a raw dataset into <code>eval_tinyLLM/cache/</code>.</li>
+  <li><strong>Prepare a split</strong>: create <code>train.txt</code> and <code>valid.txt</code> under a deterministic <code>datasetId</code> (keyed by maxBytes/trainRatio/textField).</li>
+  <li><strong>Train VSAVM macro-units</strong>: stream bytes from <code>train.txt</code> and train <code>MacroUnitModel.trainStream</code>. Optionally ingest facts into the VM, but large runs typically use <code>--skip-ingest</code> to focus on the language-model comparison.</li>
+  <li><strong>Train TF baseline</strong>: train a minimal byte-level Transformer (kept small on purpose so training stays feasible).</li>
+  <li><strong>Evaluate</strong>: compute perplexity and auxiliary metrics for both engines.</li>
+  <li><strong>Compare</strong>: run a budgeted prompt suite and write an HTML+JSON report to <code>eval_tinyLLM/results/&lt;timestamp&gt;_results.html</code>.</li>
+</ol>
+
+<h3>Artifacts are versioned by dataset size and model configuration</h3>
+<p>Prepared datasets and trained models are stored under <code>eval_tinyLLM/cache/</code> so multiple sizes and multiple model variants can coexist without overwriting:</p>
 <ul>
-  <li><strong>MDL criterion</strong>: Favors compact representations explaining large amounts of training data. Considers both individual component complexity and interaction complexity. Prevents overfitting while encouraging discovery of broadly applicable patterns.</li>
-  <li><strong>Multi-level pattern recognition</strong>:
-    <ul>
-      <li>Surface-level: recurring phrases, sentence structures, discourse patterns for fluency</li>
-      <li>Intermediate-level: recurring reasoning strategies and problem-solving approaches for transfer</li>
-      <li>Deep-level: fundamental logical structures underlying many surface manifestations</li>
-    </ul>
-  </li>
-  <li><strong>Schema emergence</strong>: Bottom-up discovery identifies statistical regularities; top-down testing evaluates compression benefits and generalization. Rigorous validation on held-out data prevents spurious schemas.</li>
-  <li><strong>Consolidation decisions</strong>: Conservative criteria require substantial evidence before creating/modifying schemas. Consider frequency, consistency of effectiveness, and generalizability. Include mechanisms for merging similar schemas and eliminating redundancy.</li>
+  <li><strong>Datasets</strong>: <code>cache/datasets/&lt;datasetId&gt;/train.txt</code>, <code>valid.txt</code>, <code>meta.json</code> + a <code>latest.json</code> pointer.</li>
+  <li><strong>Models</strong>: <code>cache/models/{vsavm,tf}/&lt;datasetId&gt;/&lt;modelId&gt;/</code> with <code>meta.json</code> and per-engine artifacts + <code>latest.json</code> pointers.</li>
+  <li><strong>Results</strong>: timestamped <code>results/&lt;timestamp&gt;_results.html</code> and <code>.json</code> reports for comparisons.</li>
 </ul>
+<p>This is what makes size-based comparisons realistic: you can train multiple variants on different byte budgets and compare them without manually moving files.</p>
 
-<h2>Consolidation</h2>
-<p>Consolidation is the point where a candidate program becomes a macro instruction. It improves performance, but it also improves stability because the system can treat the macro as a unit that can be tested, audited, versioned, and federated. Consolidation is therefore an engineering mechanism, not only a learning trick.</p>
-
-<h2>Reinforcement learning integration</h2>
-<p>RL provides targeted optimization for specific reasoning aspects while preserving the statistical foundation:</p>
+<h2>Scaling guidance (larger datasets, RAM constraints)</h2>
+<p>The outer-loop macro-unit model is designed to stream training data, but it still maintains in-memory n-gram maps and subsequence counters. Large datasets are therefore feasible only with explicit caps and pruning.</p>
 <ul>
-  <li><strong>Hypothesis selection rewards</strong>: Guide toward reasoning approaches likely to produce correct, consistent results. Multi-faceted rewards consider accuracy, consistency, efficiency, and robustness. Reward shaping provides intermediate rewards for promising steps.</li>
-  <li><strong>Consistency discipline penalties</strong>: Discourage approaches leading to contradictions. Consider both direct and indirect contradictions (via bounded closure). Calibrated severity avoids overwhelming the learning process while maintaining rigor.</li>
-  <li><strong>Bandit and offline preference methods</strong>: Computationally efficient alternatives to policy gradient methods. Multi-armed bandits for strategy selection with exploration-exploitation balance. Contextual bandits incorporate reasoning context. Offline preference learning uses human feedback without online interaction.</li>
-  <li><strong>Integration safeguards</strong>: RL enhances rather than replaces statistical learning. Operates primarily on high-level reasoning decisions, leaving low-level language generation to statistical components. Prevents local optima that sacrifice long-term learning.</li>
+  <li><strong>Use streaming training</strong>: <code>MacroUnitModel.trainStream</code> processes one record at a time (no full corpus in RAM).</li>
+  <li><strong>Cap n-gram order</strong>: keep <code>maxNgramOrder</code> small (default in the harness is 8) to prevent combinatorial growth.</li>
+  <li><strong>Prune aggressively</strong>: increase <code>minFrequency</code> / <code>pruneThreshold</code> on larger runs.</li>
+  <li><strong>Sample subsequences</strong>: set <code>subsequenceSampleRate</code> to trade accuracy for memory/time.</li>
+  <li><strong>Guard the heap</strong>: use <code>eval_tinyLLM/tools/run-with-ram.mjs</code> and/or <code>train-large.mjs</code> to pick a safe <code>--max-old-space-size</code> automatically.</li>
 </ul>
-
-<h2>Performance optimization and scaling</h2>
-<p>Performance optimization ensures efficient operation with large knowledge bases:</p>
-<ul>
-  <li><strong>VSA acceleration</strong>: Leverage parallel/associative hypervector operations via SIMD, GPU, or neuromorphic hardware. Caching for frequently used hypervectors. Approximate similarity search with indexing and pruning.</li>
-  <li><strong>VM execution optimization</strong>: Instruction-level optimization (operation fusion, redundant computation elimination). Program-level optimization (operation reordering, parallelism exploitation). Just-in-time compilation for frequently executed programs.</li>
-  <li><strong>Memory management</strong>: Hierarchical caching with learned access patterns. Garbage collection that respects logical structure. Incremental consistency checking focused on modified portions.</li>
-  <li><strong>Distributed execution</strong>: Partitioning strategies balancing communication overhead and load balance. Consistency protocols for distributed reasoning. Fault tolerance mechanisms (reactive and proactive). Load balancing across computing resources.</li>
-</ul>
+<p>Disk-backed fact storage (DS012) reduces RAM pressure when ingesting and persisting <em>facts</em>. It does not currently move language-model n-gram state to disk.</p>
 
 <h2>Risks and mitigations</h2>
-<p>Compression can consolidate spurious patterns if prediction alone is the criterion. VSAVM mitigates this by using bounded closure as a validator and by using scope to prevent unstable rules from contaminating unrelated contexts. Rules that cause branching blow-ups or frequent contradictions should be demoted or isolated.</p>
+<p>Compression can consolidate spurious patterns if prediction quality is the only criterion. VSAVM mitigates this by (a) scoping via DS010 so unstable patterns do not contaminate unrelated regions and (b) correctness checks (DS004) when translating learned structure into executable commitments.</p>
 <figure class="diagram">
 <img class="diagram-svg" src="../assets/svg/training-and-emergence-diagram.svg" alt="training-and-emergence diagram">
-<figcaption>Compilation emerges when prediction pressure makes compact executable programs the cheapest explanation for recurring patterns. RL shaping and consolidation work together to stabilize learned reasoning.</figcaption>
+<figcaption>Compilation emerges when prediction pressure makes compact representations the cheapest explanation for recurring patterns. Inner-loop consolidation targets executable programs; outer-loop consolidation targets reversible macro-units for continuation.</figcaption>
 </figure>
 <h2>References</h2>
 <p><a href="https://en.wikipedia.org/wiki/Minimum_description_length">Minimum description length (Wikipedia)</a> <a href="https://www.grunwald.nl/mdlbook/">The MDL Book (Grunwald)</a> <a href="https://en.wikipedia.org/wiki/Program_synthesis">Program synthesis (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Reinforcement_learning">Reinforcement learning (Wikipedia)</a></p>

@@ -4,6 +4,7 @@
  */
 
 import { ExecutionError, ErrorCode } from '../../core/errors.mjs';
+import { createScopeId } from '../../core/types/identifiers.mjs';
 
 /**
  * PUSH_CONTEXT: Enter a new reasoning context
@@ -14,16 +15,21 @@ import { ExecutionError, ErrorCode } from '../../core/errors.mjs';
 export function pushContext(vmState, args) {
   vmState.budget.consumeSteps('PUSH_CONTEXT');
   
-  const { name, isolated } = args;
+  const { name, isolated, scopeId } = args;
   
   let ctx;
-  if (isolated) {
+  if (scopeId) {
+    const resolved = typeof scopeId === 'string' || Array.isArray(scopeId)
+      ? createScopeId(scopeId)
+      : scopeId;
+    ctx = vmState.contextStack.pushWithScope(resolved, Boolean(isolated));
+  } else if (isolated) {
     ctx = vmState.contextStack.pushIsolated(name);
-    vmState.log.logContextPush(ctx.id, true);
   } else {
     ctx = vmState.contextStack.push(name);
-    vmState.log.logContextPush(ctx.id, false);
   }
+
+  vmState.log.logContextPush(ctx.id, ctx.isolated);
   
   return {
     contextId: ctx.id,

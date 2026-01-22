@@ -12,6 +12,7 @@ import {
   createHeaderPayload
 } from '../../core/types/events.mjs';
 import { createSourceId } from '../../core/types/identifiers.mjs';
+import { computeHash } from '../../core/hash.mjs';
 
 /**
  * Simple text parser that tokenizes input and detects structure
@@ -19,10 +20,12 @@ import { createSourceId } from '../../core/types/identifiers.mjs';
 export class TextParser {
   constructor(options = {}) {
     this.options = {
-      detectHeaders: options.detectHeaders ?? true,
-      detectParagraphs: options.detectParagraphs ?? true,
-      detectSentences: options.detectSentences ?? true,
+      // Legacy heuristics are opt-in to keep separator discovery emergent.
+      detectHeaders: options.detectHeaders ?? false,
+      detectParagraphs: options.detectParagraphs ?? false,
+      detectSentences: options.detectSentences ?? false,
       lowercase: options.lowercase ?? false,
+      emitSeparators: options.emitSeparators ?? false,
       ...options
     };
   }
@@ -38,7 +41,7 @@ export class TextParser {
   parse(text, options = {}) {
     const sourceId = options.sourceId 
       ? createSourceId('document', options.sourceId)
-      : createSourceId('document', `text_${Date.now()}`);
+      : createSourceId('document', `text_${computeHash(String(text ?? ''))}`);
     
     const stream = new EventStream({
       sourceId,
@@ -61,7 +64,9 @@ export class TextParser {
       const headerMatch = this.detectHeader(para);
       if (headerMatch) {
         stream.push(EventType.HEADER, createHeaderPayload(headerMatch.level, headerMatch.text));
-        stream.push(EventType.SEPARATOR, createSeparatorPayload(SeparatorLevel.SECTION, headerMatch.text));
+        if (this.options.emitSeparators) {
+          stream.push(EventType.SEPARATOR, createSeparatorPayload(SeparatorLevel.SECTION, headerMatch.text));
+        }
         stream.popContext();
         continue;
       }
@@ -88,7 +93,7 @@ export class TextParser {
         }
         
         // Sentence separator
-        if (sIdx < sentences.length - 1) {
+        if (this.options.emitSeparators && sIdx < sentences.length - 1) {
           stream.push(EventType.SEPARATOR, createSeparatorPayload(SeparatorLevel.SENTENCE));
         }
         
@@ -96,7 +101,7 @@ export class TextParser {
       }
       
       // Paragraph separator
-      if (pIdx < paragraphs.length - 1) {
+      if (this.options.emitSeparators && pIdx < paragraphs.length - 1) {
         stream.push(EventType.SEPARATOR, createSeparatorPayload(SeparatorLevel.PARAGRAPH));
       }
       

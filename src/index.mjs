@@ -32,17 +32,67 @@ export {
   SchemaProposer,
   createSchemaProposer,
   Consolidator,
-  createConsolidator
+  createConsolidator,
+  PatternCompressor
 } from './training/index.mjs';
 
 // VSA exports
-export { VSAService, MockVSA, BinarySparseVSA } from './vsa/index.mjs';
+export { VSAService, MockVSA, BinarySparseVSA, serializeHyperVector, deserializeHyperVector } from './vsa/index.mjs';
 
 // Storage exports
 export { MemoryStore } from './storage/index.mjs';
 
 // Event Stream exports
-export { TextParser, parseText } from './event-stream/index.mjs';
+export { 
+  TextParser, 
+  parseText, 
+  ingestEvents, 
+  ingestText,
+  fromAudioTranscript,
+  fromVisualTokens,
+  fromVideoSegments,
+  scopeIdFromContextPath,
+  scopeIdFromEvent,
+  extendContextPath,
+  ScopeTree
+} from './event-stream/index.mjs';
+export { detectStructuralSeparators, createStructuralScopeId } from './event-stream/separator-detector.mjs';
+
+// Compiler/search/closure exports
+export { CompilerService, createCompilerService } from './compiler/compiler-service.mjs';
+export { SearchService, createSearchService } from './search/search-service.mjs';
+export { ClosureService, createClosureService } from './closure/closure-service.mjs';
+export { GenerationService, createGenerationService } from './generation/index.mjs';
+export { 
+  handleQuery, 
+  handleStats, 
+  handleRules,
+  handleRequest,
+  RequestType,
+  createQueryRequest,
+  createStatsRequest,
+  createRulesRequest,
+  ResponseStatus,
+  createSuccessResponse,
+  createErrorResponse
+} from './api/index.mjs';
+export {
+  CanonicalService,
+  StrictCanonicalizer,
+  IdentityCanonicalizer,
+  normalizeText,
+  textsEquivalent,
+  TEXT_NORMALIZE_DEFAULTS,
+  normalizeNumber,
+  numbersEquivalent,
+  canonicalNumberToString,
+  normalizeTime,
+  timesEquivalent,
+  canonicalTimeToString,
+  truncateToPrecision,
+  resolveEntity,
+  ENTITY_RESOLUTION_DEFAULTS
+} from './canonicalization/index.mjs';
 
 // Strategy registration
 import { 
@@ -56,15 +106,38 @@ import {
 import { MockVSA } from './vsa/strategies/mock-vsa.mjs';
 import { BinarySparseVSA } from './vsa/strategies/binary-sparse.mjs';
 import { MemoryStore } from './storage/strategies/memory-store.mjs';
+import { FileStore } from './storage/strategies/file-store.mjs';
+import { SqliteStore } from './storage/strategies/sqlite-store.mjs';
+import { LevelDbStore } from './storage/strategies/leveldb-store.mjs';
+import { PostgresStore } from './storage/strategies/postgres-store.mjs';
 import { VSAService } from './vsa/vsa-service.mjs';
 import { VMService } from './vm/vm-service.mjs';
 import { createConfig } from './core/config/config-schema.mjs';
+import { VSAVMError } from './core/errors.mjs';
 import { 
   IdentityCanonicalizer, 
   StrictCanonicalizer, 
   FuzzyCanonicalizer 
 } from './core/canonicalization/index.mjs';
 import { createRuleLearner } from './training/rule-learner.mjs';
+import { PatternCompressor } from './training/compression/pattern-compressor.mjs';
+import { CompilerService } from './compiler/compiler-service.mjs';
+import { SearchService } from './search/search-service.mjs';
+import { ClosureService } from './closure/closure-service.mjs';
+import { ResponseMode } from './core/types/results.mjs';
+import { detectStructuralSeparators, updateSeparatorThreshold } from './event-stream/separator-detector.mjs';
+import { ingestEvents, ingestText } from './event-stream/ingest.mjs';
+import { GenerationService } from './generation/generation-service.mjs';
+import { handleError } from './core/error-handling.mjs';
+import { 
+  createSchemaSlot,
+  createSchemaTrigger,
+  createOutputContract,
+  SlotType,
+  OutputKind,
+  OutputMode
+} from './compiler/schemas/schema-model.mjs';
+import { QueryFeature } from './compiler/pipeline/normalizer.mjs';
 
 // Register default strategies
 registerVSAStrategy('mock', (config) => new MockVSA(
@@ -79,6 +152,10 @@ registerVSAStrategy('binary-sparse', (config) => new BinarySparseVSA(
 ));
 
 registerStorageStrategy('memory', () => new MemoryStore());
+registerStorageStrategy('file', (config) => new FileStore(config));
+registerStorageStrategy('sqlite', () => new SqliteStore());
+registerStorageStrategy('leveldb', () => new LevelDbStore());
+registerStorageStrategy('postgres', () => new PostgresStore());
 
 // Register default canonicalizer strategies
 registerCanonicalizerStrategy('identity', (config) => new IdentityCanonicalizer(
@@ -103,6 +180,7 @@ export class VSAVM {
    */
   constructor(configOverrides = {}) {
     this.config = createConfig(configOverrides);
+    VSAVMError.deterministicTime = this.config.vm?.strictMode ?? true;
     
     // Initialize services with configured strategies
     const vsaStrategy = getVSAStrategy(
@@ -134,6 +212,27 @@ export class VSAVM {
     this.ruleLearner = createRuleLearner({
       minConfidence: this.config.training?.minConfidence ?? 0.7
     });
+
+    // Pattern compressor for DS005 compression evaluation
+    this.compressor = new PatternCompressor(this.config.training?.compression ?? {});
+
+    // Compiler/search/closure pipeline
+    this.compiler = new CompilerService({
+      vsaService: this.vsa,
+      deterministicTime: this.config.vm?.strictMode ?? true
+    });
+    this.registerDefaultSchemas();
+    this.search = new SearchService();
+    this.closure = new ClosureService({
+      defaultMode: this.config.vm?.strictMode ? ResponseMode.STRICT : ResponseMode.CONDITIONAL
+    });
+    this.generation = new GenerationService();
+
+    // Expose separator detector for evaluation and feedback
+    this.separatorDetector = {
+      detectSeparators: detectStructuralSeparators,
+      updateThreshold: updateSeparatorThreshold
+    };
     
     this.initialized = false;
   }
@@ -188,6 +287,270 @@ export class VSAVM {
   }
 
   /**
+   * Ingest raw text into the system (event stream + facts).
+   * @param {string} text
+   * @param {Object} [options]
+   * @returns {Promise<Object>}
+   */
+  async ingestText(text, options = {}) {
+    try {
+      return await ingestText(this, text, options);
+    } catch (error) {
+      return handleError(error, { operation: 'ingestText', module: 'vsavm' });
+    }
+  }
+
+  /**
+   * Ingest a pre-built event list into the system.
+   * @param {Array} events
+   * @param {Object} [options]
+   * @returns {Promise<Object>}
+   */
+  async ingestEvents(events, options = {}) {
+    try {
+      return await ingestEvents(this, events, options);
+    } catch (error) {
+      return handleError(error, { operation: 'ingestEvents', module: 'vsavm' });
+    }
+  }
+
+  /**
+   * Compile, search, execute, and verify a natural language query
+   * @param {string} queryText
+   * @param {Object} [options]
+   * @returns {Promise<Object>}
+   */
+  async answerQuery(queryText, options = {}) {
+    try {
+      const compilation = await this.compiler.compile(queryText, options.context ?? {});
+      if (!compilation.success) {
+        return {
+          success: false,
+          error: compilation.errors?.join('; ') || 'Compilation failed',
+          compilation
+        };
+      }
+
+      const candidates = compilation.hypotheses;
+      const searchContext = {
+        store: this.storage,
+        budget: options.budget ?? this.config.vm?.defaultBudget,
+        closureService: this.closure,
+        executor: this.vm
+      };
+
+      const best = await this.search.selectBest(candidates, searchContext);
+      const hypothesis = best ?? compilation.getBestHypothesis();
+
+      if (!hypothesis) {
+        return {
+          success: false,
+          error: 'No executable hypothesis selected',
+          compilation
+        };
+      }
+
+      const execution = await this.vm.execute(hypothesis.program, {
+        budget: options.budget ?? this.config.vm?.defaultBudget
+      });
+
+      const closureStore = {
+        getAllFacts: () => (typeof this.storage.getAllFacts === 'function'
+          ? this.storage.getAllFacts()
+          : []),
+        getRules: () => this.vm.ruleStore?.getRules?.() ?? []
+      };
+
+      const closure = await this.closure.verify(
+        execution,
+        closureStore,
+        options.closureBudget ?? options.budget ?? this.config.vm?.defaultBudget,
+        options.mode
+      );
+
+      if (typeof this.separatorDetector?.updateThreshold === 'function') {
+        const success = closure.mode === ResponseMode.STRICT && !closure.hasConflicts();
+        this.separatorDetector.updateThreshold(success ? 1.0 : 0.0);
+      }
+
+      const schemaId = hypothesis.sourceSchemaId;
+      if (schemaId) {
+        const schema = this.compiler.schemaStore.get(schemaId);
+        if (schema) {
+          const success = closure.mode === ResponseMode.STRICT && !closure.hasConflicts();
+          schema.recordUsage(
+            success,
+            hypothesis.hasAssumptions(),
+            closure.executionMs ?? 0,
+            this.config.vm?.strictMode ?? true
+          );
+          if (!success) {
+            schema.recordClosureFailure();
+          }
+        }
+      }
+
+      return {
+        success: true,
+        compilation,
+        hypothesis,
+        execution,
+        closure
+      };
+    } catch (error) {
+      return handleError(error, { operation: 'answerQuery', module: 'vsavm' });
+    }
+  }
+
+  /**
+   * Add a rule to the rule store.
+   * @param {Object} rule
+   * @returns {Object|null}
+   */
+  addRule(rule) {
+    return this.vm.ruleStore.addRule(rule);
+  }
+
+  /**
+   * Get all stored rules.
+   * @returns {Object[]}
+   */
+  getRules() {
+    return this.vm.ruleStore.getRules();
+  }
+
+  /**
+   * Clear all stored rules.
+   */
+  clearRules() {
+    this.vm.ruleStore.clear();
+  }
+
+  registerDefaultSchemas() {
+    const store = this.compiler.schemaStore;
+    if (!store) return;
+
+    store.add({
+      schemaId: 'builtin:predicate_query:v1',
+      name: 'Predicate query',
+      trigger: createSchemaTrigger({
+        requiredFeatures: [QueryFeature.LIST_REQUEST],
+        keywords: ['list', 'show', 'find', 'get']
+      }),
+      slots: [
+        createSchemaSlot('predicate', SlotType.PREDICATE)
+      ],
+      programTemplate: [
+        {
+          op: 'QUERY',
+          args: {
+            predicate: '$predicate'
+          },
+          out: 'results'
+        },
+        {
+          op: 'RETURN',
+          args: {
+            value: { var: 'results' }
+          }
+        }
+      ],
+      outputContract: createOutputContract(OutputKind.FACT_LIST, OutputMode.STRICT_OR_CONDITIONAL)
+    });
+
+    store.add({
+      schemaId: 'builtin:predicate_count:v1',
+      name: 'Predicate count',
+      trigger: createSchemaTrigger({
+        requiredFeatures: [QueryFeature.QUANTIFIER],
+        keywords: ['count', 'number', 'how']
+      }),
+      slots: [
+        createSchemaSlot('predicate', SlotType.PREDICATE)
+      ],
+      programTemplate: [
+        {
+          op: 'QUERY',
+          args: {
+            predicate: '$predicate'
+          },
+          out: 'results'
+        },
+        {
+          op: 'COUNT',
+          args: {
+            value: { var: 'results' }
+          },
+          out: 'count'
+        },
+        {
+          op: 'RETURN',
+          args: {
+            value: { var: 'count' }
+          }
+        }
+      ],
+      outputContract: createOutputContract(OutputKind.VERDICT, OutputMode.ANY)
+    });
+
+    store.add({
+      schemaId: 'builtin:predicate_exists:v1',
+      name: 'Predicate exists',
+      trigger: createSchemaTrigger({
+        requiredFeatures: [QueryFeature.EXISTENTIAL],
+        keywords: ['is', 'are', 'exists', 'exist', 'there']
+      }),
+      slots: [
+        createSchemaSlot('predicate', SlotType.PREDICATE)
+      ],
+      programTemplate: [
+        {
+          op: 'QUERY',
+          args: {
+            predicate: '$predicate'
+          },
+          out: 'results'
+        },
+        {
+          op: 'COUNT',
+          args: {
+            value: { var: 'results' }
+          },
+          out: 'count'
+        },
+        {
+          op: 'BRANCH',
+          args: {
+            condition: '$count > 0',
+            then: 'has_results',
+            else: 'no_results'
+          }
+        },
+        {
+          label: 'has_results',
+          op: 'RETURN',
+          args: { value: true }
+        },
+        {
+          label: 'no_results',
+          op: 'RETURN',
+          args: { value: false }
+        }
+      ],
+      outputContract: createOutputContract(OutputKind.VERDICT, OutputMode.ANY)
+    });
+  }
+
+  /**
+   * Render a query result to text using the generation service.
+   * @param {Object} result
+   * @returns {Object}
+   */
+  renderResult(result) {
+    return this.generation.render(result);
+  }
+
+  /**
    * Get storage statistics
    */
   async getStats() {
@@ -233,7 +596,7 @@ export class VSAVM {
    * @returns {Promise<Object>} Compression result
    */
   async compressPattern(payload) {
-    const { name, data } = payload;
+    const { name, data } = payload ?? {};
 
     if (!data) {
       return {
@@ -244,6 +607,28 @@ export class VSAVM {
     }
 
     const originalSize = JSON.stringify(data).length;
+
+    if (this.compressor?.compress) {
+      const result = this.compressor.compress(payload);
+      const compressedBytes = Number.isFinite(result?.compressedBytes)
+        ? result.compressedBytes
+        : result?.compressedSize;
+      const baseSize = Number.isFinite(result?.originalSize) ? result.originalSize : originalSize;
+
+      if (Number.isFinite(compressedBytes)) {
+        return {
+          success: true,
+          compressed: result.compressed,
+          compressedBytes,
+          compressedSize: compressedBytes,
+          originalSize: baseSize,
+          compressionRatio: 1 - (compressedBytes / baseSize),
+          method: result.method ?? 'pattern',
+          decompress: result.decompress ?? (() => this.decompressPattern(result.compressed))
+        };
+      }
+    }
+
     // Smart compression: check if data is worth compressing
     if (Array.isArray(data) && data.length > 10) {
       const uniqueValues = new Set(data).size;
@@ -383,28 +768,34 @@ export class VSAVM {
    * @returns {*} Original data
    */
   decompressPattern(compressed) {
-    if (!compressed || !compressed.t) {
+    const candidate = compressed?.compressed ?? compressed;
+
+    if (candidate?.kind && this.compressor?.decompress) {
+      return this.compressor.decompress(candidate);
+    }
+
+    if (!candidate || !candidate.t) {
       throw new Error('Invalid compressed data');
     }
 
-    switch (compressed.t) {
+    switch (candidate.t) {
       case 'c': // cyclic
         const result = [];
-        for (let i = 0; i < compressed.n; i++) {
-          result.push(...compressed.p);
+        for (let i = 0; i < candidate.n; i++) {
+          result.push(...candidate.p);
         }
         return result;
 
       case 'r': // rule-based
         const sequence = [];
-        for (let i = 0; i < compressed.n; i++) {
-          sequence.push(this.applyRule(compressed.r, i));
+        for (let i = 0; i < candidate.n; i++) {
+          sequence.push(this.applyRule(candidate.r, i));
         }
         return sequence;
 
       case 'rle': // run-length encoding
         const decoded = [];
-        for (const [value, count] of compressed.d) {
+        for (const [value, count] of candidate.d) {
           for (let i = 0; i < count; i++) {
             decoded.push(value);
           }
@@ -412,13 +803,13 @@ export class VSAVM {
         return decoded;
 
       case 'j': // json
-        return JSON.parse(compressed.d
+        return JSON.parse(candidate.d
           .replace(/"t":"n"/g, '"type":"node"')
           .replace(/"c"/g, '"children"')
           .replace(/"v"/g, '"value"'));
 
       default:
-        throw new Error(`Unknown compression type: ${compressed.t}`);
+        throw new Error(`Unknown compression type: ${candidate.t}`);
     }
   }
 
@@ -518,6 +909,100 @@ export class VSAVM {
     if (typeof a !== typeof b) return false;
     if (typeof a === 'object') return JSON.stringify(a) === JSON.stringify(b);
     return a === b;
+  }
+  /**
+   * Generate text conditioned on current VM state
+   * DS005 outer loop: next-phrase prediction
+   * DS011: Uses MacroUnitModel with VM state conditioning and claims validation
+   */
+  async generateText(prompt, options = {}) {
+    // Use MacroUnitModel if available (newer, better), else fall back to phrasePredictor
+    if (options.useMacroUnitModel !== false && !options.useLegacy) {
+      if (!this.macroUnitModel) {
+        const { MacroUnitModel } = await import('./training/outer-loop/macro-unit-model.mjs');
+        this.macroUnitModel = new MacroUnitModel({
+          contextWindow: options.contextWindow ?? 32,
+          useVMConditioning: true,
+          useClaimValidation: true
+        });
+      }
+      
+      // Convert prompt to byte array if string
+      const promptBytes = typeof prompt === 'string' 
+        ? Array.from(Buffer.from(prompt))
+        : prompt;
+      
+      // Generate with VM state conditioning
+      const result = await this.macroUnitModel.generate(promptBytes, {
+        maxTokens: options.maxTokens ?? 100,
+        temperature: options.temperature ?? 0.7,
+        topK: options.topK ?? 40,
+        repetitionPenalty: options.repetitionPenalty ?? 1.4,
+        ngramBlockSize: options.ngramBlockSize ?? 5,
+        diversityBonus: options.diversityBonus ?? 0.25,
+        vmState: this,  // Pass VM instance for conditioning
+        mode: options.mode ?? 'CONDITIONAL'
+      });
+      
+      // Convert back to string
+      const text = Buffer.from(result.tokens).toString('utf8');
+      
+      return {
+        text,
+        macroUnitsUsed: result.macroUnits,
+        compressionRatio: result.compressionRatio,
+        vmConditioned: result.vmConditioned,
+        validationStats: result.validationStats
+      };
+    }
+    
+    // Legacy path: use phrasePredictor
+    if (!this.phrasePredictor) {
+      const { VMConditionedLanguageModel } = await import('./training/outer-loop/phrase-predictor.mjs');
+      this.phrasePredictor = new VMConditionedLanguageModel();
+    }
+    
+    // Get current VM state
+    const vmState = {
+      facts: Array.from(this.storage.facts || []),
+      rules: this.rules || [],
+      contextStack: this.contextStack?.stack || [],
+      budget: this.budget?.used || {}
+    };
+    
+    return await this.phrasePredictor.generateText(prompt, vmState, options.maxPhrases);
+  }
+
+  /**
+   * Load a pre-trained MacroUnitModel
+   * @param {Object} modelState - Exported model state
+   */
+  async loadMacroUnitModel(modelState) {
+    const { MacroUnitModel } = await import('./training/outer-loop/macro-unit-model.mjs');
+    this.macroUnitModel = new MacroUnitModel();
+    this.macroUnitModel.import(modelState);
+  }
+
+  /**
+   * Export the MacroUnitModel state for saving
+   * @param {Object} [options] - Export options
+   * @returns {Object|null}
+   */
+  exportMacroUnitModel(options = {}) {
+    if (!this.macroUnitModel) return null;
+    return this.macroUnitModel.export(options);
+  }
+
+  /**
+   * Train phrase predictor on examples
+   */
+  async trainPhrasePredictor(trainingData) {
+    if (!this.phrasePredictor) {
+      const { VMConditionedLanguageModel } = await import('./training/outer-loop/phrase-predictor.mjs');
+      this.phrasePredictor = new VMConditionedLanguageModel();
+    }
+    
+    return await this.phrasePredictor.train(trainingData);
   }
 }
 

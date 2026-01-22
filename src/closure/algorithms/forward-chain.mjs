@@ -177,7 +177,7 @@ export class ForwardChainer {
         }
 
         // Apply rule
-        const newFacts = this._applyRule(rule, bindings, factStore);
+        const newFacts = this._applyRule(rule, bindings, factStore, budgetObj.deterministicTime);
         
         try {
           budgetObj.consumeSteps('APPLY_RULE', rule.estimatedCost - 5);
@@ -193,7 +193,7 @@ export class ForwardChainer {
           ruleId: rule.ruleId,
           bindings: this._serializeBindings(bindings),
           newFactCount: newFacts.length,
-          timestamp: Date.now()
+          timestamp: budgetObj.deterministicTime ? 0 : Date.now()
         });
 
         for (const newFact of newFacts) {
@@ -206,7 +206,7 @@ export class ForwardChainer {
               type: 'conflict_detected',
               factId: newFact.factId,
               conflictCount: factConflicts.length,
-              timestamp: Date.now()
+              timestamp: budgetObj.deterministicTime ? 0 : Date.now()
             });
             continue;  // Don't add conflicting facts
           }
@@ -367,11 +367,11 @@ export class ForwardChainer {
    * Apply a rule with bindings to produce new facts
    * @private
    */
-  _applyRule(rule, bindings, store) {
+  _applyRule(rule, bindings, store, deterministicTime = false) {
     const newFacts = [];
 
     for (const conclusionTemplate of rule.conclusions) {
-      const fact = this._instantiateConclusion(conclusionTemplate, bindings);
+      const fact = this._instantiateConclusion(conclusionTemplate, bindings, deterministicTime);
       if (fact && !store.has(fact.factId)) {
         newFacts.push(fact);
       }
@@ -384,14 +384,14 @@ export class ForwardChainer {
    * Instantiate a conclusion template with bindings
    * @private
    */
-  _instantiateConclusion(template, bindings) {
+  _instantiateConclusion(template, bindings, deterministicTime = false) {
     const fact = {
       predicate: this._substituteValue(template.predicate, bindings),
       polarity: template.polarity ?? 'assert',
       arguments: new Map(),
       provenance: [{
         sourceId: { type: 'derived', id: 'forward_chain' },
-        timestamp: Date.now()
+        timestamp: deterministicTime ? 0 : Date.now()
       }]
     };
 

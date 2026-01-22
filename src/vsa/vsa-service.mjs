@@ -46,6 +46,16 @@ export class VSAService {
   }
 
   /**
+   * Generate hypervector for plain text
+   * @param {string} text
+   * @returns {Object} HyperVector
+   */
+  vectorizeText(text) {
+    const key = `text:${String(text ?? '')}`;
+    return this.strategy.generate(key);
+  }
+
+  /**
    * Generate hypervector for a predicate
    * @param {{namespace: string, name: string}} symbolId
    * @returns {Object} HyperVector
@@ -141,6 +151,16 @@ export class VSAService {
     return results
       .filter(r => r.similarity >= this.strategy.similarityThreshold)
       .slice(0, k);
+  }
+
+  /**
+   * Compute similarity between two hypervectors
+   * @param {Object} vecA
+   * @param {Object} vecB
+   * @returns {number}
+   */
+  similarity(vecA, vecB) {
+    return this.strategy.similarity(vecA, vecB);
   }
 
   /**

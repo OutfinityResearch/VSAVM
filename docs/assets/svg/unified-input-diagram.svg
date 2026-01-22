@@ -35,7 +35,7 @@
   <rect x="100" y="130" rx="12" ry="12" width="300" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="250" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Lexical layer (reversible tokens)</text>
   <rect x="400" y="130" rx="12" ry="12" width="300" height="50" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
-  <text x="550" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Phrase layer (macro units)</text>
+  <text x="550" y="160" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Macro-unit layer (reversible units)</text>
   <line x1="250" y1="180" x2="250" y2="200" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
   
   <line x1="550" y1="180" x2="550" y2="200" stroke="#0b6eff" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrowhead-0b6eff)"/>
@@ -43,5 +43,5 @@
   <rect x="100" y="200" rx="12" ry="12" width="300" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="250" y="225" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Deterministic expansion</text>
   <rect x="400" y="200" rx="12" ry="12" width="300" height="40" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
-  <text x="550" y="225" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Stable units for retrieval</text>
+  <text x="550" y="225" text-anchor="middle" font-size="12" fill="#2f4a63" font-family="Space Grotesk">Stable units for retrieval and continuation</text>
 </svg>

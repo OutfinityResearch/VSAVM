@@ -67,13 +67,21 @@ export class CompilerService {
     this.options = {
       maxHypotheses: 10,
       minSchemaConfidence: 0.3,
+      deterministicTime: options.deterministicTime ?? false,
       ...options
     };
 
     // Initialize components
-    this.normalizer = createQueryNormalizer(options.normalizerOptions ?? {});
+    this.normalizer = createQueryNormalizer({
+      ...(options.normalizerOptions ?? {}),
+      deterministicTime: this.options.deterministicTime
+    });
     this.slotFiller = createSlotFiller(options.slotFillerOptions ?? {});
-    this.schemaStore = options.schemaStore ?? createSchemaStore();
+    this.vsaService = options.vsaService ?? null;
+    this.schemaStore = options.schemaStore ?? createSchemaStore({ vsaService: this.vsaService });
+    if (this.schemaStore && this.vsaService && !this.schemaStore.vsaService) {
+      this.schemaStore.vsaService = this.vsaService;
+    }
 
     // Set VSA service if provided
     if (options.vsaService) {
@@ -90,7 +98,7 @@ export class CompilerService {
   async compile(queryText, context = {}) {
     const errors = [];
     const warnings = [];
-    const startTime = Date.now();
+    const startTime = this.options.deterministicTime ? 0 : Date.now();
 
     // Step 1: Normalize query
     let normalizedQuery;
@@ -108,6 +116,9 @@ export class CompilerService {
       ...normalizedQuery.toQueryContext(),
       ...context
     };
+    if (this.vsaService) {
+      queryContext.vector = this.vsaService.vectorizeText(normalizedQuery.normalizedText);
+    }
 
     let candidateSchemas;
     try {
@@ -131,7 +142,7 @@ export class CompilerService {
           candidateSchemas: [],
           warnings: ['No matching schemas found, using default query program'],
           metadata: {
-            compilationTimeMs: Date.now() - startTime,
+            compilationTimeMs: this.options.deterministicTime ? 0 : (Date.now() - startTime),
             method: 'default'
           }
         });
@@ -162,7 +173,8 @@ export class CompilerService {
             bindings: fillResult.bindings,
             score: this._computeScore(schema, fillResult, score),
             sourceSchemaId: schema.schemaId,
-            derivationMethod: method
+            derivationMethod: method,
+            deterministicTime: this.options.deterministicTime
           });
 
           // Run early checks
@@ -205,7 +217,7 @@ export class CompilerService {
       errors,
       warnings,
       metadata: {
-        compilationTimeMs: Date.now() - startTime,
+        compilationTimeMs: this.options.deterministicTime ? 0 : (Date.now() - startTime),
         totalSchemas: candidateSchemas.length,
         successfulHypotheses: finalHypotheses.length
       }
@@ -303,6 +315,7 @@ export class CompilerService {
    * @param {Object} vsaService
    */
   setVSAService(vsaService) {
+    this.vsaService = vsaService;
     this.schemaStore.setVSAService(vsaService);
     this.slotFiller.setVSAService(vsaService);
   }
@@ -323,7 +336,8 @@ export class CompilerService {
       instructions,
       metadata: {
         sourceSchemaId: schema.schemaId,
-        compiledAt: Date.now(),
+        compiledAt: this.options.deterministicTime ? 0 : Date.now(),
+        deterministicTime: this.options.deterministicTime,
         tracePolicy: 'minimal'
       }
     });
@@ -471,7 +485,8 @@ export class CompilerService {
       instructions,
       metadata: {
         sourceSchemaId: null,
-        compiledAt: Date.now(),
+        compiledAt: this.options.deterministicTime ? 0 : Date.now(),
+        deterministicTime: this.options.deterministicTime,
         tracePolicy: 'minimal'
       }
     });
@@ -480,7 +495,8 @@ export class CompilerService {
       program,
       bindings: new Map([['query', normalizedQuery.normalizedText]]),
       score: 0.8,  // Higher score (worse) for default
-      derivationMethod: 'default'
+      derivationMethod: 'default',
+      deterministicTime: this.options.deterministicTime
     });
   }
 }

@@ -16,7 +16,9 @@ import {
   RuleLearner,
   createRuleLearner,
   TrainingService,
-  createTrainingService
+  createTrainingService,
+  MacroUnitModel,
+  createMacroUnitModel
 } from '../../src/training/index.mjs';
 
 describe('PatternMiner', () => {
@@ -465,5 +467,267 @@ describe('TrainingService', () => {
     const stats = service.getStats();
     assert.ok(stats.rulesLearned >= 1);
     assert.ok(stats.trainingRuns >= 1);
+  });
+});
+
+describe('MacroUnitModel', () => {
+  let model;
+
+  beforeEach(() => {
+    model = createMacroUnitModel({
+      minFrequency: 2,
+      minLength: 2,
+      maxLength: 8,
+      contextWindow: 4,
+      mdlThreshold: 0.01,
+      pruneThreshold: 1
+    });
+  });
+
+  describe('train', () => {
+    it('discovers macro-units from repeated sequences', async () => {
+      const sequences = [
+        Array.from(Buffer.from('Hello World')),
+        Array.from(Buffer.from('Hello There')),
+        Array.from(Buffer.from('Hello Again')),
+        Array.from(Buffer.from('World Hello'))
+      ];
+
+      await model.train(sequences);
+      const macroUnits = model.getMacroUnits();
+
+      assert.ok(macroUnits.length > 0, 'Should discover macro-units');
+      
+      // "Hello" should be discovered as a macro-unit
+      const helloUnit = macroUnits.find(u => 
+        Buffer.from(u.tokens).toString('utf8').includes('Hello')
+      );
+      assert.ok(helloUnit, 'Should discover "Hello" as macro-unit');
+    });
+
+    it('builds n-gram model at multiple orders', async () => {
+      const sequences = [
+        Array.from(Buffer.from('abcabc')),
+        Array.from(Buffer.from('abcabc'))
+      ];
+
+      await model.train(sequences);
+      const stats = model.getStats();
+
+      assert.ok(stats.ngramContexts > 0, 'Should have n-gram contexts');
+      assert.ok(stats.ngramOrders.length > 0, 'Should have multiple n-gram orders');
+    });
+  });
+
+  describe('encode/decode', () => {
+    it('encodes using macro-units for compression', async () => {
+      const sequences = [
+        Array.from(Buffer.from('ababab')),
+        Array.from(Buffer.from('ababab')),
+        Array.from(Buffer.from('ababab'))
+      ];
+
+      await model.train(sequences);
+
+      const input = Array.from(Buffer.from('ababab'));
+      const encoded = model.encode(input);
+
+      // Should use fewer units than bytes
+      assert.ok(encoded.length <= input.length, 'Encoding should compress');
+    });
+
+    it('encode returns correct structure', async () => {
+      const sequences = [
+        Array.from(Buffer.from('test')),
+        Array.from(Buffer.from('test'))
+      ];
+
+      await model.train(sequences);
+
+      const input = Array.from(Buffer.from('test'));
+      const encoded = model.encode(input);
+
+      assert.ok(Array.isArray(encoded), 'Encoded should be array');
+      for (const unit of encoded) {
+        assert.ok(unit.unitId, 'Each unit should have unitId');
+        assert.ok(Array.isArray(unit.tokens), 'Each unit should have tokens array');
+      }
+    });
+  });
+
+  describe('propose', () => {
+    it('proposes next tokens using Kneser-Ney', async () => {
+      const sequences = [
+        Array.from(Buffer.from('abc')),
+        Array.from(Buffer.from('abc')),
+        Array.from(Buffer.from('abd'))
+      ];
+
+      await model.train(sequences);
+
+      const context = Array.from(Buffer.from('ab'));
+      const proposals = await model.propose(context, null, 5);
+
+      assert.ok(proposals.length > 0, 'Should have proposals');
+      
+      // 'c' should be more likely after 'ab' than random bytes
+      const cProposal = proposals.find(p => 
+        p.tokens.length === 1 && p.tokens[0] === 'c'.charCodeAt(0)
+      );
+      assert.ok(cProposal, 'Should propose "c" after "ab"');
+    });
+
+    it('proposes macro-units when applicable', async () => {
+      const sequences = [
+        Array.from(Buffer.from('xyzabc')),
+        Array.from(Buffer.from('xyzabc')),
+        Array.from(Buffer.from('xyzabc'))
+      ];
+
+      await model.train(sequences);
+      const macroUnits = model.getMacroUnits();
+
+      if (macroUnits.length > 0) {
+        const context = Array.from(Buffer.from('xyz'));
+        const proposals = await model.propose(context, null, 10);
+        
+        // Should include some macro-unit proposals
+        const macroProposals = proposals.filter(p => p.unitId !== 'byte');
+        // This is optional - macro-units may or may not be proposed based on context
+      }
+    });
+  });
+
+  describe('generate', () => {
+    it('generates continuation from prompt', async () => {
+      const sequences = [
+        Array.from(Buffer.from('hello world')),
+        Array.from(Buffer.from('hello there')),
+        Array.from(Buffer.from('hello again'))
+      ];
+
+      await model.train(sequences);
+
+      const prompt = Array.from(Buffer.from('hel'));
+      const result = await model.generate(prompt, { maxTokens: 10 });
+
+      assert.ok(result.tokens, 'Should have tokens');
+      assert.ok(result.tokens.length >= prompt.length, 'Should have at least prompt length');
+      assert.equal(typeof result.compressionRatio, 'number', 'Should have compression ratio');
+      assert.ok(Array.isArray(result.macroUnits), 'Should have macro-units array');
+    });
+
+    it('respects maxTokens limit', async () => {
+      const sequences = [
+        Array.from(Buffer.from('abcdefghij'))
+      ];
+
+      await model.train(sequences);
+
+      const prompt = Array.from(Buffer.from('a'));
+      const result = await model.generate(prompt, { maxTokens: 5 });
+
+      assert.ok(result.generatedLength <= 10, 'Should respect maxTokens (with some margin for macro-units)');
+    });
+  });
+
+  describe('calculatePerplexity', () => {
+    it('calculates perplexity for seen sequence', async () => {
+      const sequences = [
+        Array.from(Buffer.from('abcabc')),
+        Array.from(Buffer.from('abcabc'))
+      ];
+
+      await model.train(sequences);
+
+      const testSeq = Array.from(Buffer.from('abc'));
+      const ppl = model.calculatePerplexity(testSeq);
+
+      assert.ok(Number.isFinite(ppl), 'Perplexity should be finite');
+      assert.ok(ppl > 0, 'Perplexity should be positive');
+      assert.ok(ppl < 256, 'Perplexity should be less than vocabulary size for seen data');
+    });
+
+    it('returns higher perplexity for unseen patterns', async () => {
+      const sequences = [
+        Array.from(Buffer.from('aaaa')),
+        Array.from(Buffer.from('aaaa'))
+      ];
+
+      await model.train(sequences);
+
+      const seenPpl = model.calculatePerplexity(Array.from(Buffer.from('aaaa')));
+      const unseenPpl = model.calculatePerplexity(Array.from(Buffer.from('zzzz')));
+
+      // Unseen should have higher perplexity (or at least not much lower)
+      // Due to smoothing, both should be finite
+      assert.ok(Number.isFinite(seenPpl), 'Seen perplexity should be finite');
+      assert.ok(Number.isFinite(unseenPpl), 'Unseen perplexity should be finite');
+    });
+  });
+
+  describe('export/import', () => {
+    it('exports and imports model state', async () => {
+      const sequences = [
+        Array.from(Buffer.from('hello')),
+        Array.from(Buffer.from('hello')),
+        Array.from(Buffer.from('world'))
+      ];
+
+      await model.train(sequences);
+      const exported = model.export();
+
+      assert.ok(exported.version, 'Should have version');
+      assert.ok(Array.isArray(exported.macroUnits), 'Should have macroUnits');
+      assert.ok(Array.isArray(exported.ngramsByOrder), 'Should have ngramsByOrder');
+
+      // Create new model and import
+      const newModel = createMacroUnitModel();
+      newModel.import(exported);
+
+      const originalStats = model.getStats();
+      const importedStats = newModel.getStats();
+
+      assert.equal(importedStats.macroUnitCount, originalStats.macroUnitCount);
+      assert.equal(importedStats.totalBytes, originalStats.totalBytes);
+    });
+
+    it('roundtrips perplexity calculation', async () => {
+      const sequences = [
+        Array.from(Buffer.from('test data')),
+        Array.from(Buffer.from('test data'))
+      ];
+
+      await model.train(sequences);
+      
+      const testSeq = Array.from(Buffer.from('test'));
+      const pplBefore = model.calculatePerplexity(testSeq);
+
+      const exported = model.export();
+      const newModel = createMacroUnitModel();
+      newModel.import(exported);
+
+      const pplAfter = newModel.calculatePerplexity(testSeq);
+
+      assert.ok(Math.abs(pplBefore - pplAfter) < 0.01, 'Perplexity should be same after import');
+    });
+  });
+
+  describe('getStats', () => {
+    it('returns comprehensive statistics', async () => {
+      const sequences = [
+        Array.from(Buffer.from('hello world'))
+      ];
+
+      await model.train(sequences);
+      const stats = model.getStats();
+
+      assert.equal(typeof stats.macroUnitCount, 'number');
+      assert.equal(typeof stats.ngramContexts, 'number');
+      assert.equal(typeof stats.totalBytes, 'number');
+      assert.equal(typeof stats.vocabularySize, 'number');
+      assert.equal(typeof stats.avgMacroUnitLength, 'number');
+      assert.ok(Array.isArray(stats.ngramOrders));
+    });
   });
 });

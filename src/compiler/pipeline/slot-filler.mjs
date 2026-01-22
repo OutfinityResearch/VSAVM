@@ -6,8 +6,9 @@
 
 import { SlotType } from '../schemas/schema-model.mjs';
 import { normalizeText } from '../../canonicalization/normalizers/text-normalizer.mjs';
-import { stringAtom, numberAtom, entityAtom, symbolAtom } from '../../core/types/terms.mjs';
+import { stringAtom, numberAtom } from '../../core/types/terms.mjs';
 import { createSymbolId, createEntityId } from '../../core/types/identifiers.mjs';
+import { resolveEntity } from '../../canonicalization/normalizers/entity-resolver.mjs';
 
 /**
  * Slot fill methods
@@ -157,7 +158,7 @@ export class SlotFiller {
     }
 
     // Step 2: Type-based inference
-    const typeMatches = this._findByType(slot.type, query, existingBindings);
+    const typeMatches = this._findByType(slot.type, query, existingBindings, context);
     
     if (typeMatches.length === 1) {
       return new SingleSlotResult({
@@ -254,17 +255,50 @@ export class SlotFiller {
    * Find candidates by type
    * @private
    */
-  _findByType(slotType, query, existingBindings) {
+  _findByType(slotType, query, existingBindings, context = {}) {
     const candidates = [];
     const usedValues = new Set([...existingBindings.values()].map(v => JSON.stringify(v)));
 
+    if (slotType === SlotType.PREDICATE && query.originalText) {
+      const matches = query.originalText.matchAll(/\b([A-Za-z][\w-]*):([\w-]+)\b/g);
+      for (const match of matches) {
+        const namespace = normalizeText(match[1]);
+        const name = normalizeText(match[2]);
+        const value = createSymbolId(namespace, name);
+        const valueKey = JSON.stringify(value);
+        if (!usedValues.has(valueKey)) {
+          candidates.push({ value, token: match[0], score: 1.0 });
+        }
+      }
+      if (candidates.length > 0) {
+        return candidates;
+      }
+    }
+
+    const entityCandidates = slotType === SlotType.ENTITY
+      ? (context.entityCandidates ?? context.entities ?? this.entityStore?.getAll?.() ?? [])
+      : [];
+
     for (const token of query.tokens) {
-      const value = this._createValueForType(token, slotType);
+      let value = null;
+      let score = this._scoreCandidate(token, slotType);
+
+      if (slotType === SlotType.ENTITY && entityCandidates.length > 0) {
+        const resolved = resolveEntity(token, context, entityCandidates, {
+          vsa: this.vsaService
+        });
+        if (resolved.entityId) {
+          value = resolved.entityId;
+          score = resolved.confidence;
+        }
+      } else {
+        value = this._createValueForType(token, slotType);
+      }
       
       if (value !== null) {
         const valueKey = JSON.stringify(value);
         if (!usedValues.has(valueKey)) {
-          candidates.push({ value, token, score: this._scoreCandidate(token, slotType) });
+          candidates.push({ value, token, score });
         }
       }
     }

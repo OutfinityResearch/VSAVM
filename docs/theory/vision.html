@@ -27,7 +27,7 @@
 <p>Related specs: <a href="../specs-viewer.html?doc=specs/DS001-foundations-and-architecture.md">DS001 Foundations and Architecture</a>.</p>
 
 <h2>Overview</h2>
-<p>VSAVM is an Axiologic Research experiment within the Achilles project. The system exposes an LLM-like interface, yet its core is an executable virtual machine. Next-phrase prediction remains the primary training objective, but it is conditioned on VM state obtained through execution. Correctness is defined operationally as avoiding contradictions both immediately and within a bounded transitive closure.</p>
+<p>VSAVM is an Axiologic Research experiment within the Achilles project. The system exposes an LLM-like interface, yet its core is an executable virtual machine. The outer-loop objective is continuation prediction (today implemented as byte-level and macro-unit continuation per DS011), and it can be conditioned on VM state. Correctness is defined operationally as avoiding contradictions both immediately and within a bounded transitive closure (DS004).</p>
 
 <h2>Core concepts</h2>
 <p>A virtual machine is a state transition engine with explicit memory, instructions, and an execution trace. A consistency contract is a rule that ties output permission to budgeted checks. Bounded closure is the controlled exploration of consequences that turns correctness into a measurable property of search effort rather than a vague promise.</p>
@@ -35,13 +35,13 @@
 <h2>LLM-like interface with VM core</h2>
 <p>The system presents a conversational interface that mirrors large language models while operating on fundamentally different principles. Where traditional LLMs maintain understanding as latent numerical states, VSAVM constructs and executes explicit programs within a virtual machine. This enables operational correctness guarantees impossible with purely statistical approaches.</p>
 <ul>
-  <li><strong>State-conditioned prediction</strong>: Next-phrase prediction incorporates VM state including active facts, applicable rules, and ongoing computations.</li>
+  <li><strong>State-conditioned prediction</strong>: Continuation proposals can incorporate VM state including active facts, applicable rules, and ongoing computations (DS011).</li>
   <li><strong>Configurable trade-offs</strong>: Strict mode prioritizes consistency; exploratory mode allows more natural responses with uncertainty markers.</li>
   <li><strong>Learned compilation</strong>: The NL-to-query compiler emerges under compression pressure, not hardcoded rules.</li>
 </ul>
 
 <h2>Runtime story</h2>
-<p>At runtime the input is segmented into events, candidate interpretations are executed in the VM, the question is compiled into query programs through retrieval and program search, and the system produces a response through next-phrase completion guided by VM state. When a user asks the system to think more, the closure and exploration budget increases.</p>
+<p>At runtime the input is segmented into events, candidate interpretations are executed in the VM, and the question is compiled into query programs through retrieval and program search. The default response path is <strong>execution + bounded closure + deterministic rendering</strong> of checked claims. Optional continuation (DS011) can be used as a proposal mechanism, but it is always subordinate to the correctness contract and the explicit budget.</p>
 
 <h2>Boundary behavior</h2>
 <p>When budget is insufficient, the system must degrade honestly. It can emit conditional claims that explicitly depend on assumptions, or it can declare indeterminacy. In both cases, the system avoids substituting fluency for verification by making the exploration boundary explicit. The system preserves the consistency contract by strengthening conclusions when possible or falling back to conditional results when contradictions cannot be ruled out within the configured budget.</p>

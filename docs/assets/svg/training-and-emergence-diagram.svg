@@ -30,7 +30,7 @@
     </marker>
   </defs>
   <rect x="50" y="40" rx="12" ry="12" width="220" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
-  <text x="160" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Next-phrase prediction</text>
+  <text x="160" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Continuation prediction</text>
   <rect x="530" y="40" rx="12" ry="12" width="220" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>
   <text x="640" y="75" text-anchor="middle" font-size="13" fill="#0b1a2b" font-family="Space Grotesk">Program search</text>
   <rect x="290" y="140" rx="12" ry="12" width="220" height="60" fill="url(#sky)" stroke="#7fb3e6" stroke-width="1.2"/>

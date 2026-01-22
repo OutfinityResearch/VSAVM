@@ -25,11 +25,24 @@
 <p>This wiki entry defines a term used across VSAVM and explains why it matters in the architecture.</p><p>The diagram has a transparent background and highlights the operational meaning of the term inside VSAVM.</p>
 <p>Related wiki pages: <a href="vm.html">VM</a>, <a href="event-stream.html">event stream</a>, <a href="vsa.html">VSA</a>, <a href="bounded-closure.html">bounded closure</a>, <a href="consistency-contract.html">consistency contract</a>.</p>
 <h2>Definition</h2>
-<p>An event stream is an ordered sequence of typed, discrete events. In VSAVM, each event includes a payload and a structural context path that preserves scope and boundaries.</p>
+<p>An event stream is an ordered sequence of typed, discrete events. In VSAVM, each event includes a payload and a structural context path (<code>contextPath</code>) that preserves scope and boundaries.</p>
 <h2>Role in VSAVM</h2>
 <p>The event stream unifies text and multimodal inputs so that the VM and bounded closure operate on a single representation. It is the foundation for schema discovery, program compilation, and scope-aware conflict detection.</p>
 <h2>Mechanics and implications</h2>
-<p>Structural separators are explicit events that delimit where a fact applies. By keeping structure in the representation, the system can maintain local theories and avoid global inconsistency while still enforcing correctness within scope.</p>
+<p>Structural separators delimit where a fact applies. VSAVM supports two complementary signals:</p>
+<ul>
+  <li><strong>Explicit structure</strong>: the ingest pipeline can emit separator-like events and stable <code>contextPath</code> hierarchies (document/section/paragraph/speaker/function).</li>
+  <li><strong>Emergent structure (DS010)</strong>: when explicit structure is missing or incomplete, a VSA-based detector can propose separator positions from similarity gradients and context-path changes.</li>
+</ul>
+<p>Scope is derived structurally, never from domain labels. This is enforced by <code>createScopeId</code>, which rejects <code>['domain', ...]</code> paths.</p>
+
+<h2>Step-by-step: from events to scoped facts</h2>
+<ol>
+  <li><strong>Ingest events</strong> into the VM (<code>ingestEvents</code>), preserving <code>contextPath</code> when available.</li>
+  <li><strong>Detect separators (optional)</strong> using <code>detectStructuralSeparators</code> (DS010).</li>
+  <li><strong>Derive scope IDs</strong> using <code>createStructuralScopeId</code> (prefers <code>contextPath</code>, falls back to separator-derived paths).</li>
+  <li><strong>Attach scope to facts</strong> so closure and contradiction checks are localized.</li>
+</ol>
 <h2>Further reading</h2>
 <p>Event stream processing is a broad topic. VSAVM uses the term in a representational sense: explicit structure and discrete units that support deterministic parsing and auditing.</p>
 <figure class="diagram">

@@ -31,9 +31,10 @@ export class ExecutionLog {
    */
   constructor(options = {}) {
     this.level = options.level ?? 'standard';
+    this.deterministicTime = options.deterministicTime ?? false;
     this.entries = [];
     this.nextId = 0;
-    this.segmentId = `log_${Date.now()}`;
+    this.segmentId = `log_${ExecutionLog.nextId++}`;
   }
 
   /**
@@ -61,7 +62,7 @@ export class ExecutionLog {
     const entry = {
       id: this.nextId++,
       type,
-      timestamp: Date.now(),
+      timestamp: this.deterministicTime ? 0 : Date.now(),
       data
     };
     
@@ -258,3 +259,5 @@ export class ExecutionLog {
     });
   }
 }
+
+ExecutionLog.nextId = 1;

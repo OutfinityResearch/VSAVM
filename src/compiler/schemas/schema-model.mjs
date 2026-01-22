@@ -201,8 +201,9 @@ export class QuerySchema {
    * @param {boolean} success
    * @param {boolean} ambiguous
    * @param {number} executionMs
+   * @param {boolean} [deterministicTime=false]
    */
-  recordUsage(success, ambiguous, executionMs) {
+  recordUsage(success, ambiguous, executionMs, deterministicTime = false) {
     this.telemetry.retrievalCount++;
     if (success) this.telemetry.successCount++;
     
@@ -212,7 +213,7 @@ export class QuerySchema {
       ((n - 1) * this.telemetry.ambiguityRate + (ambiguous ? 1 : 0)) / n;
     this.telemetry.avgExecutionMs = 
       ((n - 1) * this.telemetry.avgExecutionMs + executionMs) / n;
-    this.telemetry.lastUsed = Date.now();
+    this.telemetry.lastUsed = deterministicTime ? 0 : Date.now();
   }
 
   /**

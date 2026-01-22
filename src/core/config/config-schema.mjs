@@ -100,7 +100,7 @@ export function validateConfig(config) {
   const validStrategies = {
     vsa: ['binary-sparse', 'bipolar-dense', 'holographic', 'mock'],
     canonicalizer: ['strict', 'fuzzy', 'identity'],
-    storage: ['memory', 'sqlite', 'leveldb', 'postgres'],
+    storage: ['memory', 'file', 'sqlite', 'leveldb', 'postgres'],
     search: ['beam', 'mcts', 'greedy'],
     scoring: ['mdl-standard', 'mdl-weighted'],
     conflictResolver: ['source-priority', 'temporal-priority', 'probabilistic']

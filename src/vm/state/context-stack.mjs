@@ -14,7 +14,7 @@ export class Context {
    * @param {{path: string[]}} scopeId
    * @param {Context} [parent]
    */
-  constructor(id, scopeId, parent = null) {
+  constructor(id, scopeId, parent = null, options = {}) {
     this.id = id;
     this.scopeId = scopeId;
     this.parent = parent;
@@ -26,7 +26,7 @@ export class Context {
     this.deniedFacts = new Set(); // factIds
     
     // Metadata
-    this.createdAt = Date.now();
+    this.createdAt = options.deterministicTime ? 0 : Date.now();
     this.isolated = false;
   }
 
@@ -133,10 +133,13 @@ export class Context {
  * Stack of reasoning contexts
  */
 export class ContextStack {
-  constructor() {
+  constructor(options = {}) {
     this.nextId = 1;
+    this.deterministicTime = options.deterministicTime ?? false;
     // Root context
-    this.root = new Context('ctx_0', createScopeId(['root']));
+    this.root = new Context('ctx_0', createScopeId(['root']), null, {
+      deterministicTime: this.deterministicTime
+    });
     this.stack = [this.root];
   }
 
@@ -169,7 +172,25 @@ export class ContextStack {
       newPath.push(scopeSegment);
     }
     
-    const ctx = new Context(id, createScopeId(newPath), this.current);
+    const ctx = new Context(id, createScopeId(newPath), this.current, {
+      deterministicTime: this.deterministicTime
+    });
+    this.stack.push(ctx);
+    return ctx;
+  }
+
+  /**
+   * Push a new context with an explicit scopeId.
+   * @param {{path: string[]}} scopeId
+   * @param {boolean} [isolated=false]
+   * @returns {Context}
+   */
+  pushWithScope(scopeId, isolated = false) {
+    const id = `ctx_${this.nextId++}`;
+    const ctx = new Context(id, scopeId, this.current, {
+      deterministicTime: this.deterministicTime
+    });
+    ctx.isolated = isolated;
     this.stack.push(ctx);
     return ctx;
   }

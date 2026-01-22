@@ -58,6 +58,9 @@ export class IndeterminateModeHandler {
    */
   process(closureResult, executionResult, budget, reason = null) {
     const budgetUsage = this._extractBudgetUsage(budget);
+    const executionMs = budget?.deterministicTime
+      ? 0
+      : Date.now() - (budget.startTime ?? Date.now());
 
     // Determine reason if not provided
     const determinedReason = reason ?? this._determineReason(closureResult, executionResult);
@@ -78,7 +81,7 @@ export class IndeterminateModeHandler {
       assumptions,
       conflicts: this._formatConflicts(conflicts),
       traceRefs: this._extractTraceRefs(closureResult, executionResult),
-      executionMs: Date.now() - (budget.startTime ?? Date.now())
+      executionMs
     });
 
     // Add reason to result

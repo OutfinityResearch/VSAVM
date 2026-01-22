@@ -22,6 +22,7 @@ export class Hypothesis {
    * @param {string} [config.sourceSchemaId] - Source schema
    */
   constructor(config) {
+    this.deterministicTime = config.deterministicTime ?? false;
     this.hypothesisId = config.hypothesisId ?? this._generateId();
     
     this.program = config.program instanceof Program
@@ -38,7 +39,7 @@ export class Hypothesis {
     this.sourceSchemaId = config.sourceSchemaId ?? null;
     
     // Metadata
-    this.createdAt = Date.now();
+    this.createdAt = this.deterministicTime ? 0 : Date.now();
     this.parentId = config.parentId ?? null;
     this.derivationMethod = config.derivationMethod ?? 'initial';
   }
@@ -48,7 +49,7 @@ export class Hypothesis {
    * @private
    */
   _generateId() {
-    return `hyp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    return `hyp_${Hypothesis.nextId++}`;
   }
 
   /**
@@ -98,7 +99,7 @@ export class Hypothesis {
       assumptionId: assumption.assumptionId ?? `assum_${this.assumptions.length}`,
       description: assumption.description,
       dependentClaims: assumption.dependentClaims ?? [],
-      addedAt: Date.now()
+      addedAt: this.deterministicTime ? 0 : Date.now()
     });
     return this;
   }
@@ -120,7 +121,7 @@ export class Hypothesis {
   setEarlyCheck(checkName, result) {
     this.earlyChecks[checkName] = {
       ...result,
-      checkedAt: Date.now()
+      checkedAt: this.deterministicTime ? 0 : Date.now()
     };
     return this;
   }
@@ -275,6 +276,8 @@ export class Hypothesis {
     });
   }
 }
+
+Hypothesis.nextId = 1;
 
 /**
  * Create a hypothesis

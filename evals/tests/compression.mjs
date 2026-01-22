@@ -254,20 +254,18 @@ function calculateCorrelation(x, y) {
  * Decompress data using the compression result
  */
 async function decompressData(compressionResult, vm) {
-  // Try different decompression methods based on result format
+  // Try built-in decompress function first
   if (typeof compressionResult.decompress === 'function') {
     return compressionResult.decompress();
   }
   
-  if (compressionResult.decompressor && typeof compressionResult.decompressor.decompress === 'function') {
-    return compressionResult.decompressor.decompress(compressionResult.compressed);
+  // Try compressed data directly
+  if (compressionResult.compressed && vm.decompressPattern) {
+    return vm.decompressPattern(compressionResult.compressed);
   }
   
-  if (vm.decompress && typeof vm.decompress === 'function') {
-    return vm.decompress(compressionResult);
-  }
-  
-  if (vm.decompressPattern && typeof vm.decompressPattern === 'function') {
+  // Try full result
+  if (vm.decompressPattern) {
     return vm.decompressPattern(compressionResult);
   }
   

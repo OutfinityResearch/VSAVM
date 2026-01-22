@@ -32,7 +32,7 @@
 <h2>Governance and safety</h2>
 <p>A wrong rule can pollute the global library. VSAVM mitigates this by requiring the same consistency contract as an admission gate: candidate rules and macros must pass health checks that detect contradiction explosion or uncontrolled branching. This resembles unit testing for learned rules.</p>
 <h2>Why modularity helps engineering</h2>
-<p>Artifacts can be versioned, rolled back, and scoped. Domain-specific libraries can be maintained separately. This is easier than interpreting dense gradient updates and enables more transparent governance for research deployments.</p>
+<p>Artifacts can be versioned, rolled back, and scoped. Libraries can be maintained separately by provenance (for example, per dataset or per ingestion source) without hardcoding semantic domains into scope IDs. This is easier than interpreting dense gradient updates and enables more transparent governance for research deployments.</p>
 <figure class="diagram">
 <img class="diagram-svg" src="../assets/svg/federated-modules-diagram.svg" alt="federated-modules diagram">
 <figcaption>Federation shares discrete artifacts such as counts and prototypes and uses health checks to prevent polluted rule libraries.</figcaption>

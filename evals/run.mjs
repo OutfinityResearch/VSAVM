@@ -21,6 +21,10 @@ import { runCompressionTests } from './tests/compression.mjs';
 import { runVMExecutionTests } from './tests/vm-execution.mjs';
 import { runScopeIsolationTests } from './tests/scope-isolation.mjs';
 import { runEmergentSeparatorTests } from './tests/emergent-separator-discovery.mjs';
+import { runStressTests } from './tests/stress-tests.mjs';
+import { runNextPhrasePredictionTests } from './tests/next-phrase-prediction.mjs';
+import { runMicroLLMConstraintsTests } from './tests/micro-llm-constraints.mjs';
+import { runArchitectureComparisonTests } from './tests/architecture-comparison.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -64,7 +68,7 @@ Usage:
 Options:
   --category <name>   Run only specified category
                       (rule-learning, reasoning, query-response, compression, 
-                       vm-execution, scope-isolation, emergent-separator-discovery)
+                       vm-execution, scope-isolation, emergent-separator-discovery, stress-tests, next-phrase-prediction)
   --verbose, -v       Show detailed output
   --json              Output results as JSON only
   --help, -h          Show this help message
@@ -131,7 +135,11 @@ async function runAllEvaluations(options) {
     { name: 'compression', runner: runCompressionTests },
     { name: 'vm-execution', runner: runVMExecutionTests },
     { name: 'scope-isolation', runner: runScopeIsolationTests },
-    { name: 'emergent-separator-discovery', runner: runEmergentSeparatorTests }
+    { name: 'emergent-separator-discovery', runner: runEmergentSeparatorTests },
+    { name: 'stress-tests', runner: runStressTests },
+    { name: 'next-phrase-prediction', runner: runNextPhrasePredictionTests },
+    { name: 'micro-llm-constraints', runner: runMicroLLMConstraintsTests },
+    { name: 'architecture-comparison', runner: runArchitectureComparisonTests }
   ];
   
   // Filter by category if specified
@@ -273,6 +281,23 @@ function evaluateCategoryResult(result, thresholds) {
 
   // NEW: Check emergent separator discovery (DS010)
   if (metrics.vsa_boundary_precision !== undefined && metrics.vsa_boundary_precision < thresholds.emergent_separator_discovery) {
+    return false;
+  }
+
+  // NEW: Check stress test metrics
+  if (metrics.edge_case_handling !== undefined && metrics.edge_case_handling < thresholds.edge_case_handling) {
+    return false;
+  }
+  
+  if (metrics.memory_stability !== undefined && metrics.memory_stability < thresholds.memory_stability) {
+    return false;
+  }
+  
+  if (metrics.concurrent_operations !== undefined && metrics.concurrent_operations < thresholds.concurrent_operations) {
+    return false;
+  }
+  
+  if (metrics.large_data_handling !== undefined && metrics.large_data_handling < thresholds.large_data_handling) {
     return false;
   }
 

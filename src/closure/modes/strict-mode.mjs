@@ -54,6 +54,10 @@ export class StrictModeHandler {
       ...(executionResult?.conflicts ?? [])
     ];
 
+    const executionMs = budget?.deterministicTime
+      ? 0
+      : Date.now() - (budget.startTime ?? Date.now());
+
     if (conflicts.length > 0) {
       // Conflicts detected - refuse to emit claims
       return createQueryResult({
@@ -63,7 +67,7 @@ export class StrictModeHandler {
         assumptions: [],
         conflicts: this._formatConflicts(conflicts),
         traceRefs: this._extractTraceRefs(closureResult, executionResult),
-        executionMs: Date.now() - (budget.startTime ?? Date.now())
+        executionMs
       });
     }
 
@@ -80,7 +84,7 @@ export class StrictModeHandler {
         }],
         conflicts: [],
         traceRefs: this._extractTraceRefs(closureResult, executionResult),
-        executionMs: Date.now() - (budget.startTime ?? Date.now())
+        executionMs
       });
     }
 
@@ -94,7 +98,7 @@ export class StrictModeHandler {
       assumptions: [],
       conflicts: [],
       traceRefs: this._extractTraceRefs(closureResult, executionResult),
-      executionMs: Date.now() - (budget.startTime ?? Date.now())
+      executionMs
     });
   }
 

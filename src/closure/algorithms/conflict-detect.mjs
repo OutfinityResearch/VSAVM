@@ -6,6 +6,7 @@
 import { timeOverlaps } from '../../core/types/terms.mjs';
 import { scopeContains, scopeIdToString } from '../../core/types/identifiers.mjs';
 import { Polarity } from '../../core/types/facts.mjs';
+import { computeHash } from '../../core/hash.mjs';
 
 /**
  * Conflict types
@@ -30,17 +31,21 @@ export class Conflict {
    * @param {Object} [config.resolution] - Resolution if resolved
    */
   constructor(config) {
-    this.conflictId = config.conflictId ?? this._generateId();
+    this.conflictId = config.conflictId ?? this._generateId(config);
     this.type = config.type;
     this.factIds = config.factIds ?? [];
     this.scopeId = config.scopeId ?? null;
     this.reason = config.reason ?? '';
     this.resolution = config.resolution ?? null;
-    this.detectedAt = Date.now();
+    this.detectedAt = config.detectedAt ?? 0;
   }
 
-  _generateId() {
-    return `conflict_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  _generateId(config) {
+    const type = config.type ?? 'direct';
+    const facts = [...(config.factIds ?? [])].sort();
+    const scope = config.scopeId ? scopeIdToString(config.scopeId) : 'global';
+    const signature = `${type}|${scope}|${facts.join('|')}`;
+    return `conflict_${computeHash(signature)}`;
   }
 
   /**
@@ -56,7 +61,7 @@ export class Conflict {
   resolve(resolution) {
     this.resolution = {
       ...resolution,
-      resolvedAt: Date.now()
+      resolvedAt: resolution?.resolvedAt ?? 0
     };
   }
 
@@ -75,6 +80,7 @@ export class Conflict {
     };
   }
 }
+
 
 /**
  * Conflict Detector - detects various types of conflicts

@@ -1,17 +1,17 @@
 /**
  * Error types and codes for VSAVM
- * Per DS008: Error categories E1xxx-E5xxx
+ * Per DS009: Error categories E1xxx-E5xxx
  */
 
 /**
  * Error categories
  */
 export const ErrorCategory = {
-  INPUT: 'E1',       // E1xxx: Input errors
-  PROCESSING: 'E2',  // E2xxx: Processing errors
-  EXECUTION: 'E3',   // E3xxx: Execution errors
-  CONSISTENCY: 'E4', // E4xxx: Consistency errors
-  SYSTEM: 'E5'       // E5xxx: System errors
+  INPUT: 'E1xxx',
+  PROCESSING: 'E2xxx',
+  EXECUTION: 'E3xxx',
+  CONSISTENCY: 'E4xxx',
+  SYSTEM: 'E5xxx'
 };
 
 /**
@@ -19,43 +19,63 @@ export const ErrorCategory = {
  */
 export const ErrorCode = {
   // Input errors (E1xxx)
-  INVALID_INPUT: 'E1001',
-  MALFORMED_QUERY: 'E1002',
-  UNKNOWN_PREDICATE: 'E1003',
-  INVALID_TERM: 'E1004',
-  MISSING_REQUIRED_SLOT: 'E1005',
-  TYPE_MISMATCH: 'E1006',
+  MALFORMED_QUERY: 'E1001',
+  UNSUPPORTED_MODALITY: 'E1002',
+  ENTITY_NOT_FOUND: 'E1003',
+  INVALID_INPUT: 'E1004',
+  UNKNOWN_PREDICATE: 'E1005',
+  INVALID_TERM: 'E1006',
+  MISSING_REQUIRED_SLOT: 'E1007',
   
   // Processing errors (E2xxx)
   CANONICALIZATION_FAILED: 'E2001',
-  ENTITY_RESOLUTION_FAILED: 'E2002',
-  SCHEMA_RETRIEVAL_FAILED: 'E2003',
-  SLOT_FILLING_FAILED: 'E2004',
-  PROGRAM_COMPILATION_FAILED: 'E2005',
+  SCHEMA_RETRIEVAL_FAILED: 'E2002',
+  SLOT_FILLING_FAILED: 'E2003',
+  COMPILATION_FAILED: 'E2004',
+  ENTITY_RESOLUTION_FAILED: 'E2005',
+  PROGRAM_COMPILATION_FAILED: 'E2004',
   
   // Execution errors (E3xxx)
   BUDGET_EXHAUSTED: 'E3001',
-  DEPTH_LIMIT_EXCEEDED: 'E3002',
-  STEP_LIMIT_EXCEEDED: 'E3003',
-  BRANCH_LIMIT_EXCEEDED: 'E3004',
-  TIME_LIMIT_EXCEEDED: 'E3005',
-  UNKNOWN_INSTRUCTION: 'E3006',
-  BINDING_NOT_FOUND: 'E3007',
-  RULE_APPLICATION_FAILED: 'E3008',
+  BRANCH_LIMIT_EXCEEDED: 'E3002',
+  STACK_OVERFLOW: 'E3003',
+  INVALID_INSTRUCTION: 'E3004',
+  TYPE_MISMATCH: 'E3005',
+  DEPTH_LIMIT_EXCEEDED: 'E3006',
+  STEP_LIMIT_EXCEEDED: 'E3007',
+  TIME_LIMIT_EXCEEDED: 'E3008',
+  BINDING_NOT_FOUND: 'E3009',
+  RULE_APPLICATION_FAILED: 'E3010',
+  UNKNOWN_INSTRUCTION: 'E3004',
   
   // Consistency errors (E4xxx)
-  DIRECT_CONFLICT: 'E4001',
-  TEMPORAL_CONFLICT: 'E4002',
-  SCOPE_CONFLICT: 'E4003',
-  CLOSURE_INCOMPLETE: 'E4004',
-  ASSUMPTION_REQUIRED: 'E4005',
+  CONFLICT_DETECTED: 'E4001',
+  INVARIANT_VIOLATED: 'E4002',
+  SCOPE_VIOLATION: 'E4003',
+  DIRECT_CONFLICT: 'E4004',
+  TEMPORAL_CONFLICT: 'E4005',
+  CLOSURE_INCOMPLETE: 'E4006',
+  ASSUMPTION_REQUIRED: 'E4007',
   
   // System errors (E5xxx)
-  STORAGE_ERROR: 'E5001',
-  STRATEGY_NOT_FOUND: 'E5002',
-  CONFIGURATION_ERROR: 'E5003',
-  INTERNAL_ERROR: 'E5999'
+  STORAGE_UNAVAILABLE: 'E5001',
+  TIMEOUT: 'E5002',
+  OUT_OF_MEMORY: 'E5003',
+  STRATEGY_NOT_FOUND: 'E5004',
+  CONFIGURATION_ERROR: 'E5005',
+  INTERNAL_ERROR: 'E5999',
+  STORAGE_ERROR: 'E5001'
 };
+
+function categoryFromCode(code) {
+  if (!code || typeof code !== 'string') return ErrorCategory.SYSTEM;
+  if (code.startsWith('E1')) return ErrorCategory.INPUT;
+  if (code.startsWith('E2')) return ErrorCategory.PROCESSING;
+  if (code.startsWith('E3')) return ErrorCategory.EXECUTION;
+  if (code.startsWith('E4')) return ErrorCategory.CONSISTENCY;
+  if (code.startsWith('E5')) return ErrorCategory.SYSTEM;
+  return ErrorCategory.SYSTEM;
+}
 
 /**
  * Base VSAVM Error class
@@ -70,9 +90,11 @@ export class VSAVMError extends Error {
     super(message);
     this.name = 'VSAVMError';
     this.code = code;
-    this.category = code.slice(0, 2);
+    this.category = categoryFromCode(code);
     this.context = context;
-    this.timestamp = Date.now();
+    this.recoverable = context?.recoverable ?? false;
+    const deterministic = context?.deterministicTime ?? VSAVMError.deterministicTime;
+    this.timestamp = context?.timestamp ?? (deterministic ? 0 : Date.now());
   }
 
   /**
@@ -141,6 +163,8 @@ export class SystemError extends VSAVMError {
   }
 }
 
+VSAVMError.deterministicTime = false;
+
 /**
  * Create appropriate error by code
  * @param {string} code
@@ -149,7 +173,7 @@ export class SystemError extends VSAVMError {
  * @returns {VSAVMError}
  */
 export function createError(code, message, context) {
-  const category = code.slice(0, 2);
+  const category = categoryFromCode(code);
   
   switch (category) {
     case ErrorCategory.INPUT:
@@ -201,6 +225,7 @@ export function getRecoverySuggestion(error) {
     [ErrorCode.BUDGET_EXHAUSTED]: 'Increase budget limits or simplify query',
     [ErrorCode.DEPTH_LIMIT_EXCEEDED]: 'Increase maxDepth or reduce inference chain',
     [ErrorCode.STEP_LIMIT_EXCEEDED]: 'Increase maxSteps or optimize rules',
+    [ErrorCode.CONFLICT_DETECTED]: 'Resolve conflicting facts or use conditional mode',
     [ErrorCode.DIRECT_CONFLICT]: 'Resolve conflicting facts or use conditional mode',
     [ErrorCode.ASSUMPTION_REQUIRED]: 'Use conditional mode to proceed with assumptions',
     [ErrorCode.SCHEMA_RETRIEVAL_FAILED]: 'Add relevant schemas or rephrase query',

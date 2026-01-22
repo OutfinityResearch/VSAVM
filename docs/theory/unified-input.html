@@ -24,7 +24,7 @@
         <h1>Unified input representation</h1>
 <p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
 <p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
-<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS001-foundations-and-architecture.md">DS001 Foundations and Architecture</a>.</p>
+<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS001-foundations-and-architecture.md">DS001</a>, <a href="../specs-viewer.html?doc=specs/DS010-emergent-separator-discovery.md">DS010</a>, <a href="../specs-viewer.html?doc=specs/DS011-generative-decoding.md">DS011</a>.</p>
 
 <h2>Overview</h2>
 <p>Multimodality becomes tractable when all inputs are mapped into a single canonical representation. VSAVM uses an event stream where each event is discrete and typed and carries an explicit structural context. This creates a shared substrate so that execution, closure, and auditing do not fragment across modality-specific pipelines.</p>
@@ -32,29 +32,29 @@
 <h2>Event stream structure</h2>
 <p>Each event within the stream carries three essential components:</p>
 <ul>
-  <li><strong>Type identifier</strong>: Specifies the nature of information (text_token, visual_element, temporal_marker, structural_separator).</li>
+  <li><strong>Type identifier</strong>: Specifies the nature of information (for example <code>text_token</code>, <code>separator</code>, <code>timestamp</code> per DS007).</li>
   <li><strong>Discrete payload</strong>: Contains actual data in standardized format that the VM can process directly.</li>
-  <li><strong>Structural context path</strong>: Hierarchical positioning (document → chapter → section → paragraph → sentence → span).</li>
+  <li><strong>Structural context path</strong>: A hierarchical path (<code>contextPath</code>) used to derive scope. The exact labels are produced by the ingest pipeline and must correspond to structural separators (DS010 / NFS11).</li>
 </ul>
 
 <h2>Modality-specific processing</h2>
 <ul>
-  <li><strong>Text</strong>: Words/subwords become events with type "text_token". Sentence boundaries generate separator events.</li>
-  <li><strong>Audio</strong>: Transcription events plus temporal metadata preserving alignment. Speaker change markers, pauses, prosodic features.</li>
-  <li><strong>Visual</strong>: Symbolic descriptions or discrete visual tokens. Key requirement is discreteness and structural segmentability.</li>
-  <li><strong>Video</strong>: Combines visual token events with temporal separators for scene changes and motion patterns.</li>
+  <li><strong>Text</strong>: token events (<code>text_token</code>) plus structural boundaries (<code>separator</code>, <code>header</code>, <code>list_item</code>, <code>quote</code>, <code>code_block</code>).</li>
+  <li><strong>Audio</strong>: token events (<code>audio_token</code>) plus timestamps (<code>timestamp</code>) and speaker/segment separators.</li>
+  <li><strong>Visual</strong>: token events (<code>visual_token</code>) plus explicit separators for scenes/shots/regions when available.</li>
+  <li><strong>Video</strong>: a mixture of visual tokens and timestamps, segmented by structural cuts (scene/shot/speaker changes).</li>
 </ul>
 
 <h2>Two granularities</h2>
 <p>The system operates on two granularities:</p>
 <ul>
   <li><strong>Lexical layer</strong>: Stable, reversible tokens.</li>
-  <li><strong>Phrase layer</strong>: Macro units discovered by compression, but they must remain reversible into lexical events for scoring and evaluation.</li>
+  <li><strong>Macro-unit layer (DS011)</strong>: Reversible macro-units discovered by compression (MDL). Macro-units expand deterministically back into the lexical layer for scoring and audit.</li>
 </ul>
 <p>Reversibility is essential: every macro unit must expand deterministically into elementary units.</p>
 
 <h2>VSA attachment</h2>
-<p>VSA attaches in parallel to each unit. Tokens and macro tokens have deterministic hypervectors derived from stable hashes. Spans combine these through bundling with role and position signals. This hypervector is an associative index for fast retrieval and paraphrase clustering, not a direct representation of truth.</p>
+<p>VSA attaches in parallel to each unit. Tokens and macro-units have deterministic hypervectors derived from stable hashes. Spans combine these through bundling with role and position signals. This hypervector is an associative index for fast retrieval and paraphrase clustering, not a direct representation of truth.</p>
 
 <h2>Implementation considerations</h2>
 <p>Representation fails when boundaries are ambiguous or when compression cannot expand deterministically. VSAVM therefore prioritizes deterministic segmentation and deterministic expansion. This makes later stages predictable and keeps the correctness contract enforceable.</p>

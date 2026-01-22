@@ -6,7 +6,7 @@ This document consolidates the core theoretical foundations of VSAVM into a sing
 
 VSAVM is an Axiologic Research experiment within the Achilles project.
 The system exposes an LLM-like interface, yet its core is an executable virtual machine.
-Next-phrase prediction remains the primary training objective,
+Continuation prediction (bytes and macro-units) remains a primary outer-loop training objective,
 but it is conditioned on VM state obtained through execution.
 Correctness is defined operationally as avoiding contradictions both immediately and within a bounded transitive closure.
 
@@ -23,7 +23,8 @@ VSA decides what is worth exploring,
 while the VM decides acceptability through execution and bounded closure.
 
 At runtime the input is segmented into events, candidate interpretations are executed in the VM, the question is compiled into query programs through retrieval and program search,
-and the system produces a response through next-phrase completion guided by VM state.
+and the system produces a response by rendering checked internal artifacts (claims, traces, modes) derived by execution and bounded closure.
+Optional continuation proposals (DS011) can be conditioned on VM state, but they are subordinate to the correctness contract.
 When a user asks the system to think more, the closure and exploration budget increases.
 The system preserves the consistency contract by strengthening conclusions when possible or falling back to conditional results or indeterminacy when contradictions cannot be ruled out within the configured budget.
 
@@ -50,7 +51,7 @@ This requirement ensures that the system's knowledge remains internally consiste
 
 State-conditioned prediction represents the core innovation that bridges statistical language modeling with symbolic execution.
 Traditional next-token prediction operates solely on surface patterns in text.
-VSAVM's next-phrase prediction incorporates the current state of the virtual machine, including active facts, applicable rules,
+VSAVM's continuation proposal model can incorporate the current state of the virtual machine, including active facts, applicable rules,
 and ongoing computations.
 This conditioning mechanism ensures that generated responses reflect not just linguistic plausibility but also logical consistency with established knowledge.
 
@@ -166,12 +167,12 @@ but the design only assumes that these tokens are discrete and that separators c
 
 The system operates on two granularities.
 A lexical layer holds stable, reversible tokens,
-while a phrase layer holds macro units discovered by compression.
+while a macro-unit layer holds macro-units discovered by compression.
 Reversibility is essential, because every macro unit must expand deterministically into elementary units for scoring, evaluation,
 and coherent generation.
 
 VSA attaches in parallel to each unit.
-Tokens and macro tokens have deterministic hypervectors derived from stable hashes,
+Tokens and macro-units have deterministic hypervectors derived from stable hashes,
 and spans combine these through bundling with role and position signals.
 This hypervector is an associative index for fast retrieval and paraphrase clustering, not a direct representation of truth.
 
@@ -218,7 +219,7 @@ This clustering accelerates the discovery of new schemas and helps the system ge
 ## Controlled Generation and Faithful Realization
 
 VSAVM treats generation as proposal plus verification.
-Next-phrase candidates may be proposed by learned distributions and schema constraints, but acceptance is gated by VM execution and closure checks (DS004) to prevent unsupported claims.
+Continuation candidates may be proposed by learned distributions and schema constraints, but acceptance is gated by VM execution and closure checks (DS004) to prevent unsupported claims.
 
 Output is a surface realization of internal result objects rather than free-form continuation.
 The surface realizer may choose wording and structure, but it must not introduce factual claims that are absent from the VM-derived `claims` produced under the correctness contract.

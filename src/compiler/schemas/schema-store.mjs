@@ -70,7 +70,11 @@ export class SchemaStore {
 
     // Build VSA index if service available
     if (this.vsaService && qs.trigger.vsaKey) {
-      this._vsaIndex.set(qs.schemaId, qs.trigger.vsaKey);
+      const key = qs.trigger.vsaKey;
+      const vector = typeof key === 'string'
+        ? this.vsaService.vectorizeText(key)
+        : key;
+      this._vsaIndex.set(qs.schemaId, vector);
     }
 
     return qs;
@@ -354,6 +358,18 @@ export class SchemaStore {
    */
   setVSAService(vsaService) {
     this.vsaService = vsaService;
+    this._vsaIndex.clear();
+    if (!this.vsaService) return;
+
+    for (const schema of this._schemas.values()) {
+      if (schema.trigger?.vsaKey) {
+        const key = schema.trigger.vsaKey;
+        const vector = typeof key === 'string'
+          ? this.vsaService.vectorizeText(key)
+          : key;
+        this._vsaIndex.set(schema.schemaId, vector);
+      }
+    }
   }
 }
 

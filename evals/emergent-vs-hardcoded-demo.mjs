@@ -6,6 +6,8 @@
 import { detectStructuralSeparators, createStructuralScopeId } from '../src/event-stream/separator-detector.mjs';
 import { createScopeId } from '../src/core/types/identifiers.mjs';
 
+(async () => {
+
 console.log('🔍 EMERGENT vs HARDCODED SCOPE DISCOVERY\n');
 
 // Example event stream from mixed content
@@ -42,8 +44,8 @@ console.log('❌ Problems: Domain knowledge hardcoded, not modality-agnostic, ma
 console.log('✅ EMERGENT STRUCTURAL APPROACH (CORRECT):');
 
 // Detect separators automatically
-const separators = detectStructuralSeparators(eventStream);
-console.log('Detected separators:', separators.map(s => `${s.type}@${s.position}(${s.strength})`).join(', '));
+const separators = await detectStructuralSeparators(eventStream);
+console.log('Detected separators:', separators.map(s => `${s.type}@${s.position}(${s.strength.toFixed(3)})`).join(', '));
 
 // Create scopes from structure
 const scopes = [];
@@ -60,14 +62,16 @@ scopes.forEach((item, i) => {
 console.log('\n✅ Benefits:');
 console.log('- No domain knowledge hardcoded');
 console.log('- Works across modalities (text, video, audio, code)');
-console.log('- Automatic separator detection');
-console.log('- Structural boundaries emerge from data');
-console.log('- VSA clustering can refine boundaries');
+console.log('- Automatic VSA-based separator detection');
+console.log('- Structural boundaries emerge from semantic similarity');
+console.log('- VSA clustering refines boundaries automatically');
 console.log('- RL optimization shapes effectiveness');
 
 console.log('\n🎯 MODALITY-AGNOSTIC DESIGN:');
-console.log('- Text: paragraphs, sentences, sections');
-console.log('- Code: functions, classes, modules');
-console.log('- Video: scenes, shots, frames');
-console.log('- Audio: speakers, segments, pauses');
-console.log('- All detected through structural separators, not domain rules');
+console.log('- Text: semantic similarity breaks, context changes');
+console.log('- Code: function boundaries, semantic clusters');
+console.log('- Video: scene changes, visual similarity breaks');
+console.log('- Audio: speaker changes, topic similarity breaks');
+console.log('- All detected through VSA similarity gradients, not domain rules');
+
+})();

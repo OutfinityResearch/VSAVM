@@ -23,62 +23,59 @@
       <main class="main content">
         <h1>Controlled generation with closure gating</h1>
 <p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
-<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
-<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS001-foundations-and-architecture.md">DS001</a>, <a href="../specs-viewer.html?doc=specs/DS004-correctness-bounded-closure.md">DS004</a>.</p>
+<p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/context-scope.html">context scope</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/llm.html">LLM</a>, <a href="../wiki/macro-token.html">macro-unit</a>.</p>
+<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS004-correctness-bounded-closure.md">DS004</a>, <a href="../specs-viewer.html?doc=specs/DS010-emergent-separator-discovery.md">DS010</a>, <a href="../specs-viewer.html?doc=specs/DS011-generative-decoding.md">DS011</a>.</p>
 
 <h2>Overview</h2>
-<p>VSAVM does not treat generation as free-form continuation. Candidates are proposed by learned distributions and schema constraints, but they must be verified against the VM state. This prevents the surface generator from introducing unsupported claims that violate correctness.</p>
-
-<h2>Phrase-level generation architecture</h2>
-<p>Next-phrase generation operates at a semantic granularity bridging token-level language modeling and symbolic reasoning:</p>
+<p>VSAVM does not treat generation as unconstrained continuation. “Generation” is split into two mechanisms:</p>
 <ul>
-  <li><strong>Phrase boundaries</strong>: Determined by syntactic analysis and semantic coherence. Natural breaking points correspond to noun phrases, verb phrases, prepositional phrases, and complete clauses expressing single propositions.</li>
-  <li><strong>Semantic correspondence</strong>: Each phrase represents a meaningful semantic unit directly relatable to facts, rules, or VM operations. This enables tighter integration between language generation and symbolic reasoning.</li>
-  <li><strong>Reduced conditioning overhead</strong>: Phrase-level approach requires fewer conditioning operations per response. Comprehensive state updates occur at phrase boundaries, incorporating full logical implications.</li>
+  <li><strong>Surface realization (implemented)</strong>: render VM/closure results into text without introducing new claims.</li>
+  <li><strong>Continuation proposals (experimental, DS011)</strong>: a learned macro-unit language model can propose bytes to continue a prompt, but proposals must respect budgets and (when VM state is available) claim validation.</li>
 </ul>
 
-<h2>VM state conditioning mechanisms</h2>
-<p>Phrase generation is conditioned on virtual machine state through multiple channels:</p>
+<h2>Implemented today: rendering checked artifacts</h2>
+<p>The default path for answering is: execute → close → render. The renderer is intentionally simple and deterministic so it cannot “invent” facts.</p>
+<ol>
+  <li><strong>VM produces a result</strong> containing <code>claims</code>, <code>mode</code> (strict/conditional/indeterminate), and optional trace references.</li>
+  <li><strong>Claim gating</strong> selects which claims are allowed to be rendered (see <code>GenerationService</code> + <code>ClaimGate.filterClaims</code>).</li>
+  <li><strong>Deterministic rendering</strong> converts each claim into text lines (see <code>ClaimRenderer</code>).</li>
+  <li><strong>Mode adaptation</strong> prefixes or suppresses output in conditional/indeterminate modes (see <code>ModeAdapter</code> + <code>UncertaintyMarker</code>).</li>
+  <li><strong>Audit hint</strong> appends a minimal trace note when traces exist (see <code>TraceExplainer</code>).</li>
+</ol>
+
+<h2>DS011 continuation: macro-units + budgets + validation</h2>
+<p>DS011 defines an optional continuation loop built on <strong>macro-units</strong>: frequently occurring byte sequences discovered by compression (MDL). Macro-units are reversible: they expand deterministically into the original bytes.</p>
+<p>The current implementation lives in <code>src/training/outer-loop/macro-unit-model.mjs</code> and is exercised by <code>eval_tinyLLM</code>. It is a byte-level model with:</p>
 <ul>
-  <li><strong>Fact-based conditioning</strong>: Highlights facts relevant to current generation context. Attention weights computed based on semantic similarity, recency, and confidence level.</li>
-  <li><strong>Rule-based conditioning</strong>: Incorporates applicable logical rules and inference patterns. Tracks rule application sequences for coherent explanations.</li>
-  <li><strong>Process-based conditioning</strong>: Aware of current reasoning goals, progress, and obstacles. Produces appropriate intermediate responses or requests for information.</li>
-  <li><strong>Context-based conditioning</strong>: Hierarchical representation of immediate conversational context, broader topical context, and global consistency constraints.</li>
+  <li>Kneser–Ney smoothing and backoff over bounded n-gram orders</li>
+  <li>Streaming training (<code>trainStream</code>) with pruning and optional sampling</li>
+  <li>Time/token budgets (<code>budgetMs</code>, <code>maxTokens</code>)</li>
+  <li>Repetition penalties and n-gram blocking to reduce degenerate loops</li>
 </ul>
 
-<h2>Consistency enforcement during generation</h2>
-<p>Multiple consistency mechanisms operate in real-time:</p>
+<h3>Step-by-step continuation loop</h3>
+<ol>
+  <li><strong>Collect context</strong>: take a bounded window of recent bytes (the prompt tail).</li>
+  <li><strong>Optionally encode VM state</strong>: compute a deterministic conditioning signature (see <code>VMStateConditioner</code>).</li>
+  <li><strong>Propose candidates</strong>: generate top-K macro-unit proposals (and keep a byte-level fallback).</li>
+  <li><strong>Validate candidates</strong>: if VM state is available, pass each proposal through <code>ClaimGate.validateMacroUnit</code>.</li>
+  <li><strong>Select next</strong>: choose the best remaining candidate under the decoding policy and budget.</li>
+  <li><strong>Append bytes</strong> and repeat until budget or stop condition ends the loop.</li>
+</ol>
+
+<h2>Budgets and “thinking more”</h2>
+<p>Budgets are explicit and user-controlled. Increasing a budget changes what the system is allowed to assert:</p>
 <ul>
-  <li><strong>Pre-generation checking</strong>: Evaluates candidate phrases before commitment. Rapid simulation identifies obvious contradictions; more sophisticated checking for survivors.</li>
-  <li><strong>Incremental checking</strong>: Monitors cumulative logical implications. Running model of logical state implied by generated content, updated after each phrase. Backtracking when contradictions detected.</li>
-  <li><strong>Post-generation validation</strong>: Comprehensive consistency checking on completed responses via bounded closure analysis. Can revise or add qualifications.</li>
+  <li><strong>Closure budgets (DS004)</strong> control how far the VM explores consequences (depth/steps/branches/time).</li>
+  <li><strong>Continuation budgets (DS011)</strong> control how long the macro-unit model is allowed to run (time/tokens).</li>
 </ul>
+<p>In both cases, budget is not a cosmetic knob: it is the horizon of the non-contradiction promise.</p>
 
-<h2>Contradiction resolution strategies</h2>
-<p>When consistency constraints cannot be satisfied through phrase substitution:</p>
-<ul>
-  <li><strong>Source-based resolution</strong>: Prioritize more reliable sources, acknowledge contradictions, indicate preferences.</li>
-  <li><strong>Temporal resolution</strong>: Qualify temporal scope when contradictions arise from changes over time.</li>
-  <li><strong>Uncertainty-based resolution</strong>: Explicitly acknowledge areas of uncertainty rather than forced resolution.</li>
-</ul>
-
-<h2>Closure gating</h2>
-<p>Before accepting a candidate, the system simulates its effect and runs a local bounded closure to detect contradictions. If contradictions are detected, the candidate is rejected in strict mode. If exploration is incomplete, the system can emit a conditional result rather than an unconditional claim.</p>
-
-<h2>Response quality optimization</h2>
-<p>Generation incorporates multiple optimization mechanisms:</p>
-<ul>
-  <li><strong>Fluency optimization</strong>: Natural language style models guide toward readable, natural-sounding expressions while maintaining accuracy.</li>
-  <li><strong>Coherence optimization</strong>: Discourse models track thematic development and logical structure. Address both local (adjacent sentences) and global (entire response) coherence.</li>
-  <li><strong>Informativeness optimization</strong>: Balance comprehensive information with clarity and conciseness. Learned models of information importance guide content selection.</li>
-  <li><strong>Engagement optimization</strong>: Consider user expertise, conversational goals, social appropriateness. Models of conversational dynamics guide effective responses.</li>
-</ul>
-
-<h2>Budget as user-controlled effort</h2>
-<p>When a user asks the system to think more, the budget increases. This increases the depth or breadth of closure and therefore changes what is safe to claim. The system should surface that budget explicitly because it defines the strength of the response.</p>
+<h2>Why separators matter (DS010)</h2>
+<p>Controlled generation depends on scope boundaries. DS010 discovers structural separators so facts, rules, and continuations remain localized to the current structural region instead of bleeding across unrelated regions.</p>
 <figure class="diagram">
 <img class="diagram-svg" src="../assets/svg/controlled-generation-diagram.svg" alt="controlled-generation diagram">
-<figcaption>Generation is treated as proposal followed by verification: candidates must pass closure-based consistency checks before being emitted. VM state conditioning ensures logical coherence.</figcaption>
+<figcaption>Generation is treated as proposal followed by verification: either render checked artifacts (default) or propose continuations that are budgeted and (when applicable) validated against VM claims.</figcaption>
 </figure>
 <h2>References</h2>
 <p><a href="https://en.wikipedia.org/wiki/Beam_search">Beam search (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Transitive_closure">Transitive closure (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Verification_and_validation">Verification and validation (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Natural_language_generation">Natural language generation (Wikipedia)</a></p>

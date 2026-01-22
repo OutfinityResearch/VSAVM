@@ -177,6 +177,10 @@ export class MemoryStore extends StorageStrategy {
     return results;
   }
 
+  getAllFacts() {
+    return [...this.facts.values()];
+  }
+
   async findConflicting(fact) {
     const conflicts = [];
     

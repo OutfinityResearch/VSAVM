@@ -25,11 +25,31 @@
 <p>This wiki entry defines a term used across VSAVM and explains why it matters in the architecture.</p><p>The diagram has a transparent background and highlights the operational meaning of the term inside VSAVM.</p>
 <p>Related wiki pages: <a href="vm.html">VM</a>, <a href="event-stream.html">event stream</a>, <a href="vsa.html">VSA</a>, <a href="bounded-closure.html">bounded closure</a>, <a href="consistency-contract.html">consistency contract</a>.</p>
 <h2>Definition</h2>
-<p>A fact store is a structured memory of assertions. In VSAVM it stores canonical fact identifiers alongside polarity and scope metadata.</p>
+<p>A fact store is a structured memory of assertions. In VSAVM it stores canonical fact identifiers alongside polarity and scope metadata, and it is accessed through a pluggable <code>StorageStrategy</code> interface.</p>
 <h2>Role in VSAVM</h2>
 <p>The fact store is the substrate for closure and conflict detection. It is where derived facts are accumulated and where contradictions are detected during bounded closure.</p>
 <h2>Mechanics and implications</h2>
-<p>The key invariants are canonical identifiers, explicit negation via polarity, and explicit scope derived from structural boundaries. These make conflict detection robust to paraphrases and meaningful under localized contexts.</p>
+<p>The key invariants are canonical identifiers, explicit negation via polarity, and explicit scope derived from structural boundaries (DS010/NFS11). These make conflict detection robust to paraphrases and meaningful under localized contexts.</p>
+<p>VSAVM supports multiple storage strategies. The default is in-memory, but large ingestions can select an on-disk strategy:</p>
+<ul>
+  <li><strong>MemoryStore (default)</strong>: fast in-memory maps and indices for small/medium runs.</li>
+  <li><strong>FileStore (DS012)</strong>: optional disk-backed append-only log with tombstones and a configurable in-memory index/cache to reduce RAM pressure.</li>
+  <li><strong>Other strategies</strong>: sqlite/leveldb/postgres strategy shells exist in the codebase; their readiness depends on the current implementation status.</li>
+</ul>
+
+<h2>Disk-backed storage (FileStore, DS012)</h2>
+<p>The disk-backed strategy is designed to be opt-in and behavior-compatible:</p>
+<ul>
+  <li><strong>Append-only log</strong>: facts are written as length-prefixed binary records (DS007-aligned).</li>
+  <li><strong>Tombstones</strong>: <code>denyFact</code> writes a tombstone record (last-write-wins) instead of deleting bytes.</li>
+  <li><strong>Snapshots</strong>: a snapshot is a saved byte offset; restore truncates the log back to that point.</li>
+  <li><strong>Indexing/caching</strong>: an optional in-memory index maps <code>factId → offset</code>; an optional small LRU caches decoded facts.</li>
+</ul>
+<p>Node.js does not provide a portable built-in memory-mapped file API, so the current strategy uses buffered reads/writes rather than <code>mmap</code>.</p>
+
+<h2>Selecting a storage strategy</h2>
+<p>The storage backend is selected via the VSAVM strategy configuration, for example:</p>
+<pre><code>new VSAVM({ strategies: { storage: 'file' } })</code></pre>
 <h2>Further reading</h2>
 <p>Fact stores are related to knowledge bases; VSAVM’s emphasis is on canonical IDs and scope-aware closure rather than on open-world accumulation.</p>
 <figure class="diagram">

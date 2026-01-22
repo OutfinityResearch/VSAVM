@@ -24,7 +24,7 @@
         <h1>Structural boundaries and scope</h1>
 <p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
 <p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
-<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS001-foundations-and-architecture.md">DS001 Foundations and Architecture</a>.</p>
+<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS001-foundations-and-architecture.md">DS001</a>, <a href="../specs-viewer.html?doc=specs/DS007-data-formats-and-constants.md">DS007</a>, <a href="../specs-viewer.html?doc=specs/DS010-emergent-separator-discovery.md">DS010</a>.</p>
 
 <h2>Overview</h2>
 <p>Correctness claims require scope. Real corpora contain incompatible sources, hypothetical statements, and quoted passages. If the system treats all statements as globally active, bounded closure either explodes in contradictions or becomes meaningless because conflicts are ignored.</p>
@@ -32,6 +32,22 @@
 <h2>Boundaries as signals</h2>
 <p>Structural boundaries include headings, paragraphs, lists, quotes, definitions, and procedural steps. In multimodal inputs, boundaries also include temporal segments and scene changes. VSAVM treats these separators as explicit events so the VM can localize inference without guessing.</p>
 <p>Separators are not only for training; they are required for correctness. Transitive closure and contradiction detection are infeasible without context and scope. Separators define what belongs to the same paragraph or section and what belongs to a different chapter, enabling the system to maintain local theories without collapsing all knowledge into a single inconsistent base.</p>
+
+<h2>Implementation snapshot (current code)</h2>
+<p>Scope derivation is intentionally structural and enforced by the core identifier layer:</p>
+<ol>
+  <li><strong>Events carry <code>contextPath</code></strong> (array of strings) whenever an ingest pipeline can provide stable structure (DS007).</li>
+  <li><strong>DS010 separator detection</strong> can infer boundary candidates from similarity gradients in a modality-agnostic VSA embedding (<code>detectStructuralSeparators</code>).</li>
+  <li><strong>Scope IDs are created structurally</strong> using <code>createStructuralScopeId(events, position, separators)</code>:
+    <ul>
+      <li>If an event has <code>contextPath</code>, it becomes the scope path.</li>
+      <li>Otherwise a fallback path is built from the strongest detected separators.</li>
+    </ul>
+  </li>
+  <li><strong>Hardcoded “domain scopes” are rejected</strong>: <code>createScopeId</code> throws if the path begins with <code>['domain', ...]</code>.</li>
+  <li><strong>Containment queries are prefix-based</strong>: a shorter path selects a larger region (see <code>scopeContains</code>).</li>
+  <li><strong>Facts are scoped</strong>: contradiction checks are only meaningful inside a scope.</li>
+</ol>
 
 <h2>Scope-aware correctness</h2>
 <p>A contradiction is defined canonically as the same fact identifier appearing with opposing polarity inside the same scope. Structural separators define that scope, and the VM carries scope through execution. This enables local theories that remain coherent even when global reconciliation is not possible under budget.</p>

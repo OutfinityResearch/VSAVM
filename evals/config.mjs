@@ -7,7 +7,7 @@ export const config = {
   // Thresholds for passing - realistic based on DS001-DS004 requirements
   thresholds: {
     rule_accuracy: 0.90,
-    compression_ratio: 0.71,  // Realistic threshold based on current performance
+    compression_ratio: 0.85,  // Realistic threshold for proper compression
     reasoning_consistency: 0.95,
     query_response_ms: 100,
     query_accuracy: 0.95,
@@ -16,7 +16,15 @@ export const config = {
     scope_isolation_success: 1.0,  // New: Scope isolation must be perfect
     budget_exhaustion_handling: 1.0,  // New: Budget limits must be respected
     decompression_fidelity: 1.0,  // New: Compression must be lossless
-    emergent_separator_discovery: 0.0  // New: DS010 - Currently not implemented
+    emergent_separator_discovery: 0.7,  // New: DS010 - Real implementation threshold
+    edge_case_handling: 0.8,  // New: Stress tests - handle edge cases gracefully
+    memory_stability: 1.0,  // New: Memory should be stable
+    concurrent_operations: 0.9,  // New: Concurrent operations should work
+    large_data_handling: 0.8,  // New: Handle large inputs
+    micro_llm_size_compliance: 1.0,  // New: Model size must be under limit
+    micro_llm_latency_compliance: 0.9,  // New: Inference latency compliance
+    micro_llm_memory_compliance: 1.0,  // New: Memory usage compliance
+    architecture_comparison_score: 0.7  // New: Performance vs other architectures
   },
 
   // Timeouts per category (ms)
@@ -60,7 +68,14 @@ export const config = {
     // Emergent separator discovery tests - DS010
     vsa_embedding_dimensions: 512,
     boundary_detection_samples: 100,
-    cross_modal_test_count: 5
+    cross_modal_test_count: 5,
+    
+    // MicroLLM constraints
+    micro_llm_model_size_mb: 50,
+    micro_llm_inference_latency_ms: 10,
+    micro_llm_memory_footprint_mb: 128,
+    micro_llm_parameter_count: 1000000,
+    micro_llm_quantization_bits: 8
   },
 
   // VSAVM configuration for tests

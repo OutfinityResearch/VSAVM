@@ -132,7 +132,8 @@ export function createInstruction(op, args = {}, out = null, labelName = null) {
 export function createProgramMetadata(options = {}) {
   return {
     sourceSchemaId: options.sourceSchemaId ?? null,
-    compiledAt: options.compiledAt ?? Date.now(),
+    compiledAt: options.compiledAt ?? 0,
+    deterministicTime: options.deterministicTime ?? false,
     estimatedSteps: options.estimatedSteps ?? 0,
     estimatedBranches: options.estimatedBranches ?? 0,
     tracePolicy: options.tracePolicy ?? TracePolicy.MINIMAL
@@ -164,7 +165,7 @@ export class Program {
    * @private
    */
   _generateId() {
-    return `prog_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    return `prog_${Program.nextId++}`;
   }
 
   /**
@@ -358,10 +359,14 @@ export class Program {
    * @returns {Program}
    */
   clone() {
+    const deterministicTime = this.metadata?.deterministicTime ?? false;
     return new Program({
       programId: this._generateId(),
       instructions: JSON.parse(JSON.stringify(this.instructions)),
-      metadata: { ...this.metadata, compiledAt: Date.now() }
+      metadata: { 
+        ...this.metadata, 
+        compiledAt: deterministicTime ? 0 : Date.now() 
+      }
     });
   }
 
@@ -386,6 +391,8 @@ export class Program {
     return new Program(json);
   }
 }
+
+Program.nextId = 1;
 
 /**
  * Create a new program

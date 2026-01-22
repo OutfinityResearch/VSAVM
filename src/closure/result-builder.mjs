@@ -339,6 +339,9 @@ export class ResultBuilder {
  */
 export function buildStrictResult(closureResult, executionResult, budget) {
   const builder = new ResultBuilder();
+  const executionMs = budget?.deterministicTime
+    ? 0
+    : Date.now() - (budget.startTime ?? Date.now());
 
   // Check for conflicts
   const conflicts = [
@@ -353,7 +356,7 @@ export function buildStrictResult(closureResult, executionResult, budget) {
       .addConflicts(conflicts)
       .addTraceRefsFromResults(closureResult, executionResult)
       .setBudgetFromTracker(budget)
-      .setExecutionMs(Date.now() - (budget.startTime ?? Date.now()))
+      .setExecutionMs(executionMs)
       .setMetadata('reason', 'conflicts_detected')
       .build();
   }
@@ -364,7 +367,7 @@ export function buildStrictResult(closureResult, executionResult, budget) {
     .addClaimsFromFacts(closureResult.derived ?? [], 1.0)
     .addTraceRefsFromResults(closureResult, executionResult)
     .setBudgetFromTracker(budget)
-    .setExecutionMs(Date.now() - (budget.startTime ?? Date.now()))
+    .setExecutionMs(executionMs)
     .build();
 }
 
@@ -378,6 +381,9 @@ export function buildStrictResult(closureResult, executionResult, budget) {
  */
 export function buildConditionalResult(closureResult, executionResult, budget, confidence = 1.0) {
   const builder = new ResultBuilder();
+  const executionMs = budget?.deterministicTime
+    ? 0
+    : Date.now() - (budget.startTime ?? Date.now());
 
   const conflicts = [
     ...(closureResult.conflicts ?? []),
@@ -391,7 +397,7 @@ export function buildConditionalResult(closureResult, executionResult, budget, c
     .addConflicts(conflicts)
     .addTraceRefsFromResults(closureResult, executionResult)
     .setBudgetFromTracker(budget)
-    .setExecutionMs(Date.now() - (budget.startTime ?? Date.now()))
+    .setExecutionMs(executionMs)
     .build();
 }
 
@@ -405,6 +411,9 @@ export function buildConditionalResult(closureResult, executionResult, budget, c
  */
 export function buildIndeterminateResult(closureResult, executionResult, budget, reason) {
   const builder = new ResultBuilder();
+  const executionMs = budget?.deterministicTime
+    ? 0
+    : Date.now() - (budget.startTime ?? Date.now());
 
   const conflicts = [
     ...(closureResult.conflicts ?? []),
@@ -416,7 +425,7 @@ export function buildIndeterminateResult(closureResult, executionResult, budget,
     .addConflicts(conflicts)
     .addTraceRefsFromResults(closureResult, executionResult)
     .setBudgetFromTracker(budget)
-    .setExecutionMs(Date.now() - (budget.startTime ?? Date.now()))
+    .setExecutionMs(executionMs)
     .setMetadata('reason', reason)
     .build();
 }

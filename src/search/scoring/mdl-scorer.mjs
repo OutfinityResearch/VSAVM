@@ -108,14 +108,16 @@ export class MDLScorer {
    * @returns {Promise<ScoringResult>}
    */
   async score(program, context) {
+    const targetProgram = program?.program ?? program;
+
     // Component 1: Program complexity
-    const complexity = this.complexityCalc.compute(program);
+    const complexity = this.complexityCalc.compute(targetProgram);
 
     // Component 2: Residual (prediction loss)
     let residual = 0;
     if (context.evaluationExamples) {
       residual = this.residualCalc.compute(
-        program, 
+        targetProgram, 
         context.evaluationExamples,
         context.executor
       );
@@ -128,7 +130,7 @@ export class MDLScorer {
     if (context.closureService && context.store) {
       try {
         const closureResult = await context.closureService.verify(
-          program,
+          targetProgram,
           context.store,
           context.budget
         );
@@ -159,7 +161,7 @@ export class MDLScorer {
         complexityBreakdown: this.complexityCalc.breakdown(program),
         weights: this.weights
       },
-      program
+      program: targetProgram
     });
   }
 

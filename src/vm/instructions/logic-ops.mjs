@@ -142,7 +142,9 @@ export async function closure(vmState, args) {
   
   const { rules, maxIterations } = args;
   
-  const resolvedRules = resolveValue(vmState, rules) || [];
+  const resolvedRules = resolveValue(vmState, rules) 
+    || vmState.ruleStore?.getRules?.() 
+    || [];
   const iterations = maxIterations ?? 100;
   
   let totalDerived = 0;

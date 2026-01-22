@@ -42,39 +42,40 @@ export async function runQueryResponseTests(config) {
     // Run queries using VM execution instead of direct storage access
     const queryCount = config.params.query_count || 20;
     const threshold = config.thresholds.query_response_ms || 100;
+    const perPredicate = config.params.per_predicate_count || 20;
     
     const responseTimes = [];
     let correctCount = 0;
     let vmExecutionSuccesses = 0;
     let compilationSuccesses = 0;
 
+    const predicateCounts = await populateTestData(vm, perPredicate);
+
     for (let i = 0; i < queryCount; i++) {
       const query = generateTestQuery(i);
-      const expectedCount = 20; // Each query will populate 20 facts
+      const expectedCount = predicateCounts[query.predicate] ?? 0;
       
       try {
-        // Compile query to VM program (this is what DS003 specifies)
-        const compiledQuery = compileQueryToProgram(query, expectedCount);
-        compilationSuccesses++;
-        
         const startTime = performance.now();
         
-        // Execute via VM instead of direct storage access
-        const vmResult = await vm.execute(compiledQuery, {
+        const answer = await vm.answerQuery(`list ${query.predicate}`, {
           budget: {
             maxDepth: 3,
-            maxSteps: 500,  // Even more generous for query + populate
+            maxSteps: 500,
             maxBranches: 2,
             maxTimeMs: threshold
           }
         });
+        if (!answer.success) {
+          throw new Error(answer.error || 'Compilation failed');
+        }
         
         const responseTime = performance.now() - startTime;
         responseTimes.push(responseTime);
         
-        // Extract results from VM execution result
-        const resultCount = vmResult.bindings?.results?.length || 0;  // Use direct access
+        const resultCount = answer.execution?.bindings?.results?.length || 0;
         vmExecutionSuccesses++;
+        compilationSuccesses++;
         
         results.details.queries.push({
           query_id: i,
@@ -146,22 +147,22 @@ async function populateTestData(vm, factCount) {
   // Build a program to populate facts via VM
   const instructions = [];
   
-  for (let i = 0; i < factCount; i++) {
-    const predicate = predicates[i % predicates.length];
+  for (const predicate of predicates) {
     const fullPredicate = `test:${predicate}`;
-    predicateCounts[fullPredicate] = (predicateCounts[fullPredicate] ?? 0) + 1;
-    
-    instructions.push({
-      op: 'ASSERT',
-      args: {
-        predicate: fullPredicate,
-        arguments: {
-          id: `entity_${i}`,
-          value: i * 10,
-          label: `Label ${i}`
+    predicateCounts[fullPredicate] = factCount;
+    for (let i = 0; i < factCount; i++) {
+      instructions.push({
+        op: 'ASSERT',
+        args: {
+          predicate: fullPredicate,
+          arguments: {
+            id: `entity_${predicate}_${i}`,
+            value: i * 10,
+            label: `Label ${i}`
+          }
         }
-      }
-    });
+      });
+    }
   }
   
   const populateProgram = {
@@ -173,7 +174,7 @@ async function populateTestData(vm, factCount) {
   await vm.execute(populateProgram, {
     budget: {
       maxDepth: 2,
-      maxSteps: factCount * 3,  // More generous budget
+      maxSteps: factCount * predicates.length * 3,
       maxBranches: 1,
       maxTimeMs: 10000
     }

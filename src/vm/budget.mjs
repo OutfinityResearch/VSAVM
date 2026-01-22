@@ -51,6 +51,7 @@ export class Budget {
    */
   constructor(limits = {}) {
     this.limits = { ...DEFAULT_BUDGET, ...limits };
+    this.deterministicTime = Boolean(limits?.deterministicTime);
     this.used = {
       depth: 0,
       steps: 0,
@@ -65,6 +66,11 @@ export class Budget {
    * Start timing
    */
   start() {
+    if (this.deterministicTime) {
+      this.startTime = 0;
+      this.used.timeMs = 0;
+      return;
+    }
     this.startTime = Date.now();
   }
 
@@ -72,6 +78,10 @@ export class Budget {
    * Update elapsed time
    */
   updateTime() {
+    if (this.deterministicTime) {
+      this.used.timeMs = 0;
+      return;
+    }
     if (this.startTime) {
       this.used.timeMs = Date.now() - this.startTime;
     }

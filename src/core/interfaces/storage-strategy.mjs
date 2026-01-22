@@ -97,6 +97,14 @@ export class StorageStrategy {
   }
 
   /**
+   * Get all stored facts
+   * @returns {Promise<Object[]>}
+   */
+  async getAllFacts() {
+    throw new Error('Not implemented: getAllFacts');
+  }
+
+  /**
    * Find facts that conflict with given fact
    * @param {Object} fact
    * @returns {Promise<Object[]>}

@@ -30,7 +30,7 @@ export class Branch {
     this.snapshot = config.snapshot ?? null;
     this.depth = config.depth ?? 0;
     this.score = config.score ?? 1.0;
-    this.createdAt = Date.now();
+    this.createdAt = config.deterministicTime ? 0 : Date.now();
     this.derivedFacts = [];
     this.pruned = false;
     this.merged = false;
@@ -157,6 +157,7 @@ export class BranchManager {
     this.options = {
       pruneThreshold: DEFAULT_PRUNE_THRESHOLD,
       minKeptBranches: 2,
+      deterministicTime: options.deterministicTime ?? false,
       ...options
     };
     this.branches = new Map();
@@ -182,7 +183,8 @@ export class BranchManager {
       id,
       parent: null,
       depth: 0,
-      score: 1.0
+      score: 1.0,
+      deterministicTime: this.options.deterministicTime
     });
     this.rootBranch = branch;
     this.branches.set(id, branch);
@@ -221,7 +223,8 @@ export class BranchManager {
       hypothesis,
       snapshot: parent.snapshot ? this._copySnapshot(parent.snapshot) : null,
       depth: parent.depth + 1,
-      score: hypothesis?.score ?? parent.score
+      score: hypothesis?.score ?? parent.score,
+      deterministicTime: this.options.deterministicTime
     });
 
     // Consume branch budget

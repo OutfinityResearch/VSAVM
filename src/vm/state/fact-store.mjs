@@ -6,7 +6,6 @@
 import { factsConflict } from '../../core/types/facts.mjs';
 import { timeOverlaps, isAtom, isStruct, termsEqual } from '../../core/types/terms.mjs';
 import { scopeContains, symbolIdToString } from '../../core/types/identifiers.mjs';
-import { detectStructuralSeparators, createStructuralScopeId } from '../../event-stream/separator-detector.mjs';
 
 /**
  * Fact store with context awareness and conflict detection
@@ -141,6 +140,39 @@ export class FactStore {
       : symbolIdToString(predicate);
     
     return this.query({ predicate: predStr });
+  }
+
+  /**
+   * Get all visible facts (storage + context, honoring denials)
+   * @returns {Promise<Object[]>}
+   */
+  async getAllFacts() {
+    const results = new Map();
+
+    const current = this.contextStack.current;
+    if (!current.isolated) {
+      if (typeof this.storage.getAllFacts === 'function') {
+        const storageFacts = await this.storage.getAllFacts();
+        for (const fact of storageFacts) {
+          if (this.contextStack.getFact(fact.factId) !== null) {
+            results.set(fact.factId, fact);
+          }
+        }
+      } else if (this.storage.facts && typeof this.storage.facts.values === 'function') {
+        for (const fact of this.storage.facts.values()) {
+          if (this.contextStack.getFact(fact.factId) !== null) {
+            results.set(fact.factId, fact);
+          }
+        }
+      }
+    }
+
+    const contextFacts = this.contextStack.getAllFacts();
+    for (const [factId, fact] of contextFacts) {
+      results.set(factId, fact);
+    }
+
+    return [...results.values()];
   }
 
   /**

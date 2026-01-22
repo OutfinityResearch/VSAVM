@@ -30,6 +30,8 @@
 <p>VSAVM uses scope derived from structural separators to localize inference and contradiction checks. This prevents incompatible sources from collapsing into a single inconsistent base.</p>
 <h2>Mechanics and implications</h2>
 <p>Scope is carried through execution as context metadata. Conflict checks require scope: a contradiction is opposing polarity for the same canonical fact identifier within the same scope. Without scope, correctness becomes either impossible or meaningless.</p>
+<p>In VSAVM, scopes must be structural (DS010/NFS11). The identifier layer enforces this by rejecting any scope path that starts with <code>['domain', ...]</code>.</p>
+<p>Scope containment is prefix-based: a shorter path selects a larger structural region. This is what allows queries like “answer within this document/section/record” without inventing domain labels.</p>
 <h2>Further reading</h2>
 <p>Scope is a standard notion in computing; VSAVM extends it to reasoning and verification by treating document structure as semantic boundaries.</p>
 <figure class="diagram">

@@ -25,11 +25,31 @@
 <p>This wiki entry defines a term used across VSAVM and explains why it matters in the architecture.</p><p>The diagram has a transparent background and highlights the operational meaning of the term inside VSAVM.</p>
 <p>Related wiki pages: <a href="vm.html">VM</a>, <a href="event-stream.html">event stream</a>, <a href="vsa.html">VSA</a>, <a href="bounded-closure.html">bounded closure</a>, <a href="consistency-contract.html">consistency contract</a>.</p>
 <h2>Definition</h2>
-<p>A large language model is typically a neural network trained to predict the next token or segment of text.</p>
+<p>A large language model is typically a neural network trained to predict the next token (or next segment) of text. In VSAVM, “LLM-like” describes the <em>interface</em> (interactive continuation), not the source of truth.</p>
 <h2>Role in VSAVM</h2>
-<p>VSAVM uses LLM-like prediction as a proposal mechanism, but acceptance is constrained by VM state and bounded closure. The interface stays familiar while the semantics change.</p>
+<p>VSAVM uses continuation prediction as a proposal mechanism, but correctness is owned by the VM and bounded closure:</p>
+<ul>
+  <li><strong>Proposals</strong>: continuations can come from a neural model (baseline) or from VSAVM’s own macro-unit model (DS011).</li>
+  <li><strong>Acceptance</strong>: factual claims are only emitted when supported by executable state and the correctness contract (DS004).</li>
+  <li><strong>Boundary behavior</strong>: when budgets are insufficient, outputs must degrade to conditional or indeterminate instead of “guessing”.</li>
+</ul>
 <h2>Mechanics and implications</h2>
-<p>Fluency proposals are filtered by schema constraints and closure gating. This prevents the generator from emitting facts that are not supported by executable state, turning trust into an operational property of checks and traces.</p>
+<p>In this repository, two “LLM-like” paths exist:</p>
+<ul>
+  <li><strong>Query answering (default)</strong>: execute a query in the VM, run bounded closure, then render checked claims deterministically.</li>
+  <li><strong>Continuation (DS011, evaluation harness)</strong>: train a macro-unit language model to continue byte sequences under budgets. This is compared against a small TensorFlow Transformer baseline in <code>eval_tinyLLM</code>.</li>
+</ul>
+<p>The important implication is that fluency is never treated as truth. Continuation quality is measured as a language-model metric (perplexity, reference match, repetition), while correctness for claims is measured via VM/closure.</p>
+
+<h2>Practical evaluation (eval_tinyLLM)</h2>
+<p>The <code>eval_tinyLLM</code> suite exists to make “more realistic” comparisons reproducible while keeping the codebase dependency-light:</p>
+<ol>
+  <li><strong>Prepare a dataset split</strong> under a deterministic <code>datasetId</code> (size-based, keyed by <code>maxBytes</code> and split settings).</li>
+  <li><strong>Train VSAVM macro-units</strong> (streaming) and optionally persist facts.</li>
+  <li><strong>Train the TensorFlow baseline</strong> on the same dataset.</li>
+  <li><strong>Compare</strong> both engines under identical budgets per prompt and write a timestamped HTML report to <code>eval_tinyLLM/results/</code>.</li>
+</ol>
+<p>Artifacts are cached under <code>eval_tinyLLM/cache/datasets/</code> and <code>eval_tinyLLM/cache/models/</code> so multiple dataset sizes and multiple trained models can coexist.</p>
 <h2>Further reading</h2>
 <p>LLMs are a fast-moving field. VSAVM’s design goal is to combine LLM-like interaction with an executable substrate and explicit boundary behavior.</p>
 <figure class="diagram">

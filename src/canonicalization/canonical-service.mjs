@@ -9,6 +9,7 @@ import { IdentityCanonicalizer } from './strategies/identity-canonical.mjs';
 import { normalizeText } from './normalizers/text-normalizer.mjs';
 import { normalizeNumber } from './normalizers/number-normalizer.mjs';
 import { normalizeTime } from './normalizers/time-normalizer.mjs';
+import { resolveEntity } from './normalizers/entity-resolver.mjs';
 import { VSAVMError, ErrorCode } from '../core/errors.mjs';
 import { isAtom, isStruct } from '../core/types/terms.mjs';
 
@@ -124,6 +125,18 @@ export class CanonicalService {
       ...this.options.strategyOptions,
       ...options
     });
+  }
+
+  /**
+   * Resolve an entity mention against candidates.
+   * @param {string} mention
+   * @param {Object} context
+   * @param {Array} candidates
+   * @param {Object} [options]
+   * @returns {Object}
+   */
+  resolveEntity(mention, context = {}, candidates = [], options = {}) {
+    return resolveEntity(mention, context, candidates, options);
   }
 
   /**

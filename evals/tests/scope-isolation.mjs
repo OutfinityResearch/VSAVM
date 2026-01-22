@@ -432,7 +432,7 @@ async function testEmergentScopeDiscovery(vm, results, config) {
       { type: 'text_token', payload: 'Second paragraph content.', context_path: ['doc', 'section1', 'para2'] }
     ];
     
-    const separators = detectStructuralSeparators(events);
+    const separators = await detectStructuralSeparators(events);
     const scope1 = createStructuralScopeId(events, 0, separators);
     const scope2 = createStructuralScopeId(events, 2, separators);
     

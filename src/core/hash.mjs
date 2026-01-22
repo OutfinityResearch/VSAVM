@@ -100,3 +100,59 @@ export function base64urlEncode(bytes) {
     .replace(/\//g, '_')
     .replace(/=+$/g, '');
 }
+
+/**
+ * Base64url decode to bytes (accepts unpadded input).
+ * @param {string} str
+ * @returns {Uint8Array}
+ */
+export function base64urlDecode(str) {
+  const normalized = String(str ?? '')
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  const padding = normalized.length % 4 === 0
+    ? ''
+    : '='.repeat(4 - (normalized.length % 4));
+  return new Uint8Array(Buffer.from(normalized + padding, 'base64'));
+}
+
+const CRC32_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) {
+      c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    table[i] = c >>> 0;
+  }
+  return table;
+})();
+
+/**
+ * Compute CRC32 for a byte array.
+ * @param {Uint8Array} bytes
+ * @returns {number} Unsigned 32-bit integer
+ */
+export function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const b of bytes) {
+    const idx = (crc ^ b) & 0xff;
+    crc = (crc >>> 8) ^ CRC32_TABLE[idx];
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+/**
+ * Compute CRC32 and return 4 bytes (little-endian).
+ * @param {Uint8Array} bytes
+ * @returns {Uint8Array}
+ */
+export function crc32Bytes(bytes) {
+  const value = crc32(bytes);
+  return new Uint8Array([
+    value & 0xff,
+    (value >>> 8) & 0xff,
+    (value >>> 16) & 0xff,
+    (value >>> 24) & 0xff
+  ]);
+}

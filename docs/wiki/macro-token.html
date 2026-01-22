@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Macro token | VSAVM</title>
+    <title>Macro-unit (macro token) | VSAVM</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,20 +21,34 @@
         </nav>
       </header>
       <main class="main content">
-        <h1>Macro token</h1>
+        <h1>Macro-unit (macro token)</h1>
 <p>This wiki entry defines a term used across VSAVM and explains why it matters in the architecture.</p><p>The diagram has a transparent background and highlights the operational meaning of the term inside VSAVM.</p>
 <p>Related wiki pages: <a href="vm.html">VM</a>, <a href="event-stream.html">event stream</a>, <a href="vsa.html">VSA</a>, <a href="bounded-closure.html">bounded closure</a>, <a href="consistency-contract.html">consistency contract</a>.</p>
 <h2>Definition</h2>
-<p>A macro token is a compressed phrase-level unit derived from repeated token sequences.</p>
+<p>A macro-unit is a reversible sequence of tokens (in the current training harness: bytes) that is promoted because it improves compression under MDL and is useful for continuation prediction (DS011).</p>
 <h2>Role in VSAVM</h2>
-<p>Macro tokens help stabilize next-phrase prediction and reduce search cost. They can also become anchors for schema discovery by turning repeated patterns into stable discrete units.</p>
+<p>Macro-units provide a “larger than token” unit for the DS011 outer loop:</p>
+<ul>
+  <li><strong>Fewer steps per continuation</strong>: predicting a frequent multi-byte unit reduces decoding iterations.</li>
+  <li><strong>Compression pressure</strong>: frequent sequences become reusable units that reduce description length.</li>
+  <li><strong>Stable handles</strong>: unit IDs can be counted, cached, versioned, and compared across runs.</li>
+</ul>
 <h2>Mechanics and implications</h2>
-<p>Reversibility is mandatory. If expansion is ambiguous, scoring becomes inconsistent and the system cannot maintain traceability. VSAVM treats deterministic expansion as a hard constraint to preserve correctness.</p>
+<p>Reversibility is mandatory. If expansion is ambiguous, scoring becomes inconsistent and the system cannot maintain traceability. VSAVM treats deterministic expansion as a hard constraint.</p>
+<p>Macro-units are <strong>not</strong> the same thing as structural separators:</p>
+<ul>
+  <li><strong>Separators (DS010)</strong> split the stream into structural regions (paragraphs, scenes, functions).</li>
+  <li><strong>Macro-units (DS011)</strong> compress recurring content inside (or across) those regions.</li>
+</ul>
+
+<h2>Implementation notes (current code)</h2>
+<p>The concrete macro-unit model is implemented in <code>src/training/outer-loop/macro-unit-model.mjs</code>. It supports streaming training (<code>trainStream</code>), bounded n-gram orders, pruning, and a trie for fast encoding/decoding.</p>
+<p>In <code>eval_tinyLLM</code>, trained macro-unit models are cached under <code>eval_tinyLLM/cache/models/vsavm/&lt;datasetId&gt;/&lt;modelId&gt;/</code> so multiple dataset sizes and multiple model variants can coexist.</p>
 <h2>Further reading</h2>
-<p>Macro units relate to tokenization and compression. VSAVM’s emphasis is on reversibility and auditability under the consistency contract.</p>
+<p>Macro-units relate to tokenization and compression. VSAVM’s emphasis is on reversibility and auditability, and on keeping scope boundaries structural (not domain-labelled).</p>
 <figure class="diagram">
 <img class="diagram-svg" src="../assets/svg/macro-token-diagram.svg" alt="macro-token diagram">
-<figcaption>Macro tokens compress recurring patterns while preserving deterministic expansion for evaluation and decoding.</figcaption>
+<figcaption>Macro-units compress recurring patterns while preserving deterministic expansion for evaluation and continuation.</figcaption>
 </figure>
 <h2>References</h2>
 <p><a href="https://en.wikipedia.org/wiki/Tokenization_(lexical_analysis)">Tokenization (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Data_compression">Data compression (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Minimum_description_length">Minimum description length (Wikipedia)</a></p>

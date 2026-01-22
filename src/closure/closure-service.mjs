@@ -142,7 +142,10 @@ export class ClosureService {
       // Step 3: Create branch manager
       const branchManager = createBranchManager(
         budgetObj.limits.maxBranches,
-        { pruneThreshold: this.options.pruneThreshold }
+        { 
+          pruneThreshold: this.options.pruneThreshold,
+          deterministicTime: budgetObj.deterministicTime
+        }
       );
       const mainBranch = branchManager.createRoot();
 
@@ -265,7 +268,11 @@ export class ClosureService {
     if (budget instanceof Budget) {
       return budget;
     }
-    return new Budget(budget ?? DEFAULT_BUDGET);
+    const seed = budget ?? DEFAULT_BUDGET;
+    return new Budget({
+      ...seed,
+      deterministicTime: seed.deterministicTime ?? (this.options.defaultMode === ResponseMode.STRICT)
+    });
   }
 
   /**
@@ -379,7 +386,7 @@ export class ClosureService {
       trace: [{
         type: 'error',
         message: error.message,
-        timestamp: Date.now()
+        timestamp: budget?.deterministicTime ? 0 : Date.now()
       }],
       budgetExhausted: false
     };

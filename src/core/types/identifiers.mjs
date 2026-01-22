@@ -1,3 +1,5 @@
+import { sha256Truncate, base64urlEncode } from '../hash.mjs';
+
 /**
  * Identifier types for VSAVM
  * Per DS007: SymbolId, EntityId, FactId, ScopeId, SourceId
@@ -20,6 +22,24 @@ export function createSymbolId(namespace, name) {
  */
 export function symbolIdToString(symbolId) {
   return `${symbolId.namespace}:${symbolId.name}`;
+}
+
+/**
+ * Hash a SymbolId (SHA-256 truncated to 16 bytes)
+ * @param {{namespace: string, name: string}} symbolId
+ * @returns {Uint8Array}
+ */
+export function hashSymbolId(symbolId) {
+  return sha256Truncate(symbolIdToString(symbolId), 16);
+}
+
+/**
+ * Hash a SymbolId and encode as base64url
+ * @param {{namespace: string, name: string}} symbolId
+ * @returns {string}
+ */
+export function symbolIdHashToString(symbolId) {
+  return base64urlEncode(hashSymbolId(symbolId));
 }
 
 /**
@@ -64,6 +84,24 @@ export function entityIdToString(entityId) {
     str += `@${entityId.version}`;
   }
   return str;
+}
+
+/**
+ * Hash an EntityId (SHA-256 truncated to 16 bytes)
+ * @param {{source: string, localId: string, version?: number}} entityId
+ * @returns {Uint8Array}
+ */
+export function hashEntityId(entityId) {
+  return sha256Truncate(entityIdToString(entityId), 16);
+}
+
+/**
+ * Hash an EntityId and encode as base64url
+ * @param {{source: string, localId: string, version?: number}} entityId
+ * @returns {string}
+ */
+export function entityIdHashToString(entityId) {
+  return base64urlEncode(hashEntityId(entityId));
 }
 
 /**
@@ -117,6 +155,24 @@ export function createScopeId(path) {
  */
 export function scopeIdToString(scopeId) {
   return scopeId.path.join('/');
+}
+
+/**
+ * Hash a ScopeId (SHA-256 truncated to 8 bytes)
+ * @param {{path: string[]}} scopeId
+ * @returns {Uint8Array}
+ */
+export function hashScopeId(scopeId) {
+  return sha256Truncate(scopeIdToString(scopeId), 8);
+}
+
+/**
+ * Hash a ScopeId and encode as base64url
+ * @param {{path: string[]}} scopeId
+ * @returns {string}
+ */
+export function scopeIdHashToString(scopeId) {
+  return base64urlEncode(hashScopeId(scopeId));
 }
 
 /**

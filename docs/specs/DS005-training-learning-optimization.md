@@ -5,7 +5,9 @@
 The VSAVM training process operates through a sophisticated dual-loop architecture that simultaneously optimizes surface-level language generation and deep symbolic reasoning capabilities.
 This architecture enables the system to maintain the fluency and broad knowledge coverage of traditional language models while developing the structured reasoning capabilities that enable operational correctness guarantees.
 
-The outer loop implements next-phrase prediction with conditioning on virtual machine state, extending traditional language modeling to incorporate symbolic reasoning context.
+Terminology note: earlier drafts used “phrase” for the outer-loop unit. DS011 updates this to “macro-unit” (a reversible unit discovered by compression). Where this document discusses “phrase-level” prediction, interpret it as macro-unit/segment-level continuation.
+
+The outer loop implements continuation prediction with conditioning on virtual machine state, extending traditional language modeling to incorporate symbolic reasoning context.
 Unlike conventional language models that predict tokens based solely on preceding text, the outer loop conditions its predictions on the current state of the virtual machine, including active facts, applicable rules,
 and ongoing reasoning processes.
 
@@ -17,12 +19,12 @@ The conditioning process operates through attention mechanisms that allow the la
 When generating responses to factual queries, the model can focus on relevant facts in the knowledge base.
 When generating explanations of reasoning processes, the model can focus on the sequence of inference steps that led to the conclusion.
 
-Phrase-level prediction rather than token-level prediction provides several advantages for this architecture.
-Phrases represent more meaningful semantic units that can be more directly related to symbolic operations within the VM.
+Macro-unit prediction rather than raw token-level prediction provides several advantages for this architecture.
+Macro-units represent more meaningful reversible units that can be more directly related to symbolic operations within the VM.
 The system can learn to associate specific phrase patterns with particular types of reasoning operations, creating stronger connections between surface language and internal reasoning processes.
 
-The phrase-level approach also reduces the computational overhead of VM state conditioning by requiring fewer conditioning operations per generated response.
-Each phrase prediction can incorporate a comprehensive view of the current VM state, whereas token-level prediction would require frequent updates to the conditioning information as the VM state evolves during generation.
+The macro-unit approach also reduces the computational overhead of VM state conditioning by requiring fewer conditioning operations per generated response.
+Each macro-unit prediction can incorporate a comprehensive view of the current VM state, whereas token-level prediction would require frequent updates to the conditioning information as the VM state evolves during generation.
 
 The inner loop performs program search and consolidation, continuously exploring the space of possible reasoning programs to identify patterns that can be consolidated into reusable schemas and macro-instructions.
 This loop operates in parallel with language modeling, using the same training examples but focusing on discovering the underlying logical structure rather than surface linguistic patterns.
@@ -88,7 +90,7 @@ The MDL principle must be operationalized as an instrumentable score to support 
 At minimum, the system should track:
 
 - **Program description cost**: proportional to program length and novelty (instruction count, macro references, slot count, and type complexity).
-- **Residual cost**: remaining prediction loss after introducing the program/schema (e.g., next-phrase loss on the affected spans).
+- **Residual cost**: remaining prediction loss after introducing the program/schema (e.g., continuation loss on the affected spans).
 - **Correctness penalties**: strong penalties for programs/schemas that introduce conflicts under bounded closure (DS004) or violate typing/canonicalization rules (DS002).
 - **Budget penalties**: penalties for strategies that systematically exhaust budgets without improving residual cost.
 
@@ -240,6 +242,19 @@ The compilation process can take advantage of runtime information about data dis
 Memory management and caching strategies ensure that the system can handle large knowledge bases efficiently while maintaining fast access to frequently used information.
 The memory management system must balance the competing demands of storage efficiency, access speed,
 and consistency maintenance.
+
+### Memory-Bounded Training (Normative)
+
+Outer-loop training MUST support memory-bounded, streaming execution on large corpora:
+
+- Training MUST operate on a stream of token sequences (no full corpus in memory).
+- N-gram statistics MUST enforce a maximum order bound to prevent combinatorial growth.
+- Macro-unit mining MUST use sampling and periodic pruning of low-frequency subsequences.
+- Training harnesses SHOULD detect available system memory and set an explicit heap budget,
+  leaving 4–5 GB free for the OS to avoid spurious OOM failures.
+
+These constraints preserve DS005's compression objectives while ensuring practical scalability
+on CPU-only machines.
 
 Hierarchical caching systems maintain frequently accessed facts and rules in fast memory while storing less frequently used information in slower but larger storage systems.
 The caching system uses learned access patterns to predict which information is likely to be needed and preload it into fast memory.

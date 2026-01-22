@@ -11,18 +11,20 @@ import { ExecutionLog } from './state/execution-log.mjs';
 import { FactStore } from './state/fact-store.mjs';
 import { ExecutionError, ErrorCode } from '../core/errors.mjs';
 import { ResponseMode, createQueryResult, createClaim } from '../core/types/results.mjs';
+import { isAtom, isStruct } from '../core/types/terms.mjs';
 
 /**
  * VM State during execution
  */
 export class VMState {
   constructor(options = {}) {
-    this.executionId = `exec_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    this.executionId = `exec_${VMState.nextId++}`;
     this.budget = options.budget || new Budget();
     this.bindings = options.bindings || new BindingEnv();
     this.contextStack = options.contextStack || new ContextStack();
     this.log = options.log || new ExecutionLog({ level: options.traceLevel || 'standard' });
     this.factStore = options.factStore;
+    this.ruleStore = options.ruleStore ?? null;
     this.canonicalizer = options.canonicalizer || null;
     
     // Program counter
@@ -38,6 +40,8 @@ export class VMState {
     this.conflicts = [];
   }
 }
+
+VMState.nextId = 1;
 
 /**
  * Program executor
@@ -122,7 +126,9 @@ export class Executor {
     }
     
     // Build result
-    const executionMs = Date.now() - startTime;
+    const executionMs = vmState.budget?.deterministicTime
+      ? 0
+      : (Date.now() - startTime);
     
     return this.buildResult(vmState, executionMs);
   }
@@ -144,7 +150,8 @@ export class Executor {
     }
     
     // Execute
-    const result = await handler(vmState, args || {});
+    const resolvedArgs = this.resolveArgs(vmState, args || {});
+    const result = await handler(vmState, resolvedArgs);
     
     // Log (verbose)
     vmState.log.logInstruction(op, args, result);
@@ -189,6 +196,78 @@ export class Executor {
     }
     
     return result;
+  }
+
+  resolveArgs(vmState, args) {
+    const output = {};
+    for (const [key, value] of Object.entries(args || {})) {
+      output[key] = this.resolveArgValue(vmState, value);
+    }
+    return output;
+  }
+
+  resolveArgValue(vmState, value) {
+    if (Array.isArray(value)) {
+      return value.map((item) => this.resolveArgValue(vmState, item));
+    }
+
+    const isInstructionArg = value
+      && typeof value === 'object'
+      && typeof value.type === 'string'
+      && ['literal', 'binding', 'slot', 'label'].includes(value.type);
+
+    if (isInstructionArg) {
+      switch (value.type) {
+        case 'literal':
+          return value.value;
+        case 'binding':
+        case 'slot': {
+          const bound = vmState.bindings.get(value.name);
+          if (bound === undefined) {
+            throw new ExecutionError(
+              ErrorCode.BINDING_NOT_FOUND,
+              `Binding not found: ${value.name}`,
+              { binding: value.name }
+            );
+          }
+          return bound;
+        }
+        case 'label':
+          return value.name;
+        default:
+          return value;
+      }
+    }
+
+    const isVarRef = value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && !isAtom(value)
+      && !isStruct(value)
+      && Object.keys(value).length === 1
+      && typeof value.var === 'string';
+
+    if (isVarRef) {
+      const bound = vmState.bindings.get(value.var);
+      if (bound === undefined) {
+        throw new ExecutionError(
+          ErrorCode.BINDING_NOT_FOUND,
+          `Binding not found: ${value.var}`,
+          { binding: value.var }
+        );
+      }
+      return bound;
+    }
+
+    if (value && typeof value === 'object' && !isAtom(value) && !isStruct(value)) {
+      const resolved = {};
+      for (const [k, v] of Object.entries(value)) {
+        resolved[k] = this.resolveArgValue(vmState, v);
+      }
+      return resolved;
+    }
+
+    return value;
   }
 
   /**

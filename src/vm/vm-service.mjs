@@ -9,7 +9,9 @@ import { BindingEnv } from './state/binding-env.mjs';
 import { ContextStack } from './state/context-stack.mjs';
 import { ExecutionLog } from './state/execution-log.mjs';
 import { FactStore } from './state/fact-store.mjs';
+import { RuleStore } from './state/rule-store.mjs';
 import { ExecutionError, ErrorCode } from '../core/errors.mjs';
+import { computeHash } from '../core/hash.mjs';
 
 /**
  * VM Service provides high-level program execution
@@ -33,6 +35,7 @@ export class VMService {
     });
     
     this.canonicalizer = options.canonicalizer || null;
+    this.ruleStore = new RuleStore();
   }
 
   /**
@@ -41,14 +44,22 @@ export class VMService {
    * @returns {VMState}
    */
   createState(budgetLimits) {
-    const contextStack = new ContextStack();
+    const contextStack = new ContextStack({ deterministicTime: this.options.strictMode });
     
     return new VMState({
-      budget: new Budget({ ...this.options.defaultBudget, ...budgetLimits }),
+      budget: new Budget({ 
+        ...this.options.defaultBudget, 
+        ...budgetLimits,
+        deterministicTime: this.options.strictMode
+      }),
       bindings: new BindingEnv(),
       contextStack,
-      log: new ExecutionLog({ level: this.options.traceLevel }),
+      log: new ExecutionLog({ 
+        level: this.options.traceLevel,
+        deterministicTime: this.options.strictMode
+      }),
       factStore: new FactStore(this.storage, contextStack),
+      ruleStore: this.ruleStore,
       canonicalizer: this.canonicalizer
     });
   }
@@ -175,11 +186,13 @@ export class VMService {
    * @returns {Promise<Object>}
    */
   async executeInstructions(instructions, options = {}) {
+    const deterministic = this.options.strictMode;
+    const signature = deterministic ? computeHash(JSON.stringify(instructions)) : null;
     const program = {
-      programId: `inline_${Date.now()}`,
+      programId: deterministic ? `inline_${signature}` : `inline_${Date.now()}`,
       instructions,
       metadata: {
-        compiledAt: Date.now(),
+        compiledAt: deterministic ? 0 : Date.now(),
         estimatedSteps: instructions.length,
         estimatedBranches: 0,
         tracePolicy: 'full'

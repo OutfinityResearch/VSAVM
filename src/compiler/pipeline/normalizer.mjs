@@ -256,6 +256,7 @@ export class QueryNormalizer {
       caseSensitive: false,
       stripPunctuation: false,  // Keep punctuation for feature detection
       normalizeWhitespace: true,
+      deterministicTime: false,
       ...options
     };
   }
@@ -290,7 +291,7 @@ export class QueryNormalizer {
       normalizedLength: normalizedText.length,
       tokenCount: tokens.length,
       featureCount: features.length,
-      normalizedAt: Date.now()
+      normalizedAt: this.options.deterministicTime ? 0 : Date.now()
     };
 
     return new NormalizedQuery({

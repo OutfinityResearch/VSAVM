@@ -10,6 +10,8 @@ import { VSAVM, createDefaultVSAVM } from '../../src/index.mjs';
 import { 
   createSymbolId, 
   createScopeId,
+  hashSymbolId,
+  hashScopeId,
   symbolIdToString,
   scopeIdToString 
 } from '../../src/core/types/identifiers.mjs';
@@ -21,6 +23,7 @@ import {
 import { 
   createFactInstance, 
   createProvenanceLink,
+  serializeFactInstance,
   Polarity 
 } from '../../src/core/types/facts.mjs';
 import { createSourceId } from '../../src/core/types/identifiers.mjs';
@@ -36,6 +39,21 @@ describe('Identifiers', () => {
   test('ScopeId creation and containment', () => {
     const scope = createScopeId(['doc', 'section', 'para']);
     assert.strictEqual(scopeIdToString(scope), 'doc/section/para');
+  });
+
+  test('Identifier hashing is deterministic', () => {
+    const sym = createSymbolId('vsavm.core', 'likes');
+    const scope = createScopeId(['doc', 'section']);
+
+    const symHash1 = hashSymbolId(sym);
+    const symHash2 = hashSymbolId(sym);
+    const scopeHash1 = hashScopeId(scope);
+    const scopeHash2 = hashScopeId(scope);
+
+    assert.strictEqual(symHash1.length, 16);
+    assert.strictEqual(scopeHash1.length, 8);
+    assert.deepEqual(symHash1, symHash2);
+    assert.deepEqual(scopeHash1, scopeHash2);
   });
 });
 
@@ -94,6 +112,21 @@ describe('Facts', () => {
     });
     
     assert.strictEqual(fact1.factId, fact2.factId);
+  });
+
+  test('Fact serialization is deterministic', () => {
+    const pred = createSymbolId('test', 'likes');
+    const fact = createFactInstance(pred, {
+      subject: stringAtom('Alice'),
+      object: stringAtom('Bob')
+    }, {
+      scopeId: createScopeId(['doc']),
+      provenance: [createProvenanceLink(createSourceId('test', 'unit'))]
+    });
+
+    const serialized1 = serializeFactInstance(fact);
+    const serialized2 = serializeFactInstance(fact);
+    assert.strictEqual(serialized1, serialized2);
   });
 });
 

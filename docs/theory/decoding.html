@@ -24,45 +24,45 @@
         <h1>Faithful surface realization</h1>
 <p>This page is a theory note. It expands the topic in short chapters and defines terminology without duplicating the formal specification documents.</p><p>The diagram has a transparent background and is intended to be read together with the caption and the sections below.</p>
 <p>Related wiki pages: <a href="../wiki/vm.html">VM</a>, <a href="../wiki/event-stream.html">event stream</a>, <a href="../wiki/vsa.html">VSA</a>, <a href="../wiki/bounded-closure.html">bounded closure</a>, <a href="../wiki/consistency-contract.html">consistency contract</a>.</p>
-<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS001-foundations-and-architecture.md">DS001</a>.</p>
+<p>Related specs: <a href="../specs-viewer.html?doc=specs/DS004-correctness-bounded-closure.md">DS004</a>, <a href="../specs-viewer.html?doc=specs/DS011-generative-decoding.md">DS011</a>.</p>
 
 <h2>Overview</h2>
-<p>Decoding is a common place where systems silently reintroduce hallucinations. VSAVM treats decoding as surface realization of internal objects. If the VM did not derive a fact, the realizer is not allowed to state it as true.</p>
+<p>Decoding is a common place where systems silently reintroduce hallucinations. VSAVM treats decoding as <strong>surface realization of internal artifacts</strong>: if the VM did not derive a claim (or the budget was insufficient to verify it), the realizer is not allowed to present it as an unconditional fact.</p>
 
-<h2>Surface realization architecture</h2>
-<p>The surface realization system transforms internal symbolic representations into natural language through multiple stages:</p>
-<ul>
-  <li><strong>Content planning</strong>: Determine what information to include and how to organize it. Learned templates specify structure for different query types. Consider user expertise level for appropriate detail. Maintain logical dependencies for coherent presentation order.</li>
-  <li><strong>Discourse structure generation</strong>: Create high-level organization (paragraphs, sections, overall flow). Learned patterns of effective information organization. Rhetorical strategies for clarity and persuasiveness.</li>
-  <li><strong>Lexical selection</strong>: Choose words and phrases balancing precision, clarity, and naturalness. Extensive knowledge of meanings, connotations, usage patterns. Adapt vocabulary to user's apparent expertise level.</li>
-  <li><strong>Syntactic realization</strong>: Generate grammatically correct sentences expressing complex logical relationships. Choose structures that effectively communicate intended content with appropriate emphasis.</li>
-</ul>
+<h2>Implemented today: deterministic rendering pipeline</h2>
+<p>The current implementation is intentionally conservative and deterministic. It lives in <code>src/generation/generation-service.mjs</code> and is used when rendering a query result.</p>
+<ol>
+  <li><strong>Claim selection</strong>: take the closure result’s <code>claims</code> (already produced by VM execution and bounded closure).</li>
+  <li><strong>Claim rendering</strong>: convert each claim term into a stable textual form (see <code>ClaimRenderer</code>).</li>
+  <li><strong>Uncertainty marking</strong>: if the closure mode is conditional, add lightweight qualifiers (see <code>UncertaintyMarker</code>).</li>
+  <li><strong>Mode adaptation</strong>: strict = render as-is; conditional = prefix with “Conditional”; indeterminate = return an explicit indeterminate message (see <code>ModeAdapter</code>).</li>
+  <li><strong>Audit hint</strong>: optionally append a short trace note when trace references exist (see <code>TraceExplainer</code>).</li>
+</ol>
 
 <h2>Fidelity preservation mechanisms</h2>
-<p>Multiple mechanisms ensure output accurately reflects internal representations:</p>
+<p>Fidelity is preserved by construction, not by a separate “truth checker”:</p>
 <ul>
-  <li><strong>Semantic fidelity checking</strong>: Back-translation converts output back to symbolic form for comparison with originals. Multi-level checking from individual facts to complex arguments. Detect both explicit and implicit violations.</li>
-  <li><strong>Logical consistency preservation</strong>: Track logical relationships in output vs. internal representations. Careful management of qualifiers and uncertainty markers. Identify potentially ambiguous or misleading expressions.</li>
-  <li><strong>Provenance tracking</strong>: Maintain connections between output elements and internal representations. Support forward tracing (internal to output) and backward tracing (output to internal). Enable different levels of explanation and justification.</li>
+  <li><strong>No new claims</strong>: the renderer only formats claims already present in the closure result.</li>
+  <li><strong>Explicit boundary behavior</strong>: conditional and indeterminate modes are surfaced in the output text, not hidden.</li>
+  <li><strong>Trace pointers</strong>: when present, traces provide a hook for auditing what was executed.</li>
 </ul>
 
 <h2>What is realized</h2>
-<p>The VM can produce a verdict, a structured object, a plan, or an execution trace. The realizer converts these internal objects into a requested surface form such as prose, a structured event stream, or a report. The emphasis is on fidelity: every factual sentence corresponds to an internal artifact.</p>
+<p>The VM can produce a result mode, a set of claims (terms), conflicts, assumptions, and trace references. Today’s realizer focuses on <strong>claims-to-text</strong>. Higher-level report formatting can be built on top, but the invariant remains: every asserted line must correspond to a checked internal artifact.</p>
 
-<h2>Multimodal output generation</h2>
-<p>The system can generate output in multiple modalities while maintaining fidelity standards:</p>
+<h2>Continuation is separate from decoding (DS011)</h2>
+<p>DS011 adds an optional macro-unit language model that can generate byte continuations under budgets. This is exercised in <code>eval_tinyLLM</code> for fair comparisons against a TensorFlow baseline. Importantly:</p>
 <ul>
-  <li><strong>Structured output</strong>: Tables, lists, diagrams for content where such formats are more effective. Combine multiple formats within single response (prose + tables). Same fidelity requirements as natural language.</li>
-  <li><strong>Visual output</strong>: Diagrams, charts for complex relationships difficult to express in text. Learned associations between content types and effective visual representations. Semantic fidelity ensured in visual elements and relationships.</li>
-  <li><strong>Interactive output</strong>: Dynamic representations allowing users to explore information space. Personalized explanations based on demonstrated interests. Maintain fidelity regardless of user interactions.</li>
+  <li><strong>Continuation is not the default answer path</strong> for VM query answering.</li>
+  <li><strong>Continuation must not be treated as truth</strong>: when VM state is available, proposals are expected to be gated by claim validation and/or closure checks.</li>
 </ul>
 
 <h2>Quality assurance and validation</h2>
-<p>Comprehensive quality assurance mechanisms:</p>
+<p>For surface realization, validation is mostly structural:</p>
 <ul>
-  <li><strong>Accuracy validation</strong>: Verify factual and logical accuracy via back-translation, consistency checking, authoritative source comparison. Check for completeness and potentially misleading emphasis.</li>
-  <li><strong>Clarity validation</strong>: Evaluate comprehensibility using learned models (sentence length, complexity, vocabulary frequency, discourse coherence). Suggest revisions for improvement.</li>
-  <li><strong>Appropriateness validation</strong>: Evaluate suitability for communicative context and user needs. Consider ethical and social factors. Adapt criteria based on feedback and evolving norms.</li>
+  <li><strong>Determinism</strong>: strict mode output is deterministic for the same input and VM state.</li>
+  <li><strong>Mode correctness</strong>: conditional/indeterminate outputs must visibly reflect the response mode.</li>
+  <li><strong>Trace presence</strong>: when traces exist, the output surfaces that there is auditable evidence.</li>
 </ul>
 
 <h2>Why constraints matter</h2>
@@ -72,7 +72,7 @@
 <p>Faithful realization supports audit. When the user asks why a claim was made, the system can point to the underlying fact identifiers and trace steps. When it cannot justify a claim, it must degrade to conditional or indeterminate outputs rather than inventing.</p>
 <figure class="diagram">
 <img class="diagram-svg" src="../assets/svg/decoding-diagram.svg" alt="decoding diagram">
-<figcaption>Decoding is a constrained realization: it can choose phrasing, but it must not invent facts beyond the VM state and trace. Fidelity mechanisms ensure end-to-end correctness.</figcaption>
+<figcaption>Decoding is constrained rendering: it formats checked claims and makes mode/budget limits visible. Continuation (DS011) is a separate optional mechanism and must not be mistaken for a truth source.</figcaption>
 </figure>
 <h2>References</h2>
 <p><a href="https://en.wikipedia.org/wiki/Natural_language_generation">Natural language generation (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Explainable_artificial_intelligence">Explainable AI (Wikipedia)</a> <a href="https://en.wikipedia.org/wiki/Verification_and_validation">Verification and validation (Wikipedia)</a></p>

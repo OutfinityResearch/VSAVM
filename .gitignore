@@ -138,3 +138,5 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 /evals/results/
+eval_tinyLLM/cache/
+eval_tinyLLM/results/
