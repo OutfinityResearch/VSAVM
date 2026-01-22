@@ -32,6 +32,11 @@
   <p>The architecture combines a discrete language model, a symbolic VM, VSA as a retrieval accelerator, and a self-learned NL to query compiler. The result is a multimodal system that produces robust or conditional answers depending on how deeply the state space is explored.</p>
 </section>
 <section class="section">
+  <h2>Intuition: The "Thinking Database"</h2>
+  <p>VSAVM represents a shift from "retrieval" to "reasoning". Unlike RAG (Retrieval-Augmented Generation) systems that merely inject context into a prompt—hoping the model won't hallucinate—VSAVM physically constrains the generation process. It negotiates every step between a statistical "Poet" (the generative model offering creative phrasing) and a strict "Lawyer" (the VM state enforcing factual correctness).</p>
+  <p>This architecture allows for controlled creativity: the system can use metaphors and synonyms to articulate a concept elegantly, but it is architecturally incapable of inventing unsupported facts in strict mode. It functions as a "Thinking Database"—one that doesn't just store and retrieve data, but actively computes valid conclusions and articulates them without fabrication.</p>
+</section>
+<section class="section">
   <h2>Quick access</h2>
   <p>The documentation is organized into specifications, theory pages, and a compact wiki. Each page is static with consistent headers, footers, and SVG diagrams for clarity.</p>
   <div class="link-grid">

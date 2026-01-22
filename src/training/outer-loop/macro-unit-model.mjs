@@ -16,6 +16,8 @@
 
 import { VMStateConditioner, createVMStateConditioner } from '../../generation/vm-state-conditioner.mjs';
 import { ClaimGate, createClaimGate } from '../../generation/constraints/claim-gate.mjs';
+import { VSAService } from '../../vsa/vsa-service.mjs';
+import { BinarySparseVSA } from '../../vsa/strategies/binary-sparse.mjs';
 
 /**
  * @typedef {Object} MacroUnit
@@ -74,8 +76,33 @@ export class MacroUnitModel {
       subsequencePruneThreshold: config.subsequencePruneThreshold ?? 2,
       subsequencePruneInterval: config.subsequencePruneInterval ?? 100000,
       useVMConditioning: config.useVMConditioning ?? true,
-      useClaimValidation: config.useClaimValidation ?? true
+      useClaimValidation: config.useClaimValidation ?? true,
+      useVsaRetrieval: config.useVsaRetrieval ?? true,
+      vsaContextBytes: config.vsaContextBytes ?? 64,
+      vsaBoost: config.vsaBoost ?? 0.35,
+      vsaRetrieveK: config.vsaRetrieveK ?? 8,
+      vsaRetrieveLimit: config.vsaRetrieveLimit ?? 400,
+      vsaRetrieveEvery: config.vsaRetrieveEvery ?? 8,
+      vsaRetrieveWeight: config.vsaRetrieveWeight ?? 0.25,
+      vsaTopicPenalty: config.vsaTopicPenalty ?? 0.7,
+      vsaTopicThreshold: config.vsaTopicThreshold ?? 0.12,
+      vsaMinSimilarity: config.vsaMinSimilarity ?? 0.08,
+      vsaDimensions: config.vsaDimensions ?? 2048,
+      vsaSparsity: config.vsaSparsity ?? 0.12,
+      vsaSimilarityThreshold: config.vsaSimilarityThreshold ?? 0.1,
+      vsaIndexLimit: config.vsaIndexLimit ?? 2000,
+      vsaLazyInit: config.vsaLazyInit ?? true,
+      vsaService: config.vsaService ?? null
     };
+
+    this.vsaService = this._initVsaService();
+    this.macroUnitVectors = new Map();
+    this.macroUnitsByFrequency = [];
+    this.vsaIndexReady = false;
+
+    if (this.config.vsaIndexLimit < this.config.vsaRetrieveLimit) {
+      this.config.vsaIndexLimit = this.config.vsaRetrieveLimit;
+    }
 
     // Learned macro-units: unitId -> MacroUnit
     this.macroUnits = new Map();
@@ -157,6 +184,8 @@ export class MacroUnitModel {
       totalBytes: options.totalBytes ?? 0
     };
     const checkpointEvery = options.checkpointEvery ?? 0;
+    const includeModelState = options.includeModelState ?? false;
+    const checkpointExportOptions = options.checkpointExportOptions ?? { compact: false };
 
     for await (const tokens of tokenSequenceStream) {
       if (!tokens || tokens.length === 0) continue;
@@ -172,11 +201,40 @@ export class MacroUnitModel {
           state: { ...state },
           subsequenceConfig: { ...subsequenceConfig },
           subsequenceCounts: Array.from(subsequenceCounts.entries()),
-          modelState: this.export({ compact: false })
+          modelState: includeModelState ? this.export(checkpointExportOptions) : null
         });
       }
     }
 
+    this._pruneNgrams();
+    this._computeContinuationCounts();
+    this._promoteMacroUnitsFromCounts(subsequenceCounts, subsequenceConfig);
+    this._buildMacroUnitTrie();
+  }
+
+  /**
+   * Accumulate n-gram statistics for a sequence.
+   * @param {number[]} tokens
+   */
+  accumulateNgrams(tokens) {
+    this._countNgramsAllOrders(tokens);
+  }
+
+  /**
+   * Resolve subsequence configuration for mining.
+   * @param {Object} options
+   * @returns {Object}
+   */
+  getSubsequenceConfig(options = {}) {
+    return this._getSubsequenceConfig(options);
+  }
+
+  /**
+   * Finalize training once subsequence counts are ready.
+   * @param {Map<string, number>} subsequenceCounts
+   * @param {Object} subsequenceConfig
+   */
+  finalizeTraining(subsequenceCounts, subsequenceConfig) {
     this._pruneNgrams();
     this._computeContinuationCounts();
     this._promoteMacroUnitsFromCounts(subsequenceCounts, subsequenceConfig);
@@ -551,6 +609,182 @@ export class MacroUnitModel {
       }
       node.unit = unit;
     }
+
+    this.vsaIndexReady = false;
+    if (!this.config.vsaLazyInit) {
+      this._buildVsaIndex();
+    }
+  }
+
+  _initVsaService() {
+    if (!this.config.useVsaRetrieval) return null;
+    if (this.config.vsaService) return this.config.vsaService;
+
+    const strategy = new BinarySparseVSA(
+      this.config.vsaDimensions,
+      this.config.vsaSparsity,
+      this.config.vsaSimilarityThreshold
+    );
+    return new VSAService(strategy);
+  }
+
+  _buildVsaIndex() {
+    if (!this.config.useVsaRetrieval || !this.vsaService) return;
+
+    this.macroUnitVectors.clear();
+    const units = Array.from(this.macroUnits.values());
+    units.sort((a, b) => b.frequency - a.frequency);
+    this.macroUnitsByFrequency = units;
+
+    const indexLimit = Math.min(this.config.vsaIndexLimit, units.length);
+    for (let i = 0; i < indexLimit; i++) {
+      const unit = units[i];
+      const text = this._tokensToText(unit.tokens);
+      const vec = this.vsaService.vectorizeText(text);
+      this.macroUnitVectors.set(unit.unitId, vec);
+    }
+
+    this.vsaIndexReady = true;
+  }
+
+  _ensureVsaIndex() {
+    if (!this.config.useVsaRetrieval || !this.vsaService) return;
+    if (this.vsaIndexReady) return;
+    this._buildVsaIndex();
+  }
+
+  _tokensToText(tokens) {
+    if (!tokens || tokens.length === 0) return '';
+    const text = Buffer.from(tokens).toString('utf8');
+    if (text && !text.includes('\uFFFD')) {
+      return text;
+    }
+    return tokens.map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  _getUnitVector(unit) {
+    if (!this.vsaService) return null;
+    if (!unit) return null;
+
+    if (unit.unitId && this.macroUnitVectors.has(unit.unitId)) {
+      return this.macroUnitVectors.get(unit.unitId);
+    }
+
+    const tokens = unit.tokens ?? [];
+    if (tokens.length === 0) return null;
+
+    const text = this._tokensToText(tokens);
+    const vec = this.vsaService.vectorizeText(text);
+    if (unit.unitId && this.macroUnitVectors.size < this.config.vsaIndexLimit) {
+      this.macroUnitVectors.set(unit.unitId, vec);
+    }
+    return vec;
+  }
+
+  _buildContextVector(tokens, lastMacroUnitId = null, contextBytes = this.config.vsaContextBytes) {
+    if (!this.vsaService) return null;
+    const slice = tokens.slice(-contextBytes);
+    const contextText = this._tokensToText(slice);
+    const contextVec = this.vsaService.vectorizeText(contextText);
+
+    if (!lastMacroUnitId) return contextVec;
+    const lastVec = this.macroUnitVectors.get(lastMacroUnitId);
+    if (!lastVec || !this.vsaService?.strategy?.bundle) return contextVec;
+
+    return this.vsaService.strategy.bundle([contextVec, lastVec]);
+  }
+
+  _retrieveVsaCandidates(contextVec, limit, sampleLimit) {
+    if (!this.vsaService || !contextVec) return [];
+    const cappedLimit = Math.max(0, limit);
+    if (cappedLimit === 0) return [];
+
+    const maxScan = Math.min(this.macroUnitsByFrequency.length, sampleLimit);
+    const candidates = [];
+
+    for (let i = 0; i < maxScan; i++) {
+      const unit = this.macroUnitsByFrequency[i];
+      const vec = this.macroUnitVectors.get(unit.unitId);
+      if (!vec) continue;
+      const sim = this.vsaService.similarity(contextVec, vec);
+      if (sim >= this.config.vsaMinSimilarity) {
+        candidates.push({ unit, similarity: sim });
+      }
+    }
+
+    candidates.sort((a, b) => b.similarity - a.similarity);
+    return candidates.slice(0, cappedLimit);
+  }
+
+  _applyVsaScoring(proposals, tokens, macroUnitsUsed, step, options) {
+    if (!this.vsaService) return proposals;
+    this._ensureVsaIndex();
+
+    const lastMacroUnitId = macroUnitsUsed.length > 0
+      ? macroUnitsUsed[macroUnitsUsed.length - 1]
+      : null;
+    const lastVec = lastMacroUnitId
+      ? this.macroUnitVectors.get(lastMacroUnitId)
+      : null;
+    const contextVec = this._buildContextVector(tokens, lastMacroUnitId, options.vsaContextBytes);
+    if (!contextVec) return proposals;
+
+    const boosted = proposals.map((proposal) => {
+      if (proposal.score <= 0) return proposal;
+      const unitVec = this._getUnitVector(proposal);
+      if (!unitVec) return proposal;
+
+      const similarity = this.vsaService.similarity(contextVec, unitVec);
+      if (similarity >= options.vsaMinSimilarity) {
+        proposal = {
+          ...proposal,
+          score: proposal.score * (1 + similarity * options.vsaBoost)
+        };
+      }
+
+      if (lastVec && unitVec) {
+        const topicSim = this.vsaService.similarity(lastVec, unitVec);
+        if (topicSim < options.vsaTopicThreshold) {
+          proposal = { ...proposal, score: proposal.score * options.vsaTopicPenalty };
+        }
+      }
+
+      return proposal;
+    });
+
+    if (options.vsaRetrieveK > 0 && step % options.vsaRetrieveEvery === 0) {
+      const existing = new Set(boosted.map((p) => p.unitId));
+      const retrieved = this._retrieveVsaCandidates(
+        contextVec,
+        options.vsaRetrieveK,
+        options.vsaRetrieveLimit
+      );
+
+      for (const { unit, similarity } of retrieved) {
+        if (existing.has(unit.unitId)) continue;
+        const lengthBonus = Math.sqrt(unit.tokens.length);
+        const freqBonus = Math.log2(unit.frequency + 1) / 10;
+        let score = similarity * options.vsaRetrieveWeight * lengthBonus * (1 + freqBonus);
+
+        if (lastVec) {
+          const unitVec = this.macroUnitVectors.get(unit.unitId);
+          if (unitVec) {
+            const topicSim = this.vsaService.similarity(lastVec, unitVec);
+            if (topicSim < options.vsaTopicThreshold) {
+              score *= options.vsaTopicPenalty;
+            }
+          }
+        }
+
+        boosted.push({
+          unitId: unit.unitId,
+          tokens: unit.tokens,
+          score
+        });
+      }
+    }
+
+    return boosted.filter((proposal) => proposal.score > 0);
   }
 
   /**
@@ -745,6 +979,16 @@ export class MacroUnitModel {
    * @param {number} [options.repetitionWindow=32] - Window for repetition detection
    * @param {number} [options.ngramBlockSize=4] - Block exact n-gram repetitions of this size
    * @param {number} [options.diversityBonus=0.3] - Bonus for tokens not in recent window
+   * @param {boolean} [options.vsaEnabled=true] - Enable VSA retrieval and coherence bias
+   * @param {number} [options.vsaContextBytes=64] - Bytes for VSA context vector
+   * @param {number} [options.vsaBoost=0.35] - Score boost for VSA similarity
+   * @param {number} [options.vsaRetrieveK=8] - VSA retrieval candidates to add
+   * @param {number} [options.vsaRetrieveLimit=2000] - VSA scan limit per step
+   * @param {number} [options.vsaRetrieveEvery=4] - Retrieval cadence in steps
+   * @param {number} [options.vsaRetrieveWeight=0.25] - Base score weight for retrieved units
+   * @param {number} [options.vsaTopicPenalty=0.7] - Penalty for topic switch
+   * @param {number} [options.vsaTopicThreshold=0.12] - Topic similarity threshold
+   * @param {number} [options.vsaMinSimilarity=0.08] - Minimum similarity to consider
    * @param {Object} [options.vmState] - VM state for conditioning (DS011)
    * @param {string} [options.mode='CONDITIONAL'] - Generation mode (STRICT|CONDITIONAL)
    * @returns {Promise<Object>}
@@ -757,6 +1001,16 @@ export class MacroUnitModel {
     const repetitionWindow = options.repetitionWindow ?? 32;
     const ngramBlockSize = options.ngramBlockSize ?? 4;
     const diversityBonus = options.diversityBonus ?? 0.3;
+    const vsaEnabled = options.vsaEnabled ?? this.config.useVsaRetrieval;
+    const vsaContextBytes = options.vsaContextBytes ?? this.config.vsaContextBytes;
+    const vsaBoost = options.vsaBoost ?? this.config.vsaBoost;
+    const vsaRetrieveK = options.vsaRetrieveK ?? this.config.vsaRetrieveK;
+    const vsaRetrieveLimit = options.vsaRetrieveLimit ?? this.config.vsaRetrieveLimit;
+    const vsaRetrieveEvery = options.vsaRetrieveEvery ?? this.config.vsaRetrieveEvery;
+    const vsaRetrieveWeight = options.vsaRetrieveWeight ?? this.config.vsaRetrieveWeight;
+    const vsaTopicPenalty = options.vsaTopicPenalty ?? this.config.vsaTopicPenalty;
+    const vsaTopicThreshold = options.vsaTopicThreshold ?? this.config.vsaTopicThreshold;
+    const vsaMinSimilarity = options.vsaMinSimilarity ?? this.config.vsaMinSimilarity;
     const vmState = options.vmState ?? null;
     const mode = options.mode ?? 'CONDITIONAL';
     const budgetMs = Number.isFinite(options.budgetMs) ? options.budgetMs : null;
@@ -765,6 +1019,7 @@ export class MacroUnitModel {
     const macroUnitsUsed = [];
     const validationStats = { validated: 0, rejected: 0, conditional: 0 };
     const startTime = budgetMs !== null ? performance.now() : 0;
+    const deadline = budgetMs !== null ? startTime + budgetMs : null;
 
     // Track recent tokens for repetition penalty
     const recentTokens = new Set();
@@ -780,7 +1035,7 @@ export class MacroUnitModel {
     }
 
     for (let step = 0; step < maxTokens && generated.length < prompt.length + maxTokens; step++) {
-      if (budgetMs !== null && (performance.now() - startTime) >= budgetMs) {
+      if (deadline !== null && performance.now() >= deadline) {
         break;
       }
       // Update recent tokens window
@@ -807,6 +1062,10 @@ export class MacroUnitModel {
 
       const context = generated.slice(-this.config.contextWindow);
       let proposals = await this.propose(context, vmSignature, Math.max(topK * 2, 20));
+
+      if (deadline !== null && performance.now() >= deadline) {
+        break;
+      }
 
       if (proposals.length === 0) {
         break;
@@ -905,6 +1164,23 @@ export class MacroUnitModel {
           continue;
         }
         break;
+      }
+
+      if (vsaEnabled && this.vsaService) {
+        if (deadline !== null && performance.now() >= deadline) {
+          break;
+        }
+        proposals = this._applyVsaScoring(proposals, generated, macroUnitsUsed, step, {
+          vsaContextBytes,
+          vsaBoost,
+          vsaRetrieveK,
+          vsaRetrieveLimit,
+          vsaRetrieveEvery,
+          vsaRetrieveWeight,
+          vsaTopicPenalty,
+          vsaTopicThreshold,
+          vsaMinSimilarity
+        });
       }
 
       // Re-sort after penalty
@@ -1067,6 +1343,11 @@ export class MacroUnitModel {
       macroUnitsToExport = macroUnitsToExport.slice(0, maxMacroUnits);
     }
 
+    const exportConfig = { ...this.config };
+    if (exportConfig.vsaService) {
+      exportConfig.vsaService = null;
+    }
+
     return {
       version: 2,
       compact,
@@ -1076,7 +1357,7 @@ export class MacroUnitModel {
       totalBytes: this.totalBytes,
       continuationCounts: Array.from(this.continuationCounts.entries()),
       nextUnitId: this.nextUnitId,
-      config: this.config
+      config: exportConfig
     };
   }
 
@@ -1121,6 +1402,10 @@ export class MacroUnitModel {
       Object.assign(this.config, state.config);
     }
 
+    this.vsaService = this._initVsaService();
+
+    this.vsaService = this._initVsaService();
+
     // Rebuild trie
     this._buildMacroUnitTrie();
   }
@@ -1162,6 +1447,8 @@ export class MacroUnitModel {
 
     // Compute missing continuation counts
     this._computeContinuationCounts();
+
+    this.vsaService = this._initVsaService();
 
     // Rebuild trie
     this._buildMacroUnitTrie();

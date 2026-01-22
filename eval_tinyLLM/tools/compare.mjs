@@ -60,6 +60,18 @@ function parseArgs() {
     else if (arg === '--reference') options.reference = true;
     else if (arg === '--perplexity') options.perplexity = true;
     else if (arg === '--quick') options.quick = true;
+    else if (arg === '--no-vsa') options.vsaEnabled = false;
+    else if (arg === '--vsa-enabled') options.vsaEnabled = true;
+    else if (arg === '--vsa-context-bytes' && args[i + 1]) options.vsaContextBytes = Number(args[++i]);
+    else if (arg === '--vsa-boost' && args[i + 1]) options.vsaBoost = Number(args[++i]);
+    else if (arg === '--vsa-retrieve-k' && args[i + 1]) options.vsaRetrieveK = Number(args[++i]);
+    else if (arg === '--vsa-retrieve-limit' && args[i + 1]) options.vsaRetrieveLimit = Number(args[++i]);
+    else if (arg === '--vsa-retrieve-every' && args[i + 1]) options.vsaRetrieveEvery = Number(args[++i]);
+    else if (arg === '--vsa-retrieve-weight' && args[i + 1]) options.vsaRetrieveWeight = Number(args[++i]);
+    else if (arg === '--vsa-topic-penalty' && args[i + 1]) options.vsaTopicPenalty = Number(args[++i]);
+    else if (arg === '--vsa-topic-threshold' && args[i + 1]) options.vsaTopicThreshold = Number(args[++i]);
+    else if (arg === '--vsa-min-similarity' && args[i + 1]) options.vsaMinSimilarity = Number(args[++i]);
+    else if (arg === '--heartbeat-ms' && args[i + 1]) options.heartbeatMs = Number(args[++i]);
   }
 
   return options;
@@ -506,6 +518,20 @@ async function main() {
 
   const sampleBudgetMs = budgets[0];
   const samples = [];
+  const heartbeatMs = Number.isFinite(args.heartbeatMs) ? args.heartbeatMs : 60000;
+  let lastHeartbeat = Date.now();
+  const vsaOptions = {
+    vsaEnabled: args.vsaEnabled ?? true,
+    vsaContextBytes: args.vsaContextBytes,
+    vsaBoost: args.vsaBoost,
+    vsaRetrieveK: args.vsaRetrieveK,
+    vsaRetrieveLimit: args.vsaRetrieveLimit,
+    vsaRetrieveEvery: args.vsaRetrieveEvery,
+    vsaRetrieveWeight: args.vsaRetrieveWeight,
+    vsaTopicPenalty: args.vsaTopicPenalty,
+    vsaTopicThreshold: args.vsaTopicThreshold,
+    vsaMinSimilarity: args.vsaMinSimilarity
+  };
 
   // Load VSAVM model
   console.log('\nLoading VSAVM model...');
@@ -692,7 +718,8 @@ async function main() {
       const vsResult = await generateWithVSAVM(vsavmModel, sample.prompt, {
         budgetMs,
         maxTokens,
-        temperature
+        temperature,
+        ...vsaOptions
       });
       const vsDuration = performance.now() - vsStart;
       
@@ -731,6 +758,13 @@ async function main() {
       }
 
       count++;
+
+      if (heartbeatMs > 0 && Date.now() - lastHeartbeat >= heartbeatMs) {
+        console.log(
+          `Heartbeat: processed ${count}/${prompts.length} prompts at budget ${budgetMs}ms`
+        );
+        lastHeartbeat = Date.now();
+      }
     }
 
     budgetResults.push({

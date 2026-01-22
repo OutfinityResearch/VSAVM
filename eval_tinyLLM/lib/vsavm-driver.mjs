@@ -149,12 +149,23 @@ export async function generateWithVSAVM(model, prompt, options = {}) {
   const temperature = options.temperature;
   const budgetMs = options.budgetMs;
   const promptBytes = Array.from(encodeBytes(prompt));
-  
-  const result = await model.generate(promptBytes, {
+  const generationOptions = {
     maxTokens,
     temperature,
-    budgetMs
-  });
+    budgetMs,
+    vsaEnabled: options.vsaEnabled,
+    vsaContextBytes: options.vsaContextBytes,
+    vsaBoost: options.vsaBoost,
+    vsaRetrieveK: options.vsaRetrieveK,
+    vsaRetrieveLimit: options.vsaRetrieveLimit,
+    vsaRetrieveEvery: options.vsaRetrieveEvery,
+    vsaRetrieveWeight: options.vsaRetrieveWeight,
+    vsaTopicPenalty: options.vsaTopicPenalty,
+    vsaTopicThreshold: options.vsaTopicThreshold,
+    vsaMinSimilarity: options.vsaMinSimilarity
+  };
+  
+  const result = await model.generate(promptBytes, generationOptions);
   
   // Decode generated tokens to text
   const generatedText = Buffer.from(result.tokens).toString('utf8');

@@ -11,6 +11,8 @@
 
 import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { Worker } from 'node:worker_threads';
+import { fileURLToPath } from 'node:url';
 import { config } from '../config.mjs';
 import { createVSAVMInstance, ingestDataset, saveFacts } from '../lib/vsavm-driver.mjs';
 import { appendLog } from '../lib/logging.mjs';
@@ -62,7 +64,11 @@ function parseArgs() {
     else if (arg === '--export-full') options.exportFull = true;
     else if (arg === '--resume') options.resume = true;
     else if (arg === '--checkpoint-every' && args[i + 1]) options.checkpointEvery = Number(args[++i]);
+    else if (arg === '--checkpoint-max-entries' && args[i + 1]) options.checkpointMaxEntries = Number(args[++i]);
     else if (arg === '--checkpoint-path' && args[i + 1]) options.checkpointPath = args[++i];
+    else if (arg === '--log-every-ms' && args[i + 1]) options.logEveryMs = Number(args[++i]);
+    else if (arg === '--workers' && args[i + 1]) options.workers = Number(args[++i]);
+    else if (arg === '--batch-size' && args[i + 1]) options.batchSize = Number(args[++i]);
     else if (arg === '--force') options.force = true;
   }
 
@@ -81,6 +87,7 @@ function createSequenceStream(inputPath, options = {}) {
   const maxRecords = options.maxRecords ?? config.vsavm.maxRecords;
   const maxBytesPerRecord = options.maxBytesPerRecord ?? config.vsavm.maxBytesPerRecord;
   const logEvery = options.logEvery ?? 1000;
+  const logEveryMs = options.logEveryMs ?? 60000;
   const compressionSampleSize = options.compressionSampleSize ?? 100;
   const perplexitySampleSize = options.perplexitySampleSize ?? 100;
   const startRecord = options.startRecord ?? 0;
@@ -97,6 +104,7 @@ function createSequenceStream(inputPath, options = {}) {
 
   async function* generator() {
     let skipped = 0;
+    let lastHeartbeat = Date.now();
     const effectiveMaxRecords = Number.isFinite(maxRecords)
       ? maxRecords + startRecord
       : maxRecords;
@@ -138,6 +146,14 @@ function createSequenceStream(inputPath, options = {}) {
           `Streamed ${stats.sequences} sequences (${formatBytes(stats.totalBytes)}) | ` +
           `heap ${formatBytes(mem.heapUsed)} / ${formatBytes(mem.heapTotal)}`
         );
+        lastHeartbeat = Date.now();
+      } else if (logEveryMs > 0 && Date.now() - lastHeartbeat >= logEveryMs) {
+        const mem = process.memoryUsage();
+        console.log(
+          `Heartbeat: ${stats.sequences} sequences (${formatBytes(stats.totalBytes)}) | ` +
+          `heap ${formatBytes(mem.heapUsed)} / ${formatBytes(mem.heapTotal)}`
+        );
+        lastHeartbeat = Date.now();
       }
 
       yield bytes;
@@ -152,6 +168,83 @@ function createSequenceStream(inputPath, options = {}) {
   };
 }
 
+function createWorkerPool(workerPath, size) {
+  const workers = [];
+  const idle = [];
+  const queue = [];
+
+  const startWorker = () => {
+    const worker = new Worker(workerPath, { type: 'module' });
+    worker.on('message', (message) => {
+      const task = worker.currentTask;
+      worker.currentTask = null;
+      idle.push(worker);
+
+      if (!task) return;
+      if (message?.ok) {
+        task.resolve(message.result);
+      } else {
+        task.reject(new Error(message?.error ?? 'Worker error'));
+      }
+      runNext();
+    });
+    worker.on('error', (error) => {
+      if (worker.currentTask) {
+        worker.currentTask.reject(error);
+      }
+    });
+    workers.push(worker);
+    idle.push(worker);
+  };
+
+  const runNext = () => {
+    if (queue.length === 0 || idle.length === 0) return;
+    const worker = idle.pop();
+    const task = queue.shift();
+    worker.currentTask = task;
+    worker.postMessage(task.payload);
+  };
+
+  for (let i = 0; i < size; i++) {
+    startWorker();
+  }
+
+  return {
+    run(payload) {
+      return new Promise((resolve, reject) => {
+        queue.push({ payload, resolve, reject });
+        runNext();
+      });
+    },
+    async close() {
+      await Promise.all(workers.map((worker) => worker.terminate()));
+    }
+  };
+}
+
+function pruneSubsequenceCounts(subsequenceCounts, config) {
+  let threshold = config.pruneThreshold;
+  const maxEntries = config.maxSubsequenceEntries;
+
+  while (subsequenceCounts.size > maxEntries && threshold <= config.pruneThreshold + 3) {
+    for (const [key, count] of subsequenceCounts) {
+      if (count <= threshold) {
+        subsequenceCounts.delete(key);
+      }
+    }
+    threshold += 1;
+  }
+}
+
+function mergeSubsequenceCounts(target, entries, config) {
+  for (const [key, count] of entries) {
+    target.set(key, (target.get(key) ?? 0) + count);
+  }
+  if (target.size > config.maxSubsequenceEntries) {
+    pruneSubsequenceCounts(target, config);
+  }
+}
+
 async function loadCheckpoint(checkpointPath) {
   const raw = await readFile(checkpointPath, 'utf8');
   const payload = JSON.parse(raw);
@@ -161,9 +254,22 @@ async function loadCheckpoint(checkpointPath) {
   };
 }
 
-async function saveCheckpoint(checkpointPath, payload) {
+async function saveCheckpoint(checkpointPath, payload, options = {}) {
+  const maxEntries = Number.isFinite(options.maxEntries) ? options.maxEntries : 200000;
+  let subsequenceCounts = payload.subsequenceCounts ?? [];
+  let truncated = false;
+  const subsequenceCountsSize = Array.isArray(subsequenceCounts) ? subsequenceCounts.length : 0;
+
+  if (Array.isArray(subsequenceCounts) && subsequenceCounts.length > maxEntries) {
+    subsequenceCounts = null;
+    truncated = true;
+  }
+
   const checkpoint = {
     ...payload,
+    subsequenceCounts,
+    subsequenceCountsSize,
+    subsequenceCountsTruncated: truncated,
     updatedAt: new Date().toISOString()
   };
   await mkdir(dirname(checkpointPath), { recursive: true });
@@ -296,7 +402,15 @@ async function main() {
   // Phase 3: Stream token sequences for training
   console.log('\n[Phase 3] Streaming token sequences for macro-unit training...');
   const checkpointEvery = Number.isFinite(args.checkpointEvery) ? args.checkpointEvery : 50000;
+  const checkpointMaxEntries = Number.isFinite(args.checkpointMaxEntries)
+    ? args.checkpointMaxEntries
+    : 200000;
   const checkpointPath = args.checkpointPath ?? `${dirname(modelOut)}/checkpoint.json`;
+  const workerCount = Number.isFinite(args.workers)
+    ? Math.max(1, Math.floor(args.workers))
+    : 1;
+  const batchSize = Number.isFinite(args.batchSize) ? Math.max(10, Math.floor(args.batchSize)) : 200;
+  const maxInflight = Math.max(1, workerCount * 2);
   let resumeState = null;
 
   if (args.resume) {
@@ -320,6 +434,7 @@ async function main() {
     maxRecords: args.maxRecords ?? config.vsavm.maxRecords,
     maxBytes,
     maxBytesPerRecord: args.maxBytesPerRecord ?? config.vsavm.maxBytesPerRecord,
+    logEveryMs: args.logEveryMs,
     startRecord: resumeState?.state?.sequences ?? 0,
     startBytes: resumeState?.state?.totalBytes ?? 0
   });
@@ -346,25 +461,129 @@ async function main() {
     model.import(resumeState.modelState);
   }
 
-  await model.trainStream(streamState.generator(), {
-    subsequenceCounts: resumeState?.subsequenceCounts,
-    totalSubseq: resumeState?.state?.totalSubseq,
-    sequences: resumeState?.state?.sequences,
-    totalBytes: resumeState?.state?.totalBytes,
-    checkpointEvery,
-    onCheckpoint: async (payload) => {
-      await saveCheckpoint(checkpointPath, {
-        version: 1,
-        datasetId,
-        modelId,
-        state: payload.state,
-        subsequenceConfig: payload.subsequenceConfig,
-        subsequenceCounts: payload.subsequenceCounts,
-        modelState: payload.modelState
-      });
-      console.log(`  Checkpoint saved: ${checkpointPath}`);
+  if (workerCount > 1) {
+    const workerPath = fileURLToPath(new URL('./workers/subsequence-counter.mjs', import.meta.url));
+    const pool = createWorkerPool(workerPath, workerCount);
+    const subsequenceCounts = resumeState?.subsequenceCounts ?? new Map();
+    const subsequenceConfig = model.getSubsequenceConfig({
+      subsequenceSampleRate: resumeState?.subsequenceConfig?.sampleRate ?? subsequenceSampleRate,
+      maxSubsequenceLength,
+      maxSubsequenceEntries,
+      subsequencePruneThreshold,
+      subsequencePruneInterval
+    });
+    if (!Number.isFinite(subsequenceConfig.sampleRate)) {
+      subsequenceConfig.sampleRate = 1.0;
     }
-  });
+    const subsequenceState = {
+      totalSubseq: resumeState?.state?.totalSubseq ?? 0
+    };
+    const batch = [];
+    const inflight = new Set();
+    const workerConfig = {
+      minLength: model.config.minLength,
+      maxLength: model.config.maxLength,
+      maxSubsequenceLength: subsequenceConfig.maxSubsequenceLength,
+      maxSubsequenceEntries: subsequenceConfig.maxSubsequenceEntries,
+      sampleRate: subsequenceConfig.sampleRate,
+      pruneThreshold: subsequenceConfig.pruneThreshold,
+      pruneInterval: subsequenceConfig.pruneInterval
+    };
+
+    const dispatchBatch = async (batchPayload) => {
+      const promise = pool.run({ sequences: batchPayload, config: workerConfig })
+        .then((result) => {
+          mergeSubsequenceCounts(subsequenceCounts, result.counts, subsequenceConfig);
+          subsequenceState.totalSubseq += result.totalSubseq;
+          inflight.delete(promise);
+        })
+        .catch((error) => {
+          inflight.delete(promise);
+          throw error;
+        });
+      inflight.add(promise);
+      if (inflight.size >= maxInflight) {
+        await Promise.race(inflight);
+      }
+    };
+
+    for await (const tokens of streamState.generator()) {
+      model.accumulateNgrams(tokens);
+      batch.push(Array.from(tokens));
+
+      if (batch.length >= batchSize) {
+        const batchPayload = batch.splice(0, batch.length);
+        await dispatchBatch(batchPayload);
+      }
+
+      if (checkpointEvery > 0 && streamState.stats.sequences % checkpointEvery === 0) {
+        await Promise.all(inflight);
+        const checkpointModelState = model.export({
+          compact: true,
+          maxOrders: exportMaxOrders,
+          maxMacroUnits: exportMaxMacroUnits,
+          minNgramCount: exportMinNgramCount
+        });
+        await saveCheckpoint(checkpointPath, {
+          version: 1,
+          datasetId,
+          modelId,
+          state: {
+            sequences: streamState.stats.sequences,
+            totalBytes: streamState.stats.totalBytes,
+            totalSubseq: subsequenceState.totalSubseq
+          },
+          subsequenceConfig,
+          subsequenceCounts: Array.from(subsequenceCounts.entries()),
+          modelState: checkpointModelState
+        }, { maxEntries: checkpointMaxEntries });
+        if (subsequenceCounts.size > checkpointMaxEntries) {
+          console.log(`  Checkpoint counts truncated (${subsequenceCounts.size} > ${checkpointMaxEntries})`);
+        }
+        console.log(`  Checkpoint saved: ${checkpointPath}`);
+      }
+    }
+
+    if (batch.length > 0) {
+      await dispatchBatch(batch.splice(0, batch.length));
+    }
+    await Promise.all(inflight);
+    await pool.close();
+
+    model.finalizeTraining(subsequenceCounts, subsequenceConfig);
+  } else {
+    await model.trainStream(streamState.generator(), {
+      subsequenceCounts: resumeState?.subsequenceCounts,
+      totalSubseq: resumeState?.state?.totalSubseq,
+      sequences: resumeState?.state?.sequences,
+      totalBytes: resumeState?.state?.totalBytes,
+      checkpointEvery,
+      includeModelState: false,
+      onCheckpoint: async (payload) => {
+        const checkpointModelState = model.export({
+          compact: true,
+          maxOrders: exportMaxOrders,
+          maxMacroUnits: exportMaxMacroUnits,
+          minNgramCount: exportMinNgramCount
+        });
+        await saveCheckpoint(checkpointPath, {
+          version: 1,
+          datasetId,
+          modelId,
+          state: payload.state,
+          subsequenceConfig: payload.subsequenceConfig,
+          subsequenceCounts: payload.subsequenceCounts,
+          modelState: checkpointModelState
+        }, { maxEntries: checkpointMaxEntries });
+        if (payload.subsequenceCounts?.length > checkpointMaxEntries) {
+          console.log(
+            `  Checkpoint counts truncated (${payload.subsequenceCounts.length} > ${checkpointMaxEntries})`
+          );
+        }
+        console.log(`  Checkpoint saved: ${checkpointPath}`);
+      }
+    });
+  }
 
   const modelStats = model.getStats();
   const totalBytes = streamState.stats.totalBytes;
